@@ -306,6 +306,8 @@ const brandLogoOptions = computed(() => [
   { label: t('preferences.brand-logo-auto'), value: 'auto' },
   { label: t('preferences.brand-logo-gold'), value: 'gold' },
   { label: t('preferences.brand-logo-violet'), value: 'violet' },
+  { label: t('preferences.brand-logo-blue'), value: 'blue' },
+  { label: t('preferences.brand-logo-teal'), value: 'teal' },
 ])
 
 const androidAppIconOptions = computed(() => [

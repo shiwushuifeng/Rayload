@@ -663,7 +663,9 @@
     "android-app-icon": "Android 桌面图标",
     "android-app-icon-purple": "经典紫罗兰",
     "android-app-icon-gold": "米白金",
-    "android-app-icon-failed": "无法切换 Android 桌面图标"
+    "android-app-icon-failed": "无法切换 Android 桌面图标",
+    "brand-logo-blue": "米蓝色",
+    "brand-logo-teal": "青黑色"
   },
   "task": {
     "scope-all": "全部",

@@ -663,7 +663,9 @@
     "android-app-icon": "Android Home Icon",
     "android-app-icon-purple": "Classic Violet",
     "android-app-icon-gold": "Cream & Gold",
-    "android-app-icon-failed": "Could not change the Android Home icon"
+    "android-app-icon-failed": "Could not change the Android Home icon",
+    "brand-logo-blue": "Cream & Blue",
+    "brand-logo-teal": "Teal & Black"
   },
   "task": {
     "scope-all": "Tutte",

@@ -197,7 +197,13 @@ function normalizeScalarValues(config: Record<string, unknown>, repairs: string[
     repairs.push('mediaSelectBeforeDownload')
   }
   repairEnum(config, 'theme', ['auto', 'light', 'dark'] as const, DEFAULT_APP_CONFIG.theme, repairs)
-  repairEnum(config, 'brandLogoStyle', ['auto', 'gold', 'violet'] as const, DEFAULT_APP_CONFIG.brandLogoStyle, repairs)
+  repairEnum(
+    config,
+    'brandLogoStyle',
+    ['auto', 'gold', 'violet', 'blue', 'teal'] as const,
+    DEFAULT_APP_CONFIG.brandLogoStyle,
+    repairs,
+  )
   repairEnum(config, 'androidAppIcon', ['purple', 'gold'] as const, DEFAULT_APP_CONFIG.androidAppIcon, repairs)
   repairEnum(config, 'taskCardMode', ['full', 'compact'] as const, DEFAULT_APP_CONFIG.taskCardMode, repairs)
   repairEnum(config, 'colorScheme', getAllowedColorSchemeIds(), DEFAULT_APP_CONFIG.colorScheme, repairs)
