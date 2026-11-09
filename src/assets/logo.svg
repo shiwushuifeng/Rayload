@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="gradC" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E9D5FF" />
+      <stop offset="100%" stop-color="#9333EA" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="110" fill="#0A0A0A"/>
+  <g transform="rotate(-35 256 256)" stroke="#D8B4FE" fill="none" stroke-linejoin="miter" stroke-linecap="round">
+    <!-- Floating gradient accent -->
+    <path d="M 256 120 L 290 170 L 222 170 Z" fill="url(#gradC)" stroke-width="8"/>
+    <!-- Fine downward arrow outline -->
+    <path d="M 256 410 L 130 290 L 180 290 L 180 240 L 332 240 L 332 290 L 382 290 Z" stroke-width="12"/>
+    <!-- Internal folded signal -->
+    <path d="M 180 240 L 256 410 M 332 240 L 256 410" stroke-width="8" opacity="0.6"/>
+  </g>
+</svg>

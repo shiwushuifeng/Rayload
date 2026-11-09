@@ -104,7 +104,7 @@ struct FirefoxManifest<'a> {
 pub fn chromium_manifest_json(path: &Path) -> Result<Vec<u8>, serde_json::Error> {
     serde_json::to_vec_pretty(&ChromiumManifest {
         name: HOST_NAME,
-        description: "Activate Rayburst",
+        description: "Activate Rayload",
         path: &path.to_string_lossy(),
         r#type: "stdio",
         allowed_origins: chromium_origins(),
@@ -114,7 +114,7 @@ pub fn chromium_manifest_json(path: &Path) -> Result<Vec<u8>, serde_json::Error>
 pub fn firefox_manifest_json(path: &Path) -> Result<Vec<u8>, serde_json::Error> {
     serde_json::to_vec_pretty(&FirefoxManifest {
         name: HOST_NAME,
-        description: "Activate Rayburst",
+        description: "Activate Rayload",
         path: &path.to_string_lossy(),
         r#type: "stdio",
         allowed_extensions: [browser_identity().firefox_id.as_str()],

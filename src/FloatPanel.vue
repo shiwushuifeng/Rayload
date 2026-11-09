@@ -15,6 +15,7 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { NButton, NIcon } from 'naive-ui'
 import { AddOutline, ArrowForwardOutline, PauseOutline, PlayOutline } from '@vicons/ionicons5'
 import aria2Api from '@/api/aria2'
+import brandLogo from '@/assets/logo.svg'
 import SegmentBar from '@/components/task/SegmentBar.vue'
 import { useEscapeKey } from '@/composables/useEscapeKey'
 import { useFloatUpdates } from '@/composables/useFloatUpdates'
@@ -213,7 +214,7 @@ onBeforeUnmount(() => {
   <div ref="root" class="float-panel" :class="`float-panel--${phase}`">
     <section class="panel-card" :style="{ transformOrigin: origin }">
       <header class="panel-header" @mousedown="startDrag">
-        <img class="panel-logo" src="/logo.svg" alt="" draggable="false" />
+        <img class="panel-logo" :src="brandLogo" alt="" draggable="false" />
         <span class="panel-title">Rayload</span>
         <span v-if="update" class="panel-speeds">
           <span>↓ {{ bytesToSize(update.stat.downloadSpeed) }}/s</span>
@@ -259,7 +260,7 @@ onBeforeUnmount(() => {
       </ul>
 
       <div v-else class="panel-empty">
-        <img class="panel-empty-logo" src="/logo.svg" alt="" draggable="false" />
+        <img class="panel-empty-logo" :src="brandLogo" alt="" draggable="false" />
         <span>{{ t('task.no-active-tasks') }}</span>
         <div class="panel-empty-actions">
           <NButton size="small" secondary @click="newTask">

@@ -75,6 +75,7 @@
                 <data android:mimeType="application/x-bittorrent" />
                 <data android:pathPattern=".*\\.torrent" />
             </intent-filter>
+
             <!-- tauri-file-associations. AUTO-GENERATED. DO NOT REMOVE. -->
         </activity>
 

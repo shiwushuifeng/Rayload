@@ -2,9 +2,17 @@
 /** @fileoverview Lightweight Android permission onboarding and battery prompt. */
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NButton, NIcon, NModal } from 'naive-ui'
-import { BatteryHalfOutline, CheckmarkCircleOutline, FolderOpenOutline, NotificationsOutline } from '@vicons/ionicons5'
+import { NButton, NIcon, NModal, NSelect } from 'naive-ui'
+import {
+  BatteryHalfOutline,
+  CheckmarkCircleOutline,
+  FolderOpenOutline,
+  LanguageOutline,
+  NotificationsOutline,
+} from '@vicons/ionicons5'
+import { useLocale } from '@/composables/useLocale'
 import { usePlatform } from '@/composables/usePlatform'
+import { usePreferenceStore } from '@/stores/preference'
 import {
   readAndroidPermissionStatuses,
   requestAndroidBatteryOptimizationExemption,
@@ -12,6 +20,10 @@ import {
   requestAndroidStoragePermission,
   type AndroidPermissionStatus,
 } from '@/composables/useAndroidNative'
+import { isSupportedLocale, LOCALE_CATALOG, type SupportedLocale } from '@shared/localeCatalog'
+import { logger } from '@shared/logger'
+import { resolveSystemLocale } from '@shared/utils/locale'
+import { locale as getSystemLocale } from '@tauri-apps/plugin-os'
 
 type PermissionKey = 'storage' | 'notification' | 'battery'
 
@@ -22,17 +34,26 @@ interface PermissionStep {
 }
 
 const STORAGE_KEY = 'rayload-onboarding-v1'
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const { isAndroid } = usePlatform()
+const { setLocale } = useLocale()
+const preferenceStore = usePreferenceStore()
 const visible = ref(false)
 const firstRun = ref(true)
+const languageStepActive = ref(false)
 const dismissedThisSession = ref(false)
 const currentIndex = ref(0)
+const selectedLocale = ref(preferenceStore.locale || 'auto')
 const statuses = ref<Record<PermissionKey, AndroidPermissionStatus>>({
   storage: 'unavailable',
   notification: 'unavailable',
   battery: 'unavailable',
 })
+
+const localeOptions = computed(() => [
+  { label: t('preferences.follow-system'), value: 'auto' },
+  ...LOCALE_CATALOG.map(({ code, label }) => ({ label, value: code })),
+])
 
 const allSteps = computed<PermissionStep[]>(() => [
   {
@@ -61,9 +82,13 @@ const steps = computed(() =>
 )
 const currentStep = computed(() => steps.value[currentIndex.value] ?? steps.value[0] ?? null)
 const currentStatus = computed(() => (currentStep.value ? statuses.value[currentStep.value.key] : 'unavailable'))
-const progress = computed(() =>
-  steps.value.length === 0 ? 0 : Math.round(((currentIndex.value + 1) / steps.value.length) * 100),
-)
+const totalOnboardingSteps = computed(() => steps.value.length + (firstRun.value ? 1 : 0))
+const progress = computed(() => {
+  if (totalOnboardingSteps.value === 0) return 100
+  const completedPermissions = languageStepActive.value ? 0 : currentIndex.value + 1
+  const completedLanguage = firstRun.value && !languageStepActive.value ? 1 : 0
+  return Math.round(((completedPermissions + completedLanguage) / totalOnboardingSteps.value) * 100)
+})
 
 function readOnboardingComplete(): boolean {
   try {
@@ -85,7 +110,7 @@ function refreshStatuses(): void {
   if (!isAndroid.value) return
   statuses.value = readAndroidPermissionStatuses()
   if (currentIndex.value >= steps.value.length) currentIndex.value = Math.max(0, steps.value.length - 1)
-  visible.value = steps.value.length > 0 && !dismissedThisSession.value
+  visible.value = (languageStepActive.value || steps.value.length > 0) && !dismissedThisSession.value
 }
 
 function requestCurrentPermission(): void {
@@ -102,7 +127,35 @@ function requestCurrentPermission(): void {
   }
 }
 
-function advance(): void {
+async function confirmLanguage(): Promise<void> {
+  let localeToApply: SupportedLocale
+  if (selectedLocale.value === 'auto') {
+    try {
+      localeToApply = resolveSystemLocale((await getSystemLocale()) || 'en-US')
+    } catch (error) {
+      logger.debug('AndroidPermissionWelcome.systemLocale', error)
+      localeToApply = isSupportedLocale(locale.value) ? locale.value : 'en-US'
+    }
+  } else {
+    localeToApply = isSupportedLocale(selectedLocale.value) ? selectedLocale.value : 'en-US'
+  }
+  try {
+    await setLocale(localeToApply)
+  } catch (error) {
+    logger.error('AndroidPermissionWelcome.locale', error)
+  }
+  await preferenceStore.updateAndSave({ locale: selectedLocale.value })
+  languageStepActive.value = false
+  currentIndex.value = 0
+  if (steps.value.length === 0) finish()
+  else visible.value = true
+}
+
+async function advance(): Promise<void> {
+  if (languageStepActive.value) {
+    await confirmLanguage()
+    return
+  }
   if (currentStatus.value !== 'granted') {
     requestCurrentPermission()
     return
@@ -131,6 +184,7 @@ function onVisibilityOrFocus(): void {
 
 onMounted(() => {
   firstRun.value = !readOnboardingComplete()
+  languageStepActive.value = firstRun.value
   window.setTimeout(() => {
     refreshStatuses()
     window.addEventListener('focus', onVisibilityOrFocus)
@@ -151,11 +205,26 @@ onBeforeUnmount(() => {
     <section class="permission-welcome" role="dialog" aria-modal="true" :aria-label="t('onboarding.title')">
       <div class="permission-welcome__accent" />
       <div class="permission-welcome__heading">
-        <h2>{{ t('onboarding.title') }}</h2>
-        <p>{{ t('onboarding.description') }}</p>
+        <h2>{{ languageStepActive ? t('preferences.language') : t('onboarding.title') }}</h2>
+        <p>{{ languageStepActive ? t('preferences.select-language') : t('onboarding.description') }}</p>
       </div>
 
-      <div v-if="currentStep" class="permission-step">
+      <div v-if="languageStepActive" class="permission-step permission-step--language">
+        <div class="permission-step__icon">
+          <NIcon :size="26"><LanguageOutline /></NIcon>
+        </div>
+        <div class="permission-step__copy">
+          <NSelect
+            v-model:value="selectedLocale"
+            :options="localeOptions"
+            :aria-label="t('preferences.select-language')"
+            filterable
+            size="large"
+          />
+        </div>
+      </div>
+
+      <div v-else-if="currentStep" class="permission-step">
         <div class="permission-step__icon">
           <NIcon :size="26"><component :is="currentStep.icon" /></NIcon>
         </div>
@@ -172,14 +241,18 @@ onBeforeUnmount(() => {
       </div>
 
       <div class="permission-welcome__actions">
-        <NButton quaternary @click="dismissForNow">{{ t('onboarding.later') }}</NButton>
+        <NButton v-if="!languageStepActive" quaternary @click="dismissForNow">
+          {{ t('onboarding.later') }}
+        </NButton>
         <NButton type="primary" @click="advance">
           {{
-            currentStatus === 'granted'
-              ? currentIndex + 1 < steps.length
-                ? t('onboarding.next')
-                : t('onboarding.finish')
-              : t('onboarding.allow')
+            languageStepActive
+              ? t('onboarding.next')
+              : currentStatus === 'granted'
+                ? currentIndex + 1 < steps.length
+                  ? t('onboarding.next')
+                  : t('onboarding.finish')
+                : t('onboarding.allow')
           }}
         </NButton>
       </div>
@@ -235,6 +308,12 @@ onBeforeUnmount(() => {
   color: var(--m3-on-primary-container);
   background: var(--m3-primary-container);
   border-radius: 16px;
+}
+.permission-step__copy {
+  min-width: 0;
+}
+.permission-step--language .permission-step__copy {
+  width: 100%;
 }
 .permission-step h3 {
   margin: 0 0 5px;

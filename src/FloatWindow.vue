@@ -22,6 +22,7 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { NIcon } from 'naive-ui'
 import { Add, ArrowDown, ArrowUp, Checkmark, Pause, TimeOutline } from '@vicons/ionicons5'
 import aria2Api from '@/api/aria2'
+import brandLogo from '@/assets/logo.svg'
 import { useFloatUpdates, type FloatUpdate } from '@/composables/useFloatUpdates'
 import { useFloatDrag } from '@/composables/useFloatDrag'
 import { usePreferenceStore } from '@/stores/preference'
@@ -330,7 +331,7 @@ onBeforeUnmount(() => {
 
         <Transition name="orb-face">
           <span :key="face" class="orb-face">
-            <img v-if="face === 'idle'" class="orb-logo" src="/logo.svg" alt="" draggable="false" />
+            <img v-if="face === 'idle'" class="orb-logo" :src="brandLogo" alt="" draggable="false" />
             <template v-else-if="showsSpeed">
               <span class="orb-speed-value" :data-length="speed.value.length">{{ speed.value }}</span>
               <span class="orb-speed-unit">{{ speed.unit }}</span>

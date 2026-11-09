@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="110" fill="#0A0A0A"/>
+  <!-- Rotate the complete icon counterclockwise to the left -->
+  <g transform="rotate(-35 256 256)" stroke="#D8B4FE" fill="none" stroke-linejoin="miter" stroke-linecap="round">
+    <!-- Floating sharp upward arrow -->
+    <path d="M 256 130 L 290 180 L 222 180 Z" stroke-width="12"/>
+
+    <!-- Slender downward arrow outline -->
+    <path d="M 256 400 L 130 280 L 180 280 L 180 240 L 332 240 L 332 280 L 382 280 Z" stroke-width="12"/>
+
+    <!-- Internal folded signal -->
+    <path d="M 180 240 L 256 400 M 332 240 L 256 400" stroke-width="8" opacity="0.6"/>
+  </g>
+</svg>

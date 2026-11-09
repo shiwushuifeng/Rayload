@@ -7,7 +7,7 @@ const output = mkdtempSync(join(tmpdir(), 'rayburst-icons-'))
 try {
   execFileSync(
     process.execPath,
-    ['node_modules/@tauri-apps/cli/tauri.js', 'icon', 'public/logo.svg', '--output', output],
+    ['node_modules/@tauri-apps/cli/tauri.js', 'icon', 'src/assets/logo.svg', '--output', output],
     { stdio: 'inherit' },
   )
   for (const entry of readdirSync(output, { withFileTypes: true })) {
@@ -19,11 +19,19 @@ try {
   const tray = join(output, 'tray')
   execFileSync(
     process.execPath,
-    ['node_modules/@tauri-apps/cli/tauri.js', 'icon', 'public/logo.svg', '--png', '16,20,24,32,40,48', '--output', tray],
+    [
+      'node_modules/@tauri-apps/cli/tauri.js',
+      'icon',
+      'src/assets/logo.svg',
+      '--png',
+      '16,20,24,32,40,48',
+      '--output',
+      tray,
+    ],
     { stdio: 'inherit' },
   )
   for (const name of readdirSync(tray)) copyFileSync(join(tray, name), join('src-tauri/icons/tray', name))
-  copyFileSync('public/logo.svg', 'src-tauri/icons/Rayload.icon/Assets/logo.svg')
+  copyFileSync('src/assets/logo.svg', 'src-tauri/icons/Rayload.icon/Assets/logo.svg')
   if (process.platform === 'darwin') {
     // Tauri dev uses an NSImage, not the compiled Icon Composer asset catalog.
     const preview = join(output, 'macos-preview.png')

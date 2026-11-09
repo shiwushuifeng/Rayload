@@ -3,6 +3,22 @@
 All notable changes to the independent Rayload Android port are documented in
 this file.
 
+## v1.0.1 - 2026-11-09
+
+### Changed
+
+- Replaced the application icon and in-app brand artwork with the final 35-degree
+  counterclockwise double-arrow logo.
+- Regenerated Android, Windows, macOS, iOS, and Tauri icon assets from the
+  1024×1024 source artwork.
+- Updated the application version to `1.0.1`.
+- Updated release notes in Simplified Chinese and English.
+- Added selectable README editions for all 27 supported interface languages.
+
+### Added
+
+- Added interface language selection to the first-launch setup flow.
+
 ## v1.0.0 - 2026-11-09
 
 ### Added
