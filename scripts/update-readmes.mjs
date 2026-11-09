@@ -163,7 +163,8 @@ function fileNameFor(code) {
 
 function selectorFor(code) {
   const links = Object.entries(catalog).map(([locale, metadata]) => {
-    const label = locale === code ? `**${metadata.label}**` : metadata.label
+    const labelText = locale === 'en-US' ? 'English + 简体中文' : metadata.label
+    const label = locale === code ? `**${labelText}**` : labelText
     return `[${label}](${fileNameFor(locale)})`
   })
   return `${startMarker}
