@@ -20,9 +20,9 @@ import {
   ListOutline,
 } from '@vicons/ionicons5'
 import { useTaskCardModel } from '@/composables/useTaskCardModel'
+import { usePlatform } from '@/composables/usePlatform'
 import { canOpenTaskContent, dragTaskContent } from '@/composables/useTaskContentOpen'
 import { useTaskFileMissing } from '@/composables/useTaskFileMissing'
-import TaskDragHandle from './TaskDragHandle.vue'
 import TaskItemActions from './TaskItemActions.vue'
 import TaskTextTransition from './TaskTextTransition.vue'
 import type { Aria2Task } from '@shared/types'
@@ -46,6 +46,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const { isAndroid } = usePlatform()
 const taskRef = computed(() => props.task)
 
 const {
@@ -123,7 +124,11 @@ const statusBadgeIcon = computed(() => {
 const { fileMissing, fileState } = useTaskFileMissing(taskRef)
 // The rail orders the list; the rest of a finished card drags its file out.
 const contentDraggable = computed(
-  () => !fileMissing.value && !props.actionPending && (props.task.status === TASK_STATUS.COMPLETE || isSharing.value),
+  () =>
+    !isAndroid.value &&
+    !fileMissing.value &&
+    !props.actionPending &&
+    (props.task.status === TASK_STATUS.COMPLETE || isSharing.value),
 )
 </script>
 
@@ -135,7 +140,6 @@ const contentDraggable = computed(
     }"
     @dblclick="!fileMissing && !actionPending && canOpenTaskContent(task, $event) && emit('open-file', task)"
   >
-    <TaskDragHandle class="task-drag-rail" />
     <div class="task-body" :draggable="contentDraggable" @dragstart="dragTaskContent(task, $event)">
       <div class="task-header">
         <MTooltip placement="bottom-start">
@@ -163,7 +167,6 @@ const contentDraggable = computed(
           @copy-link="emit('copy-link', task)"
           @show-info="emit('show-info', task)"
           @folder="emit('folder', task)"
-          @open-file="emit('open-file', task)"
           @share-file="emit('share-file', task)"
           @select-files="emit('select-files', task)"
         />
@@ -224,7 +227,7 @@ const contentDraggable = computed(
 .task-item {
   position: relative;
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   min-height: 78px;
   background-color: var(--task-item-bg);
   border: 1px solid var(--m3-outline-variant);
@@ -252,14 +255,6 @@ const contentDraggable = computed(
 .task-item.is-sharing::before {
   opacity: 1;
 }
-.task-item:hover .task-drag-rail {
-  opacity: 0.64;
-}
-.task-drag-rail {
-  grid-row: 1;
-  align-self: stretch;
-  min-height: 0;
-}
 .task-body {
   display: grid;
   grid-template-rows: auto auto auto;
@@ -273,10 +268,14 @@ const contentDraggable = computed(
   align-items: start;
 }
 .task-header :deep(.n-tooltip-trigger) {
+  display: block;
+  width: 100%;
   min-width: 0;
   max-width: 100%;
 }
 .task-name {
+  display: block;
+  width: 100%;
   color: var(--m3-on-surface-variant);
   overflow: hidden;
   min-height: 26px;
@@ -284,16 +283,25 @@ const contentDraggable = computed(
   max-width: 100%;
 }
 .task-name > .task-text-transition {
-  display: grid;
+  display: block;
+  width: 100%;
+  min-width: 0;
 }
 .task-name :deep(.task-text-transition-content) {
+  display: -webkit-box;
+  width: 100%;
   font-size: var(--font-size-base);
   line-height: 26px;
-  display: -webkit-box;
   overflow: hidden;
   text-overflow: ellipsis;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+.task-name :deep(.technical-text-wrap) {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  word-break: break-all;
 }
 .file-missing-tag {
   display: inline-flex;

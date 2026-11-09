@@ -1045,7 +1045,8 @@
   "navigation": {
     "about": "À propos",
     "settings": "Paramètres",
-    "extensions": "Extensions"
+    "extensions": "Extensions",
+    "trash": "Trash"
   },
   "extension": {
     "description": "Envoyez les téléchargements du navigateur vers Rayload et découvrez les médias du Web.",
@@ -1073,5 +1074,25 @@
     "later": "Plus tard",
     "next": "Suivant",
     "finish": "Terminer"
+  },
+  "trash": {
+    "title": "Trash",
+    "subtitle": "Files moved to Trash can be restored to their original download folder.",
+    "empty": "Trash is empty",
+    "loading": "Loading Trash…",
+    "refresh": "Refresh Trash",
+    "restore": "Restore",
+    "restore-success": "Restored \"{name}\"",
+    "restore-failed": "Could not restore the file",
+    "delete-permanently": "Delete Permanently",
+    "delete-confirm-title": "Delete Permanently",
+    "delete-confirm": "Permanently delete \"{name}\"? This cannot be undone.",
+    "delete-success": "File permanently deleted",
+    "delete-failed": "Could not permanently delete the file",
+    "load-failed": "Could not load Trash",
+    "retry": "Retry",
+    "item-count": "{count} items",
+    "file": "File",
+    "folder": "Folder"
   }
 }

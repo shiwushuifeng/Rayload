@@ -17,7 +17,7 @@ import { getTaskSharingState } from '@shared/utils/task'
 
 import { logger } from '@shared/logger'
 import { getErrorMessage } from '@shared/utils/errorMessage'
-import { NButton, NIcon, NCheckbox, NDropdown, useDialog, type DropdownOption } from 'naive-ui'
+import { NButton, NIcon, NCheckbox, NDrawer, NDrawerContent, NDropdown, useDialog, type DropdownOption } from 'naive-ui'
 import MTooltip from '@/components/common/MTooltip.vue'
 import { useAppMessage } from '@/composables/useAppMessage'
 import { usePreferenceStore } from '@/stores/preference'
@@ -43,9 +43,10 @@ import {
   SwapVerticalOutline,
   ArrowUpOutline,
   ArrowDownOutline,
+  EllipsisHorizontalOutline,
 } from '@vicons/ionicons5'
 
-const props = defineProps<{ scope: 'all' | 'progress' | 'failed' | 'completed' }>()
+const props = defineProps<{ scope: 'all' | 'progress' | 'failed' | 'completed'; mobile?: boolean }>()
 const { t } = useI18n()
 const appStore = useAppStore()
 const taskStore = useTaskStore()
@@ -99,6 +100,7 @@ const message = useAppMessage()
 const dialog = useDialog()
 
 const refreshing = ref(false)
+const mobileActionsOpen = ref(false)
 
 async function lockDialog(d: ReturnType<typeof dialog.info>) {
   d.loading = true
@@ -568,10 +570,91 @@ function selectBatchAction(key: string | number) {
   const option = batchOptions.value.find((option) => option.key === key)
   if (option && !option.disabled) void option.action()
 }
+
+const mobileActions = computed<BatchAction[]>(() => [
+  {
+    key: 'refresh',
+    label: t('task.refresh-list'),
+    icon: menuIcon(RefreshOutline),
+    disabled: refreshing.value,
+    action: onRefresh,
+  },
+  ...batchOptions.value,
+])
+
+function runMobileAction(action: BatchAction) {
+  if (action.disabled) return
+  mobileActionsOpen.value = false
+  void action.action()
+}
 </script>
 
 <template>
-  <TransitionGroup name="toolbar-action" tag="div" class="task-actions">
+  <template v-if="props.mobile">
+    <div class="mobile-task-toolbar">
+      <NDropdown
+        trigger="click"
+        placement="bottom-end"
+        :options="sortOptions"
+        :value="currentSort.field"
+        @select="selectSort"
+      >
+        <NButton quaternary circle size="large" :aria-label="t('task.sort-by')">
+          <template #icon
+            ><NIcon><SwapVerticalOutline /></NIcon
+          ></template>
+        </NButton>
+      </NDropdown>
+      <NButton
+        quaternary
+        circle
+        size="large"
+        :aria-label="t('task.more-actions')"
+        :aria-expanded="mobileActionsOpen"
+        aria-haspopup="dialog"
+        @click="mobileActionsOpen = true"
+      >
+        <template #icon
+          ><NIcon><EllipsisHorizontalOutline /></NIcon
+        ></template>
+      </NButton>
+    </div>
+
+    <NButton class="task-fab" type="primary" circle :aria-label="t('task.new-task')" @click="showAddTask">
+      <template #icon
+        ><NIcon :size="26"><AddOutline /></NIcon
+      ></template>
+    </NButton>
+
+    <NDrawer
+      v-model:show="mobileActionsOpen"
+      placement="bottom"
+      height="min(72dvh, 560px)"
+      :trap-focus="true"
+      :block-scroll="true"
+    >
+      <NDrawerContent :title="t('task.more-actions')" closable>
+        <div class="mobile-action-sheet">
+          <button
+            v-for="action in mobileActions"
+            :key="action.key"
+            type="button"
+            class="mobile-action-sheet__item"
+            :disabled="Boolean(action.disabled)"
+            @click="runMobileAction(action)"
+          >
+            <span class="mobile-action-sheet__icon" aria-hidden="true">
+              <component :is="action.icon" v-if="action.icon" />
+              <NIcon v-else><StopCircleOutline /></NIcon>
+            </span>
+            <span>{{ action.label }}</span>
+          </button>
+        </div>
+      </NDrawerContent>
+    </NDrawer>
+  </template>
+
+  <TransitionGroup v-else name="toolbar-action" tag="div" class="task-actions">
     <span key="add" class="toolbar-action"
       ><MTooltip>
         <template #trigger>
@@ -652,6 +735,65 @@ function selectBatchAction(key: string | number) {
   align-items: center;
   gap: 4px;
 }
+.mobile-task-toolbar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 4px;
+}
+.mobile-task-toolbar :deep(.n-button) {
+  min-width: 44px;
+  min-height: 44px;
+}
+.task-fab {
+  position: fixed;
+  right: max(20px, env(safe-area-inset-right, 0px));
+  bottom: calc(124px + env(safe-area-inset-bottom, 0px));
+  z-index: 30;
+  width: 58px;
+  height: 58px;
+  box-shadow:
+    0 12px 30px color-mix(in srgb, var(--m3-primary) 34%, transparent),
+    0 2px 8px var(--m3-shadow);
+}
+.task-fab:active {
+  transform: scale(0.94);
+}
+.mobile-action-sheet {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.mobile-action-sheet__item {
+  display: flex;
+  min-height: 64px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  color: var(--m3-on-surface);
+  text-align: left;
+  background: var(--m3-surface-container);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--radius-lg);
+}
+.mobile-action-sheet__item:active {
+  background: var(--m3-surface-container-highest);
+}
+.mobile-action-sheet__item:disabled {
+  color: var(--m3-on-surface-variant);
+  opacity: 0.48;
+}
+.mobile-action-sheet__icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  color: var(--m3-primary);
+  background: color-mix(in srgb, var(--m3-primary) 12%, transparent);
+  border-radius: 12px;
+}
 .toolbar-action {
   display: inline-flex;
   flex-shrink: 0;
@@ -684,6 +826,11 @@ function selectBatchAction(key: string | number) {
   .toolbar-action-enter-active,
   .toolbar-action-leave-active {
     transition: none;
+  }
+}
+@media (max-width: 420px) {
+  .mobile-action-sheet {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 </style>

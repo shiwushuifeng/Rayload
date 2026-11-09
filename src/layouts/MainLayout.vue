@@ -37,6 +37,7 @@ import WindowControls from '@/components/layout/WindowControls.vue'
 import EngineRecoveryDialog from '@/components/layout/EngineRecoveryDialog.vue'
 import AboutPanel from '@/components/about/AboutPanel.vue'
 import ExtensionPanel from '@/components/extension/ExtensionPanel.vue'
+import TrashPanel from '@/components/trash/TrashPanel.vue'
 import TorrentDropOverlay from '@/components/task/TorrentDropOverlay.vue'
 import UpdateDialog from '@/components/preference/UpdateDialog.vue'
 import TaskSelectionHost from '@/components/task/TaskSelectionHost.vue'
@@ -72,6 +73,10 @@ function handleAndroidBack(): boolean {
   }
   if (showExtensions.value) {
     showExtensions.value = false
+    return true
+  }
+  if (showTrash.value) {
+    showTrash.value = false
     return true
   }
   if (appStore.addTaskVisible) {
@@ -159,6 +164,7 @@ const pageTitle = computed(() =>
 )
 const showAbout = ref(false)
 const showExtensions = ref(false)
+const showTrash = ref(false)
 function openAbout() {
   showAbout.value = true
 }
@@ -855,10 +861,12 @@ onUnmounted(() => {
     <AppSidebar
       :compact="compactNavigation"
       :extensions-open="showExtensions"
+      :trash-open="showTrash"
       :inert="mobileModalOpen"
       class="sidebar-slot"
       @show-about="openAbout"
       @show-extensions="showExtensions = true"
+      @show-trash="showTrash = true"
     />
     <header class="page-header" data-tauri-drag-region :inert="mobileModalOpen">
       <div class="page-title-slot" data-tauri-drag-region>
@@ -870,6 +878,7 @@ onUnmounted(() => {
         <TaskActions
           v-if="isTaskPage"
           :scope="taskScope"
+          :mobile="isAndroid"
           :inert="taskStore.currentList !== (route.params.status || 'all')"
         />
       </Transition>
@@ -919,6 +928,7 @@ onUnmounted(() => {
     <AboutPanel :show="showAbout" @close="showAbout = false" />
     <AndroidPermissionWelcome />
     <ExtensionPanel :show="showExtensions" @close="showExtensions = false" />
+    <TrashPanel :show="showTrash" @close="showTrash = false" />
     <UpdateDialog ref="updateDialogRef" />
     <EngineRecoveryDialog />
     <NModal
@@ -942,6 +952,7 @@ onUnmounted(() => {
         taskStore.taskDetailClosing ||
         showAbout ||
         showExtensions ||
+        showTrash ||
         showExitDialog ||
         engineStore.isBusy
       "
@@ -1243,6 +1254,17 @@ onUnmounted(() => {
     margin-inline: 16px;
     padding: 8px 0 10px;
     align-items: center;
+    flex-wrap: wrap;
+    row-gap: 6px;
+  }
+  .page-title-slot {
+    flex: 1 0 auto;
+  }
+  .page-header :deep(.task-actions) {
+    max-width: 100%;
+    margin-inline-start: auto;
+    overflow-x: auto;
+    scrollbar-width: none;
   }
   .content {
     grid-column: 1;

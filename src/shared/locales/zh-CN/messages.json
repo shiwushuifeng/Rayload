@@ -1045,7 +1045,8 @@
   "navigation": {
     "about": "关于",
     "settings": "设置",
-    "extensions": "扩展"
+    "extensions": "扩展",
+    "trash": "回收站"
   },
   "extension": {
     "description": "接管下载，发现网页媒体。",
@@ -1073,5 +1074,25 @@
     "later": "稍后",
     "next": "下一步",
     "finish": "完成"
+  },
+  "trash": {
+    "title": "回收站",
+    "subtitle": "移到回收站的文件可以恢复到原来的下载文件夹。",
+    "empty": "回收站为空",
+    "loading": "正在读取回收站…",
+    "refresh": "刷新回收站",
+    "restore": "恢复",
+    "restore-success": "已恢复“{name}”",
+    "restore-failed": "恢复文件失败",
+    "delete-permanently": "彻底删除",
+    "delete-confirm-title": "彻底删除文件",
+    "delete-confirm": "确定要彻底删除“{name}”吗？此操作无法撤销。",
+    "delete-success": "文件已彻底删除",
+    "delete-failed": "彻底删除文件失败",
+    "load-failed": "无法读取回收站",
+    "retry": "重试",
+    "item-count": "共 {count} 项",
+    "file": "文件",
+    "folder": "文件夹"
   }
 }

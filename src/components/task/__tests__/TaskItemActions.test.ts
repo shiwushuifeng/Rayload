@@ -19,7 +19,6 @@ vi.mock('@vicons/ionicons5', () => {
     LinkOutline: icon,
     InformationCircleOutline: icon,
     FolderOpenOutline: icon,
-    OpenOutline: icon,
     ListOutline: icon,
   }
 })
@@ -197,11 +196,12 @@ describe('TaskItemActions', () => {
     expect(wrapper.emitted('retry')).toBeTruthy()
   })
 
-  it('keeps terminal actions accessible', () => {
+  it('keeps terminal actions accessible without the removed open-location button', () => {
     const wrapper = mountActions(makeTask('complete'))
     const actions = wrapper.findAll('.task-item-action')
-    expect(actions).toHaveLength(6)
+    expect(actions).toHaveLength(5)
     expect(actions.every((action) => Boolean(action.attributes('aria-label')))).toBe(true)
+    expect(wrapper.find('[aria-label="task.open-file"]').exists()).toBe(false)
   })
 
   it('separates retry, resume, and re-download actions', async () => {

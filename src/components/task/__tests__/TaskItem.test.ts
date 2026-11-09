@@ -134,8 +134,7 @@ describe('TaskItem', () => {
       await nextTick()
       await wrapper.trigger('dblclick')
       expect(wrapper.emitted('open-file')).toHaveLength(1)
-      await wrapper.get('.task-drag-handle').trigger('dblclick')
-      expect(wrapper.emitted('open-file')).toHaveLength(1)
+      expect(wrapper.find('.task-drag-handle').exists()).toBe(false)
       wrapper.unmount()
     },
   )

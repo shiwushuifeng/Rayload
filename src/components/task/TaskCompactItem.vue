@@ -8,9 +8,9 @@ import LinearProgress from '@/components/common/LinearProgress.vue'
 import MTooltip, { TOOLTIP_DEFAULTS } from '@/components/common/MTooltip.vue'
 import { ArrowDownOutline, ArrowUpOutline, AlertCircleOutline, RadioOutline, TimeOutline } from '@vicons/ionicons5'
 import { useTaskCardModel } from '@/composables/useTaskCardModel'
+import { usePlatform } from '@/composables/usePlatform'
 import { canOpenTaskContent, dragTaskContent } from '@/composables/useTaskContentOpen'
 import { useTaskFileMissing } from '@/composables/useTaskFileMissing'
-import TaskDragHandle from './TaskDragHandle.vue'
 import TaskItemActions from './TaskItemActions.vue'
 import TaskTextTransition from './TaskTextTransition.vue'
 import type { Component } from 'vue'
@@ -34,6 +34,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const { isAndroid } = usePlatform()
 const taskRef = computed(() => props.task)
 const {
   taskFullName,
@@ -55,7 +56,11 @@ const {
 const { fileMissing, fileState } = useTaskFileMissing(taskRef)
 // The rail orders the list; the rest of a finished card drags its file out.
 const contentDraggable = computed(
-  () => !fileMissing.value && !props.actionPending && (props.task.status === TASK_STATUS.COMPLETE || isSharing.value),
+  () =>
+    !isAndroid.value &&
+    !fileMissing.value &&
+    !props.actionPending &&
+    (props.task.status === TASK_STATUS.COMPLETE || isSharing.value),
 )
 
 const statusColorMap: Record<string, string> = {
@@ -101,7 +106,6 @@ const compactStatus = computed<{ label: string; tone: string; icon: Component } 
     }"
     @dblclick="!fileMissing && !actionPending && canOpenTaskContent(task, $event) && emit('open-file', task)"
   >
-    <TaskDragHandle class="compact-drag-rail" />
     <div class="compact-body" :draggable="contentDraggable" @dragstart="dragTaskContent(task, $event)">
       <div class="compact-header">
         <MTooltip placement="bottom-start">
@@ -128,7 +132,6 @@ const compactStatus = computed<{ label: string; tone: string; icon: Component } 
           @copy-link="emit('copy-link', task)"
           @show-info="emit('show-info', task)"
           @folder="emit('folder', task)"
-          @open-file="emit('open-file', task)"
           @select-files="emit('select-files', task)"
         />
       </div>
@@ -174,7 +177,7 @@ const compactStatus = computed<{ label: string; tone: string; icon: Component } 
 .task-compact-item {
   position: relative;
   display: grid;
-  grid-template-columns: 22px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
   min-height: 42px;
   background-color: var(--task-item-bg);
   border: 1px solid var(--m3-outline-variant);
@@ -198,12 +201,6 @@ const compactStatus = computed<{ label: string; tone: string; icon: Component } 
 }
 .task-compact-item.is-sharing::before {
   opacity: 1;
-}
-.task-compact-item:hover .compact-drag-rail {
-  opacity: 0.64;
-}
-.compact-drag-rail {
-  grid-row: 1;
 }
 .compact-body {
   min-width: 0;

@@ -5,21 +5,23 @@ import { RouterLink, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import MTooltip from '@/components/common/MTooltip.vue'
 import { NIcon } from 'naive-ui'
-import { ExtensionPuzzleOutline, InformationCircleOutline, SettingsOutline } from '@vicons/ionicons5'
+import { ExtensionPuzzleOutline, InformationCircleOutline, SettingsOutline, TrashOutline } from '@vicons/ionicons5'
 import { useTaskStore } from '@/stores/task'
 import { usePreferenceStore } from '@/stores/preference'
 import SidebarCount from './SidebarCount.vue'
 import { useTaskDestinations } from './navigation'
 import { triggerHaptic } from '@/composables/useHaptics'
+import { usePlatform } from '@/composables/usePlatform'
 
-defineProps<{ compact?: boolean; extensionsOpen?: boolean }>()
+defineProps<{ compact?: boolean; extensionsOpen?: boolean; trashOpen?: boolean }>()
 
-const emit = defineEmits<{ 'show-about': []; 'show-extensions': [] }>()
+const emit = defineEmits<{ 'show-about': []; 'show-extensions': []; 'show-trash': [] }>()
 const { t } = useI18n()
 const route = useRoute()
 const taskDestinations = useTaskDestinations()
 const tasks = useTaskStore()
 const preferences = usePreferenceStore()
+const { isAndroid } = usePlatform()
 const isSettings = computed(() => route.matched.some((record) => record.name === 'preference'))
 
 function showExtensions(): void {
@@ -30,6 +32,11 @@ function showExtensions(): void {
 function showAbout(): void {
   triggerHaptic()
   emit('show-about')
+}
+
+function showTrash(): void {
+  triggerHaptic()
+  emit('show-trash')
 }
 </script>
 
@@ -77,6 +84,23 @@ function showAbout(): void {
           </RouterLink>
         </template>
         {{ t('navigation.settings') }}
+      </MTooltip>
+      <MTooltip v-if="isAndroid" placement="right" :disabled="compact || trashOpen">
+        <template #trigger>
+          <button
+            type="button"
+            class="sidebar-item"
+            :class="{ active: trashOpen }"
+            :aria-label="t('navigation.trash')"
+            :aria-expanded="!!trashOpen"
+            aria-haspopup="dialog"
+            @click="showTrash"
+          >
+            <NIcon :size="18" aria-hidden="true"><TrashOutline /></NIcon>
+            <span class="sidebar-label">{{ t('navigation.trash') }}</span>
+          </button>
+        </template>
+        {{ t('navigation.trash') }}
       </MTooltip>
       <MTooltip placement="right" :disabled="compact || extensionsOpen">
         <template #trigger>
@@ -151,6 +175,7 @@ function showAbout(): void {
 .sidebar-label {
   flex: 1;
   min-width: 0;
+  text-align: center;
   white-space: nowrap;
   overflow: clip visible;
   text-overflow: ellipsis;
@@ -185,8 +210,12 @@ function showAbout(): void {
 .compact .sidebar-label {
   opacity: 0;
 }
-.counts .sidebar-scopes .sidebar-label {
-  padding-inline-end: 30px;
+.sidebar-scopes .sidebar-item {
+  justify-content: center;
+  gap: 8px;
+}
+.sidebar-scopes .sidebar-label {
+  flex: 0 1 auto;
 }
 .sidebar :deep(.sidebar-count) {
   position: absolute;
@@ -215,7 +244,7 @@ function showAbout(): void {
 @media (max-width: 768px) {
   .sidebar {
     display: grid;
-    grid-template-columns: repeat(7, minmax(44px, 1fr));
+    grid-template-columns: repeat(8, minmax(44px, 1fr));
     align-items: stretch;
     gap: 2px;
     height: auto;

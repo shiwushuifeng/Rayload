@@ -7,6 +7,16 @@ export type AppLogLevel = 'error' | 'warn' | 'info' | 'debug'
 export type Aria2LogLevel = AppLogLevel | 'trace'
 export type FileDeletionMode = 'trash' | 'permanent'
 
+/** Entry held by Rayload's Android `.trash` directories. */
+export interface TrashItem {
+  path: string
+  originalPath: string
+  name: string
+  trashedAt: number | null
+  size: number
+  isDir: boolean
+}
+
 /** URI entry within an aria2 file descriptor. */
 export interface Aria2FileUri {
   uri: string

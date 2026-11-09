@@ -1,24 +1,20 @@
-# Rayload v1.0.1-beta1
+# Rayload v1.0.1-beta2
 
 ## 中文
 
-Rayload `v1.0.1` 启用全新的 35 度倾斜双向箭头品牌图标：黑底、淡紫细线框，
-配合顶部渐变实心箭头和更轻盈的几何层次。本次更新同时加入首次启动语言选择，
-并为全部 27 种受支持语言提供 README 语言入口。
+Rayload `v1.0.1-beta2` 继续完善 Android 17 体验，移除重复操作、精简任务卡片，
+并补上可恢复的文件回收站。
 
 ### 更新内容
 
-- 修复首次启动语言下拉框无法展开的问题。
-- 修复空任务页面 Logo 不显示的问题。
-- 修复 Android 任务详情面板过窄和长路径挤压的问题。
-- 修复文件分享误报“文件不存在”的问题，统一通过 FileProvider URI 分享。
-- 修复权限引导在点击“稍后”后仍于冷启动重复出现的问题。
-- 修复系统 SAF“使用此文件夹”回调未送达前端的问题。
-- 全量更新 Android、Windows、macOS、iOS 和 Tauri 图标资源。
-- 侧边栏、悬浮窗、关于页、空状态和加载状态统一使用新 Logo。
-- 首次启动时可直接选择界面语言，并在选择后立即应用。
-- Release 介绍提供中英双语内容。
-- GitHub README 顶部可通过语言选择器切换全部 27 种语言版本。
+- 移除任务卡片中已废弃的“打开文件位置”按钮。
+- 移除任务卡片左侧的竖条拖拽把手，手机端改为长按任务卡片排序。
+- 将“全部”“进行中”“失败”“已完成”等任务分类文字居中。
+- 新增侧边栏“回收站”入口，可查看、恢复或彻底删除移入 `.trash` 的文件。
+- 重构手机任务页顶部：只保留标题、排序和“更多操作”，全局操作收纳到底部动作面板。
+- 将“新建任务”改为右下角悬浮按钮，减少拥挤和误触。
+- 修复长任务名在卡片中竖排，以及手机页面标题被工具栏挤没的问题。
+- 保留首次启动语言选择、空状态 Logo、任务分享、权限引导和 SAF 文件夹选择修复。
 
 ### 安装包
 
@@ -29,31 +25,27 @@ Rayload-v1.0.1-android17-arm64-release.apk
 - 目标：Android 17 / API 37
 - 最低：Android 7.0 / API 24
 - 架构：`arm64-v8a`
-- SHA-256：`ca8624b5b9aed3f9b5cbf5d7ea648fa348db0cda1ea5f58b32941ad15b87168d`
+- SHA-256：`d23e60ad6039ea2bee5a5bf38899da5be85432ca3085af5948d0066c093f428c`
 
 Release APK 使用 Rayload 独立签名。升级前请确认设备上安装的是同一签名版本。
 
 ## English
 
-Rayload `v1.0.1` introduces a new slanted double-arrow identity: a black
-background, fine lavender outlines, a compact gradient-filled accent, and a
-lighter geometric composition. This release also adds language selection to
-first launch and provides README entry points for all 27 supported languages.
+Rayload `v1.0.1-beta2` polishes the Android 17 experience by removing redundant
+actions, simplifying task cards, and adding a recoverable file Trash.
 
 ### What's new
 
-- Fixed the first-launch language picker not opening.
-- Fixed the missing empty-state logo.
-- Expanded the Android task-detail drawer and improved long-path wrapping.
-- Fixed false missing-file errors when sharing through the native share sheet.
-- Persisted the permission-guide dismissal flag across cold starts.
-- Moved SAF directory selection to the Android Activity Result API.
-- Regenerated all Android, Windows, macOS, iOS, and Tauri icon assets.
-- Applied the new logo across the sidebar, floating windows, About page, empty
-  states, and loading presentation.
-- Added language selection to first launch with immediate application.
-- Added bilingual Chinese and English release notes.
-- Added a GitHub language picker covering all 27 supported README editions.
+- Removed the obsolete open-location button from task cards.
+- Removed the visible drag rail and enabled long-press reordering on phones.
+- Centered task-scope navigation labels.
+- Added a sidebar Trash panel for restoring or permanently deleting `.trash`
+  entries.
+- Rebuilt the mobile task header around the title, sort, and a bottom action
+  sheet, and moved New Task to a floating action button.
+- Fixed clipped mobile headings and vertically collapsed long task names.
+- Retained the language picker, empty-state logo, native sharing, permission
+  guide, and SAF directory-selection fixes.
 
 ### Package
 
@@ -64,7 +56,7 @@ Rayload-v1.0.1-android17-arm64-release.apk
 - Target: Android 17 / API 37
 - Minimum: Android 7.0 / API 24
 - ABI: `arm64-v8a`
-- SHA-256: `ca8624b5b9aed3f9b5cbf5d7ea648fa348db0cda1ea5f58b32941ad15b87168d`
+- SHA-256: `d23e60ad6039ea2bee5a5bf38899da5be85432ca3085af5948d0066c093f428c`
 
 The Release APK uses the independent Rayload signing identity. Verify that the
 installed build uses the same signing certificate before upgrading.

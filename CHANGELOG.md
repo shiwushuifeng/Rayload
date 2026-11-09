@@ -3,6 +3,22 @@
 All notable changes to the independent Rayload Android port are documented in
 this file.
 
+## v1.0.1-beta2 - 2026-11-09
+
+### Changed
+
+- Removed the obsolete open-location button from task cards.
+- Replaced the visible task drag rail with long-press reordering on touch
+  screens and centered task-scope navigation labels.
+- Added an Android Trash panel with restore and permanent-delete actions.
+- Rebuilt the Android task toolbar around the page title, sort, and a bottom
+  action sheet; task creation now uses a right-side floating action button.
+
+### Fixed
+
+- Kept long task names readable in cards and preserved mobile page headings
+  when the task toolbar wraps.
+
 ## v1.0.1-beta1 - 2026-11-09
 
 ### Fixed
@@ -10,8 +26,9 @@ this file.
 - Replaced the first-launch language dropdown with a WebView-safe native
   selector.
 - Restored the empty-state logo artwork.
-- Expanded the Android task-detail drawer and prevented path text from collapsing
-  into vertical columns.
+- Expanded the Android task-detail drawer and prevented task names and path text
+  from collapsing into unreadable vertical columns.
+- Kept mobile task-page headings visible when the action toolbar wraps.
 - Routed Android file sharing through readable task-file candidates and
   FileProvider content URIs without a premature Rust path check.
 - Persisted permission-guide completion in localStorage so dismissed battery

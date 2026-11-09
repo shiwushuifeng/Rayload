@@ -175,7 +175,9 @@ describe('TaskList', () => {
     await wrapper.vm.$nextTick()
 
     const sortableOptions = sortableCreateMock.mock.calls[sortableCreateMock.mock.calls.length - 1]?.[1]
-    expect(sortableOptions?.handle).toBe('.task-drag-handle')
+    expect(sortableOptions?.handle).toBeUndefined()
+    expect(sortableOptions?.delay).toBe(450)
+    expect(sortableOptions?.delayOnTouchOnly).toBe(true)
     sortableOptions?.onStart?.({} as SortableEvent)
     await sortableOptions?.onEnd?.({} as SortableEvent)
 

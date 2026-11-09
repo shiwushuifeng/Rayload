@@ -18,7 +18,6 @@ import {
   LinkOutline,
   InformationCircleOutline,
   FolderOpenOutline,
-  OpenOutline,
   ListOutline,
   ShareSocialOutline,
 } from '@vicons/ionicons5'
@@ -43,7 +42,6 @@ const emit = defineEmits<{
   'copy-link': []
   'show-info': []
   folder: []
-  'open-file': []
   'share-file': []
   'select-files': []
 }>()
@@ -127,19 +125,16 @@ const actions = computed(() => {
         { key: 'delete', icon: CloseOutline, label: t('task.delete-task'), event: 'delete' },
       ],
       [TASK_STATUS.ERROR]: [
-        { key: 'open', icon: OpenOutline, label: t('task.open-file'), event: 'open-file' },
         { key: 'folder', icon: FolderOpenOutline, label: t('task.show-in-folder'), event: 'folder' },
         { key: 'retry', icon: RefreshOutline, label: t('task.retry-task'), event: 'retry' },
         { key: 'trash', icon: TrashOutline, label: t('task.remove-record'), event: 'delete-record' },
       ],
       [TASK_STATUS.COMPLETE]: [
-        { key: 'open', icon: OpenOutline, label: t('task.open-file'), event: 'open-file' },
         { key: 'folder', icon: FolderOpenOutline, label: t('task.show-in-folder'), event: 'folder' },
         { key: 'redownload', icon: RefreshOutline, label: t('task.restart-task'), event: 'redownload' },
         { key: 'trash', icon: TrashOutline, label: t('task.remove-record'), event: 'delete-record' },
       ],
       [TASK_STATUS.REMOVED]: [
-        { key: 'open', icon: OpenOutline, label: t('task.open-file'), event: 'open-file' },
         { key: 'folder', icon: FolderOpenOutline, label: t('task.show-in-folder'), event: 'folder' },
         { key: 'redownload', icon: RefreshOutline, label: t('task.restart-task'), event: 'redownload' },
         { key: 'trash', icon: TrashOutline, label: t('task.remove-record'), event: 'delete-record' },
@@ -153,9 +148,7 @@ const actions = computed(() => {
 
   // Destructive actions (trash, delete) always go to the far right
   const destructiveKeys = new Set(['trash', 'delete'])
-  const leading = primary.filter(
-    (a) => !destructiveKeys.has(a.key) && !(a.key === 'open' && props.task.media && props.task.status !== 'complete'),
-  )
+  const leading = primary.filter((a) => !destructiveKeys.has(a.key))
   const trailing = primary.filter((a) => destructiveKeys.has(a.key))
 
   const common: ActionDef[] = [
@@ -217,9 +210,6 @@ function onAction(event: string) {
       break
     case 'folder':
       emit('folder')
-      break
-    case 'open-file':
-      emit('open-file')
       break
     case 'share-file':
       emit('share-file')

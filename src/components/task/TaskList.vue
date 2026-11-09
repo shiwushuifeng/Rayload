@@ -159,9 +159,11 @@ watch(
 
 const sortableOptions: SortableOptions = {
   animation: reduceMotion.value ? 0 : 240,
-  handle: '.task-drag-handle',
   draggable: '.task-list-item',
   filter: '.task-item-actions, button, a, input, textarea, select, [data-no-drag]',
+  delay: 450,
+  delayOnTouchOnly: true,
+  touchStartThreshold: 4,
   ghostClass: 'task-list-item--ghost',
   chosenClass: 'task-list-item--chosen',
   fallbackClass: 'task-list-item--floating',

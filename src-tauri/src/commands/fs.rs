@@ -1,7 +1,7 @@
 use crate::error::AppError;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use tauri::AppHandle;
 use tauri::Manager;
 
@@ -615,6 +615,125 @@ pub enum FileDeletionMode {
     Permanent,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TrashItem {
+    pub path: String,
+    pub original_path: String,
+    pub name: String,
+    pub trashed_at: Option<u64>,
+    pub size: u64,
+    pub is_dir: bool,
+}
+
+/// Lists entries held by Rayload's Android-style `.trash` directories.
+///
+/// The frontend passes the configured download roots because trashed paths can
+/// live beside files in nested category or BitTorrent folders.
+#[tauri::command]
+pub fn list_trash_items(roots: Vec<String>) -> Result<Vec<TrashItem>, AppError> {
+    let mut trash_dirs = Vec::new();
+    let mut seen_roots = std::collections::HashSet::new();
+
+    for root in roots {
+        let trimmed = root.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        let path = PathBuf::from(trimmed);
+        if !seen_roots.insert(path.clone()) || !path.is_dir() {
+            continue;
+        }
+        collect_trash_directories(&path, 0, &mut trash_dirs);
+    }
+
+    let mut items = Vec::new();
+    for trash_dir in trash_dirs {
+        let Some(parent) = trash_dir.parent() else {
+            continue;
+        };
+        let Ok(entries) = std::fs::read_dir(&trash_dir) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let Ok(metadata) = std::fs::symlink_metadata(&path) else {
+                continue;
+            };
+            let raw_name = entry.file_name().to_string_lossy().into_owned();
+            let (name, trashed_at) = parse_trash_entry_name(&raw_name);
+            if name.is_empty() {
+                continue;
+            }
+            items.push(TrashItem {
+                original_path: parent.join(&name).to_string_lossy().into_owned(),
+                path: path.to_string_lossy().into_owned(),
+                name,
+                trashed_at,
+                size: if metadata.file_type().is_dir() {
+                    directory_size(&path)
+                } else {
+                    metadata.len()
+                },
+                is_dir: metadata.file_type().is_dir(),
+            });
+        }
+    }
+
+    items.sort_by(|left, right| {
+        right
+            .trashed_at
+            .cmp(&left.trashed_at)
+            .then_with(|| left.name.cmp(&right.name))
+    });
+    Ok(items)
+}
+
+/// Restores a `.trash` entry beside the directory it was removed from.
+#[tauri::command]
+pub fn restore_trash_item(path: String) -> Result<String, AppError> {
+    let target = Path::new(&path);
+    validate_trash_entry(target)?;
+    let trash_dir = target
+        .parent()
+        .ok_or_else(|| AppError::InvalidInput("Invalid trash entry".into()))?;
+    let parent = trash_dir
+        .parent()
+        .ok_or_else(|| AppError::InvalidInput("Invalid trash directory".into()))?;
+    let raw_name = target
+        .file_name()
+        .ok_or_else(|| AppError::InvalidInput("Invalid trash entry".into()))?
+        .to_string_lossy();
+    let (name, _) = parse_trash_entry_name(&raw_name);
+    if name.is_empty() {
+        return Err(AppError::InvalidInput("Invalid trash entry name".into()));
+    }
+
+    let destination = available_restore_path(parent, &name);
+    std::fs::rename(target, &destination).map_err(|error| {
+        AppError::Io(format!(
+            "Failed to restore '{}' to '{}': {error}",
+            target.display(),
+            destination.display()
+        ))
+    })?;
+    Ok(destination.to_string_lossy().into_owned())
+}
+
+/// Permanently removes one entry from Rayload's trash.
+#[tauri::command]
+pub fn delete_trash_item(path: String) -> Result<bool, AppError> {
+    let target = Path::new(&path);
+    validate_trash_entry(target)?;
+    let metadata = std::fs::symlink_metadata(target)?;
+    if metadata.file_type().is_dir() {
+        std::fs::remove_dir_all(target)?;
+    } else {
+        std::fs::remove_file(target)?;
+    }
+    Ok(true)
+}
+
 #[tauri::command]
 pub fn delete_path(path: String, mode: FileDeletionMode) -> Result<bool, AppError> {
     if path.trim().is_empty() {
@@ -645,6 +764,113 @@ pub fn delete_path(path: String, mode: FileDeletionMode) -> Result<bool, AppErro
     }
 
     Ok(true)
+}
+
+fn collect_trash_directories(root: &Path, depth: usize, output: &mut Vec<PathBuf>) {
+    const MAX_TRASH_SCAN_DEPTH: usize = 8;
+    if depth > MAX_TRASH_SCAN_DEPTH {
+        return;
+    }
+    let Ok(entries) = std::fs::read_dir(root) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let Ok(file_type) = entry.file_type() else {
+            continue;
+        };
+        if !file_type.is_dir() {
+            continue;
+        }
+        let name = entry.file_name();
+        if name == ".trash" {
+            output.push(entry.path());
+            continue;
+        }
+        if name.to_string_lossy().starts_with('.') {
+            continue;
+        }
+        collect_trash_directories(&entry.path(), depth + 1, output);
+    }
+}
+
+fn parse_trash_entry_name(raw_name: &str) -> (String, Option<u64>) {
+    let Some((timestamp, remainder)) = raw_name.split_once('-') else {
+        return (raw_name.to_owned(), None);
+    };
+    if timestamp.len() < 10 || !timestamp.bytes().all(|byte| byte.is_ascii_digit()) {
+        return (raw_name.to_owned(), None);
+    }
+    let trashed_at = timestamp.parse::<u64>().ok();
+    let mut name = remainder;
+    if let Some((suffix, rest)) = remainder.split_once('-') {
+        if !suffix.is_empty() && suffix.bytes().all(|byte| byte.is_ascii_digit()) {
+            name = rest;
+        }
+    }
+    (name.to_owned(), trashed_at)
+}
+
+fn directory_size(path: &Path) -> u64 {
+    let Ok(entries) = std::fs::read_dir(path) else {
+        return 0;
+    };
+    entries
+        .flatten()
+        .map(|entry| {
+            entry
+                .file_type()
+                .ok()
+                .filter(|file_type| !file_type.is_symlink())
+                .map(|file_type| {
+                    if file_type.is_dir() {
+                        directory_size(&entry.path())
+                    } else {
+                        entry.metadata().map(|metadata| metadata.len()).unwrap_or(0)
+                    }
+                })
+                .unwrap_or(0)
+        })
+        .sum()
+}
+
+fn validate_trash_entry(path: &Path) -> Result<(), AppError> {
+    let Some(trash_dir) = path.parent() else {
+        return Err(AppError::InvalidInput("Invalid trash entry".into()));
+    };
+    if trash_dir.file_name().and_then(|name| name.to_str()) != Some(".trash") {
+        return Err(AppError::InvalidInput(
+            "Only Rayload trash entries can be managed here".into(),
+        ));
+    }
+    Ok(())
+}
+
+fn available_restore_path(parent: &Path, name: &str) -> PathBuf {
+    let original = parent.join(name);
+    if !original.exists() {
+        return original;
+    }
+
+    let path = Path::new(name);
+    let stem = path
+        .file_stem()
+        .and_then(|value| value.to_str())
+        .filter(|value| !value.is_empty())
+        .unwrap_or("restored");
+    let extension = path.extension().and_then(|value| value.to_str());
+    for suffix in 1_u32.. {
+        let candidate_name = match (suffix, extension) {
+            (1, Some(extension)) => format!("{stem} (restored).{extension}"),
+            (1, None) => format!("{stem} (restored)"),
+            (_, Some(extension)) => format!("{stem} (restored {suffix}).{extension}"),
+            (_, None) => format!("{stem} (restored {suffix})"),
+        };
+        let candidate = parent.join(candidate_name);
+        if !candidate.exists() {
+            return candidate;
+        }
+    }
+    unreachable!("u32 restore suffixes exhaust available paths")
 }
 
 /// Android has no portable desktop-trash API. Keep deleted paths recoverable
@@ -837,6 +1063,73 @@ mod tests {
     fn delete_path_returns_false_for_empty_path() {
         let result = delete_path(String::new(), FileDeletionMode::Permanent);
         assert!(!result.expect("empty path is a no-op"));
+    }
+
+    #[test]
+    fn trash_items_expose_original_names_and_can_be_restored() {
+        let root = tempfile::tempdir().expect("create download root");
+        let trash = root.path().join(".trash");
+        std::fs::create_dir_all(&trash).expect("create trash directory");
+        let trashed = trash.join("1700000000000-report.pdf");
+        std::fs::write(&trashed, "recover me").expect("write trashed file");
+
+        let items = list_trash_items(vec![root.path().to_string_lossy().into_owned()])
+            .expect("list trash");
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].name, "report.pdf");
+        assert_eq!(items[0].trashed_at, Some(1_700_000_000_000));
+        assert_eq!(items[0].original_path, root.path().join("report.pdf").to_string_lossy());
+        assert_eq!(items[0].size, 10);
+
+        let restored = restore_trash_item(items[0].path.clone()).expect("restore trash item");
+        assert_eq!(restored, root.path().join("report.pdf").to_string_lossy());
+        assert!(root.path().join("report.pdf").is_file());
+        assert!(!trashed.exists());
+    }
+
+    #[test]
+    fn restored_names_do_not_overwrite_existing_files() {
+        let root = tempfile::tempdir().expect("create download root");
+        let trash = root.path().join(".trash");
+        std::fs::create_dir_all(&trash).expect("create trash directory");
+        std::fs::write(root.path().join("archive.zip"), "existing").expect("write existing file");
+        let trashed = trash.join("1700000000000-2-archive.zip");
+        std::fs::write(&trashed, "restored").expect("write trashed file");
+
+        let restored = restore_trash_item(trashed.to_string_lossy().into_owned())
+            .expect("restore trash item");
+        assert_eq!(
+            Path::new(&restored).file_name().and_then(|name| name.to_str()),
+            Some("archive (restored).zip")
+        );
+        assert_eq!(
+            std::fs::read_to_string(root.path().join("archive.zip")).expect("read original"),
+            "existing"
+        );
+    }
+
+    #[test]
+    fn trash_items_can_be_permanently_deleted() {
+        let root = tempfile::tempdir().expect("create download root");
+        let trash = root.path().join(".trash");
+        let directory = trash.join("1700000000000-folder");
+        std::fs::create_dir_all(&directory).expect("create trashed directory");
+        std::fs::write(directory.join("nested.bin"), "data").expect("write nested file");
+
+        assert!(
+            delete_trash_item(directory.to_string_lossy().into_owned()).expect("delete trash item")
+        );
+        assert!(!directory.exists());
+    }
+
+    #[test]
+    fn trash_management_rejects_paths_outside_rayload_trash() {
+        let root = tempfile::tempdir().expect("create download root");
+        let file = root.path().join("ordinary.bin");
+        std::fs::write(&file, "data").expect("write file");
+
+        assert!(restore_trash_item(file.to_string_lossy().into_owned()).is_err());
+        assert!(delete_trash_item(file.to_string_lossy().into_owned()).is_err());
     }
 
     #[cfg(unix)]
