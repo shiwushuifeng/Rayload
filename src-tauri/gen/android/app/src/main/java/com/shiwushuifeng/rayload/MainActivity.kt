@@ -218,6 +218,12 @@ class MainActivity : TauriActivity() {
   override fun onWebViewCreate(webView: WebView) {
     super.onWebViewCreate(webView)
     activeWebView = webView
+    webView.settings.apply {
+      setSupportZoom(false)
+      builtInZoomControls = false
+      displayZoomControls = false
+      textZoom = 100
+    }
     webView.addJavascriptInterface(NativeBridge(), "RayloadNative")
     webView.setDownloadListener { url, userAgent, contentDisposition, _, contentLength ->
       val detail = JSONObject()
