@@ -157,15 +157,22 @@ const translations = {
   },
 }
 
-function fileNameFor(code) {
+function readmePath(code) {
   return code === 'en-US' ? 'README.md' : `README.${code}.md`
+}
+
+function linkFor(locale, currentCode) {
+  if (currentCode === 'en-US') {
+    return locale === 'en-US' ? 'README.md' : `docs/README.${locale}.md`
+  }
+  return locale === 'en-US' ? '../README.md' : `README.${locale}.md`
 }
 
 function selectorFor(code) {
   const links = Object.entries(catalog).map(([locale, metadata]) => {
     const labelText = locale === 'en-US' ? 'English + 简体中文' : metadata.label
     const label = locale === code ? `**${labelText}**` : labelText
-    return `[${label}](${fileNameFor(locale)})`
+    return `[${label}](${linkFor(locale, code)})`
   })
   return `${startMarker}
 <details>
@@ -183,7 +190,11 @@ function addSelector(content, code) {
   const withSelector = blockPattern.test(content)
     ? content.replace(blockPattern, selector)
     : content.replace(/^(# .+\r?\n)/u, `$1\n${selector}\n`)
-  return withSelector.replace(
+  const localizedLinks = withSelector.replace(
+    /\[English README\]\(README\.md\)/gu,
+    '[English README](../README.md)',
+  )
+  return localizedLinks.replace(
     /^\[English\]\(README\.md\) · \[简体中文\]\(README\.zh-CN\.md\) · \[Русский\]\(README\.ru\.md\)\n\n/mu,
     '',
   )
@@ -222,7 +233,7 @@ Download \`Rayload-v1.0.1-android17-arm64-release.apk\` from
 | GitHub CLI | optional, only for releases |
 
 Full build and browser integration instructions are available in the
-[English README](README.md).
+[English README](../README.md).
 
 ## License
 
@@ -233,7 +244,7 @@ unofficial port.
 }
 
 for (const code of Object.keys(catalog)) {
-  const path = join(root, fileNameFor(code))
+  const path = join(root, code === 'en-US' ? readmePath(code) : join('docs', readmePath(code)))
   if (!existsSync(path) || (forceQuickGuides && translations[code])) {
     writeFileSync(path, quickGuide(code), 'utf8')
     continue

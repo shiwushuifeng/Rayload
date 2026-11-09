@@ -39,6 +39,10 @@ src-tauri/gen/android/       Customized Android Studio project
 src-tauri/locales/           Native JSON translations
 src/shared/locales/          Frontend JSON translations
 scripts/android/             Android Kotlin source templates
+docs/                        Bilingual default docs and translated READMEs
+release/current/             Current local APK and checksums (Git-ignored)
+release/archive/             Historical local build artifacts (Git-ignored)
+assets/branding/             Original logo and icon source artwork
 ```
 
 Do not run `tauri android init` over the committed Android project. It would

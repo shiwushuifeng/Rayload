@@ -5,7 +5,7 @@ API level 37 (Android 17) and supports API level 24 (Android 7) and later.
 
 ## Install
 
-1. Install `artifacts/Rayload-1.0.0-android17-arm64-release.apk`.
+1. Install `release/current/Rayload-v1.0.1-android17-arm64-release.apk`.
 2. On first launch, allow **All files access** so Rayload can write to the
    public `Download/Rayload` directory.
 3. Allow notifications and battery optimization exemption when prompted.
