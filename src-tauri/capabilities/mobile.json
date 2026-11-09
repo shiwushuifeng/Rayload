@@ -1,0 +1,47 @@
+{
+  "$schema": "../gen/schemas/mobile-schema.json",
+  "identifier": "mobile",
+  "description": "Capability for the Rayload Android WebView",
+  "platforms": ["android"],
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-show",
+    "core:window:allow-hide",
+    "core:window:allow-set-focus",
+    "opener:default",
+    "store:default",
+    "dialog:default",
+    "notification:default",
+    "process:default",
+    "os:default",
+    "fs:allow-remove",
+    "fs:allow-exists",
+    {
+      "identifier": "fs:scope",
+      "allow": [
+        { "path": "$APPDATA/**" },
+        { "path": "$APPLOG/**" },
+        { "path": "$TEMP/**" },
+        { "path": "$CACHE/**" },
+        { "path": "$DOWNLOAD/**" },
+        { "path": "$DOWNLOAD/Rayload/**" },
+        { "path": "$DOCUMENT/**" }
+      ]
+    },
+    "clipboard-manager:allow-read-text",
+    "clipboard-manager:allow-write-text",
+    "updater:default",
+    "deep-link:default",
+    "log:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "aria2-next",
+          "sidecar": true
+        }
+      ]
+    }
+  ]
+}

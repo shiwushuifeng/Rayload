@@ -1,0 +1,509 @@
+//! Runtime services orchestration layer.
+//!
+//! Groups all background services that share the engine lifecycle:
+//! - `config` — RuntimeConfig cache (refreshed on engine ready)
+//! - `pump` — the single reader of engine state (statistics and task queues)
+//! - `stat` — native effects of the statistics (tray, Dock, taskbar, keep-awake)
+//! - `speed` — Speed limit scheduler (time-of-day limits)
+//! - `monitor` — lifecycle persistence and active-state policy
+//! - `aria2_events` — native WebSocket lifecycle event source
+//!
+//! The `on_engine_ready()` function orchestrates post-start initialization:
+//! 1. Updates `TaskService` credentials to match the just-started engine
+//! 2. Refreshes `RuntimeConfig` from the store
+//! 3. Syncs global options to aria2 via `changeGlobalOption`
+//! 4. Stops old background services and spawns fresh ones
+
+pub mod add_window;
+pub mod aria2_events;
+pub mod bt_blocklist;
+pub mod clipboard_watch;
+pub mod config;
+pub mod deep_link;
+pub mod engine_fetch;
+pub mod external_input;
+pub mod float_window;
+pub mod frontend_action;
+pub mod http_api;
+pub mod media;
+pub mod monitor;
+pub mod notification;
+pub mod post_download;
+pub mod power;
+pub mod pump;
+pub mod speed;
+pub mod stat;
+
+use crate::engine::{non_hot_reloadable_keys, supported_engine_keys};
+use crate::error::AppError;
+use crate::services::tasks::TaskServiceState;
+use config::RuntimeConfigState;
+use tauri::Manager;
+use tauri_plugin_store::StoreExt;
+
+/// Reads the `system.json` store and returns its key-value pairs as a
+/// flat `Map<String, String>`, filtered to only hot-reloadable keys.
+///
+/// `system.json` stores aria2 engine options in kebab-case as a flat
+/// JSON object (written by the `replace_system_config` command).
+fn read_system_options(
+    app: &tauri::AppHandle,
+) -> Result<serde_json::Map<String, serde_json::Value>, AppError> {
+    let store = app
+        .store("system.json")
+        .map_err(|e| AppError::Store(format!("Failed to open system.json: {e}")))?;
+
+    // system.json stores all keys at the root level
+    let mut opts = serde_json::Map::new();
+    for key in store.keys() {
+        if !supported_engine_keys().contains(key.as_str())
+            || non_hot_reloadable_keys().contains(key.as_str())
+        {
+            continue;
+        }
+        if let Some(val) = store.get(&key) {
+            // aria2 changeGlobalOption expects all values as strings
+            let str_val = match &val {
+                serde_json::Value::String(s) => s.clone(),
+                serde_json::Value::Number(n) => n.to_string(),
+                serde_json::Value::Bool(b) => b.to_string(),
+                _ => continue,
+            };
+            opts.insert(key, serde_json::Value::String(str_val));
+        }
+    }
+    Ok(opts)
+}
+
+/// Full post-engine-start orchestration sequence.
+///
+/// Must be called after the engine sidecar has started and is accepting
+/// RPC connections.
+///
+/// Steps:
+/// 1. Update `TaskService` credentials from config store
+/// 2. Refresh `RuntimeConfigState` from preferences
+/// 3. Read `system.json` and push hot-reloadable options to aria2
+/// 4. Apply speed limit overrides based on schedule state
+/// 5. Stop existing background services (handles restart gracefully)
+/// 6. Spawn fresh background services (stat, speed scheduler, task monitor)
+pub async fn on_engine_ready(app: &tauri::AppHandle) -> Result<(), AppError> {
+    // 1. Update TaskService credentials
+    let (port, secret) = read_engine_credentials(app)?;
+    if let Some(aria2) = app.try_state::<TaskServiceState>() {
+        aria2.0.update_credentials(port, secret).await;
+    }
+
+    // 2. Refresh RuntimeConfig
+    if let Some(rc_state) = app.try_state::<RuntimeConfigState>() {
+        let store = app
+            .store("config.json")
+            .map_err(|e| AppError::Store(format!("Failed to open config.json: {e}")))?;
+        if let Some(prefs) = store.get("preferences") {
+            let _ = rc_state.refresh_from_json(&prefs).await;
+        }
+    }
+
+    if let Err(code) = media::service(app).await {
+        log::warn!("media: initialization unavailable code={code}");
+    }
+
+    // 3. Sync global options
+    let mut opts = read_system_options(app)?;
+
+    // 4. Speed limit override
+    if let Some(rc_state) = app.try_state::<RuntimeConfigState>() {
+        let cfg = rc_state.snapshot().await;
+        if !cfg.speed_limit_enabled {
+            // Speed limiter OFF → unlimited
+            opts.insert(
+                "max-overall-download-limit".to_string(),
+                serde_json::Value::String("0".to_string()),
+            );
+            opts.insert(
+                "max-overall-upload-limit".to_string(),
+                serde_json::Value::String("0".to_string()),
+            );
+        } else if cfg.speed_schedule_enabled
+            && !is_in_scheduled_period(
+                &cfg.speed_schedule_from,
+                &cfg.speed_schedule_to,
+                cfg.speed_schedule_days,
+            )
+        {
+            // Schedule ON but outside period → unlimited
+            opts.insert(
+                "max-overall-download-limit".to_string(),
+                serde_json::Value::String("0".to_string()),
+            );
+            opts.insert(
+                "max-overall-upload-limit".to_string(),
+                serde_json::Value::String("0".to_string()),
+            );
+        }
+        // Otherwise: in-period limits from system.json are already correct
+    }
+
+    // Push to aria2
+    if !opts.is_empty() {
+        if let Some(aria2) = app.try_state::<TaskServiceState>() {
+            let count = opts.len();
+            aria2.0.change_global_option(opts).await?;
+            log::info!("runtime_services: synced {count} global options to aria2");
+        }
+    } else {
+        log::info!("runtime_services: no global options to sync");
+    }
+
+    if let Some(aria2) = app.try_state::<TaskServiceState>() {
+        match aria2.0.get_bt_session_status().await {
+            Ok(status) => log::info!(
+                "runtime_services: bt_session listen_port={} endpoints={} mapped_tcp={} mapped_udp={} dht_nodes={} dht_state_healthy={}",
+                status.listen_port,
+                status.listen_endpoints.len(),
+                status.mapped_tcp_port,
+                status.mapped_udp_port,
+                status.dht_nodes,
+                status.dht_state_healthy
+            ),
+            Err(error) => {
+                log::warn!("runtime_services: BT session diagnostics unavailable: {error}")
+            }
+        }
+    }
+
+    // 5–6. Stop old services, spawn fresh ones.
+    // On first start the handles are None; on restart they hold the old handles.
+    spawn_background_services(app).await;
+    // Fetches an earlier run left behind; running ones are kept.
+    engine_fetch::purge_stale(app).await;
+
+    Ok(())
+}
+
+/// Replaces the services bound to the engine process with fresh ones.
+async fn spawn_background_services(app: &tauri::AppHandle) {
+    let Some(aria2) = app
+        .try_state::<TaskServiceState>()
+        .map(|state| state.0.clone())
+    else {
+        log::warn!("runtime_services: TaskServiceState not available, skipping service spawn");
+        return;
+    };
+    stop_engine_services(app).await;
+
+    if let Some(pump) = app.try_state::<std::sync::Arc<pump::Pump>>() {
+        pump.start(app.clone(), aria2.clone());
+    }
+    if let Some(state) = app.try_state::<speed::SpeedSchedulerState>() {
+        *state.0.lock().await = Some(speed::spawn_speed_scheduler(app.clone(), aria2.clone()));
+    }
+    if let Some(state) = app.try_state::<bt_blocklist::BtPeerBlocklistServiceState>() {
+        *state.0.lock().await = Some(bt_blocklist::spawn_bt_peer_blocklist_service(
+            app.clone(),
+            aria2.clone(),
+        ));
+    }
+    if let Some(state) = app.try_state::<aria2_events::Aria2EventState>() {
+        *state.0.lock().await = Some(aria2_events::spawn_aria2_event_listener(app.clone(), aria2));
+    }
+
+    // HTTP API — keep running across engine restarts.  Idempotent: skips
+    // if already bound to the correct port and interface. On mismatch the old
+    // server is stopped and a new one spawned.
+    let desired_port = http_api::read_extension_api_port(app).await;
+    let desired_remote_access = http_api::read_extension_api_allow_remote_access(app).await;
+    if let Some(api_state) = app.try_state::<http_api::HttpApiState>() {
+        let guard = api_state.0.lock().await;
+        let current_port = guard.as_ref().map(http_api::HttpApiHandle::port);
+        let current_remote_access = guard
+            .as_ref()
+            .map(http_api::HttpApiHandle::allow_remote_access);
+        drop(guard);
+        if current_port != Some(desired_port)
+            || current_remote_access != Some(desired_remote_access)
+        {
+            match http_api::restart_on_port(app, desired_port).await {
+                Ok(active_port) => {
+                    log::info!("runtime_services: HTTP API listening on port {active_port}");
+                }
+                Err(e) => {
+                    log::warn!(
+                        "runtime_services: HTTP API bind failed on port {desired_port}: {e}"
+                    );
+                    http_api::emit_bind_failed(app, desired_port);
+                }
+            }
+        }
+    }
+
+    log::info!("runtime_services: spawned pump + speed_scheduler + events + bt_peer_blocklist");
+}
+
+/// Stops every service whose lifetime is bound to the engine process.
+pub async fn stop_engine_services(app: &tauri::AppHandle) {
+    if let Some(pump) = app.try_state::<std::sync::Arc<pump::Pump>>() {
+        pump.stop().await;
+    }
+    if let Some(state) = app.try_state::<speed::SpeedSchedulerState>() {
+        if let Some(handle) = state.0.lock().await.take() {
+            handle.stop();
+        }
+    }
+    if let Some(state) = app.try_state::<aria2_events::Aria2EventState>() {
+        if let Some(handle) = state.0.lock().await.take() {
+            handle.stop();
+        }
+    }
+    if let Some(state) = app.try_state::<bt_blocklist::BtPeerBlocklistServiceState>() {
+        if let Some(handle) = state.0.lock().await.take() {
+            handle.stop();
+        }
+    }
+}
+
+/// Read engine port and secret from the config store.
+fn read_engine_credentials(app: &tauri::AppHandle) -> Result<(u16, String), AppError> {
+    let store = app
+        .store("config.json")
+        .map_err(|e| AppError::Store(format!("Failed to open config.json: {e}")))?;
+
+    let prefs = store.get("preferences");
+
+    let port = prefs
+        .as_ref()
+        .and_then(|p| {
+            p.get("rpcListenPort").and_then(|v| {
+                v.as_u64()
+                    .map(|n| n as u16)
+                    .or_else(|| v.as_str().and_then(|s| s.parse().ok()))
+            })
+        })
+        .unwrap_or(crate::engine::DEFAULT_RPC_PORT);
+    // The engine may run on another port when the configured one was taken.
+    let port = app
+        .try_state::<crate::engine::EngineState>()
+        .and_then(|state| state.rpc_port())
+        .unwrap_or(port);
+
+    let secret = prefs
+        .as_ref()
+        .and_then(|p| p.get("rpcSecret")?.as_str().map(String::from))
+        .unwrap_or_default();
+
+    Ok((port, secret))
+}
+
+/// Public wrapper for use by commands that need engine credentials
+/// without running the full `on_engine_ready` orchestration.
+pub fn read_engine_credentials_from_app(app: &tauri::AppHandle) -> Result<(u16, String), AppError> {
+    read_engine_credentials(app)
+}
+
+/// Pure function: determines if the current time falls within the scheduled
+/// speed-limit period.
+///
+/// Port of the TypeScript `isInScheduledPeriod` from `useSpeedScheduler.ts`.
+///
+/// - `from`/`to`: "HH:mm" 24-hour format strings
+/// - `days`: bitmask (Mon=1,Tue=2,Wed=4,Thu=8,Fri=16,Sat=32,Sun=64; 0=every day)
+pub fn is_in_scheduled_period(from: &str, to: &str, days: u8) -> bool {
+    is_in_scheduled_period_at(from, to, days, chrono::Local::now())
+}
+
+/// Testable version with injectable "now".
+fn is_in_scheduled_period_at(
+    from: &str,
+    to: &str,
+    days: u8,
+    now: chrono::DateTime<chrono::Local>,
+) -> bool {
+    use chrono::{Datelike, NaiveTime, Timelike};
+
+    // Day-of-week check: Mon=1, Tue=2, ..., Sun=64; 0 = every day
+    if days != 0 {
+        // chrono: Mon=0..Sun=6 → bit position
+        let day_bit = 1u8 << now.weekday().num_days_from_monday();
+        if days & day_bit == 0 {
+            return false;
+        }
+    }
+
+    let from_time = match NaiveTime::parse_from_str(from, "%H:%M") {
+        Ok(v) => v,
+        Err(_) => return false,
+    };
+    let to_time = match NaiveTime::parse_from_str(to, "%H:%M") {
+        Ok(v) => v,
+        Err(_) => return false,
+    };
+
+    let now_minutes = now.hour() * 60 + now.minute();
+    let from_minutes = from_time.hour() * 60 + from_time.minute();
+    let to_minutes = to_time.hour() * 60 + to_time.minute();
+
+    if from_minutes <= to_minutes {
+        // Same-day span: 08:00 → 22:00
+        now_minutes >= from_minutes && now_minutes < to_minutes
+    } else {
+        // Overnight span: 22:00 → 08:00
+        now_minutes >= from_minutes || now_minutes < to_minutes
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use chrono::TimeZone;
+
+    fn make_time(hour: u32, minute: u32, weekday_offset: i64) -> chrono::DateTime<chrono::Local> {
+        // Create a date at a known weekday offset from a Monday
+        // 2025-01-06 is a Monday
+        let naive = chrono::NaiveDate::from_ymd_opt(2025, 1, 6 + weekday_offset as u32)
+            .unwrap()
+            .and_hms_opt(hour, minute, 0)
+            .unwrap();
+        chrono::Local.from_local_datetime(&naive).single().unwrap()
+    }
+
+    // ── Schedule period checks ──────────────────────────────────────
+
+    #[test]
+    fn same_day_span_inside() {
+        // 08:00 → 22:00, currently 12:00 Monday, every day
+        let now = make_time(12, 0, 0);
+        assert!(is_in_scheduled_period_at("08:00", "22:00", 0, now));
+    }
+
+    #[test]
+    fn same_day_span_outside_before() {
+        let now = make_time(7, 30, 0);
+        assert!(!is_in_scheduled_period_at("08:00", "22:00", 0, now));
+    }
+
+    #[test]
+    fn same_day_span_outside_after() {
+        let now = make_time(22, 30, 0);
+        assert!(!is_in_scheduled_period_at("08:00", "22:00", 0, now));
+    }
+
+    #[test]
+    fn overnight_span_inside_late() {
+        // 22:00 → 08:00, currently 23:00
+        let now = make_time(23, 0, 0);
+        assert!(is_in_scheduled_period_at("22:00", "08:00", 0, now));
+    }
+
+    #[test]
+    fn overnight_span_inside_early() {
+        // 22:00 → 08:00, currently 06:00
+        let now = make_time(6, 0, 0);
+        assert!(is_in_scheduled_period_at("22:00", "08:00", 0, now));
+    }
+
+    #[test]
+    fn overnight_span_outside() {
+        // 22:00 → 08:00, currently 12:00
+        let now = make_time(12, 0, 0);
+        assert!(!is_in_scheduled_period_at("22:00", "08:00", 0, now));
+    }
+
+    #[test]
+    fn boundary_exactly_at_from() {
+        let now = make_time(8, 0, 0);
+        assert!(is_in_scheduled_period_at("08:00", "22:00", 0, now));
+    }
+
+    #[test]
+    fn boundary_exactly_at_to() {
+        // "to" is exclusive
+        let now = make_time(22, 0, 0);
+        assert!(!is_in_scheduled_period_at("08:00", "22:00", 0, now));
+    }
+
+    // ── Day-of-week filtering ───────────────────────────────────────
+
+    #[test]
+    fn weekday_only_on_monday() {
+        // Weekdays = 31 (Mon=1+Tue=2+Wed=4+Thu=8+Fri=16)
+        let monday = make_time(12, 0, 0); // Monday
+        assert!(is_in_scheduled_period_at("08:00", "22:00", 31, monday));
+    }
+
+    #[test]
+    fn weekday_only_on_saturday() {
+        // Weekdays = 31, Saturday offset = 5
+        let saturday = make_time(12, 0, 5); // Saturday
+        assert!(!is_in_scheduled_period_at("08:00", "22:00", 31, saturday));
+    }
+
+    #[test]
+    fn weekend_only_on_sunday() {
+        // Weekends = 96 (Sat=32+Sun=64)
+        let sunday = make_time(12, 0, 6); // Sunday
+        assert!(is_in_scheduled_period_at("08:00", "22:00", 96, sunday));
+    }
+
+    #[test]
+    fn every_day_ignores_bitmask() {
+        // days=0 means every day
+        let wednesday = make_time(12, 0, 2);
+        assert!(is_in_scheduled_period_at("08:00", "22:00", 0, wednesday));
+    }
+
+    // ── Invalid input handling ──────────────────────────────────────
+
+    #[test]
+    fn invalid_from_returns_false() {
+        let now = make_time(12, 0, 0);
+        assert!(!is_in_scheduled_period_at("invalid", "22:00", 0, now));
+    }
+
+    #[test]
+    fn invalid_to_returns_false() {
+        let now = make_time(12, 0, 0);
+        assert!(!is_in_scheduled_period_at("08:00", "bad", 0, now));
+    }
+
+    #[test]
+    fn invalid_time_components_return_false() {
+        let now = make_time(12, 0, 0);
+        assert!(!is_in_scheduled_period_at("00:99", "23:59", 0, now));
+        assert!(!is_in_scheduled_period_at("24:00", "23:59", 0, now));
+    }
+
+    // ── non_hot_reloadable_keys (shared aria2Options.json) ─────────
+
+    #[test]
+    fn non_hot_reloadable_keys_cover_restart_and_startup_only_options() {
+        let keys = crate::engine::non_hot_reloadable_keys();
+        for key in [
+            "rpc-listen-port",
+            "rpc-secret",
+            "ed2k-listen-port",
+            "ed2k-udp-listen-port",
+        ] {
+            assert!(keys.contains(key), "missing: {key}");
+        }
+    }
+
+    #[test]
+    fn non_hot_reloadable_keys_exclude_hot_reloadable_options() {
+        let keys = crate::engine::non_hot_reloadable_keys();
+        assert!(!keys.contains("max-overall-download-limit"));
+        assert!(!keys.contains("dir"));
+        assert!(!keys.contains("stream-max-connections"));
+        assert!(!keys.contains("listen-port"));
+        assert!(!keys.contains("bt-external-ip"));
+        assert!(!keys.contains("bt-external-port"));
+        assert!(!keys.contains("bt-encryption"));
+        assert!(!keys.contains("enable-dht"));
+        assert!(!keys.contains("enable-peer-exchange"));
+        assert!(!keys.contains("bt-enable-lpd"));
+        assert!(!keys.contains("bt-max-peers"));
+    }
+}
+
+pub mod downloads;
+
+pub mod tasks;

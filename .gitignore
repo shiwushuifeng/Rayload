@@ -1,0 +1,82 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Dependencies
+node_modules/
+
+# Build output
+dist
+dist-ssr
+target/
+
+# Test coverage output
+coverage
+
+# Tauri / Rust build artifacts
+src-tauri/target
+src-tauri/generated-icons/
+src-tauri/generated-binaries/*
+!src-tauri/generated-binaries/README.md
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Environment variables
+*.local
+.env
+.env.*
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Lock files (use pnpm-lock.yaml only)
+package-lock.json
+
+# Android Gradle caches are excluded by src-tauri/gen/android/.gitignore.
+# Keep the customized Android project and Kotlin sources in version control.
+.kotlin/
+src-tauri/gen/android/.tauri/
+src-tauri/gen/android/app/src/main/jniLibs/
+
+# AI coding tool directories
+.claude/
+.codex/
+.aws/
+.agents/
+.gemini/
+.agent*/
+.aider*
+
+# Runtime data
+*.pid
+*.seed
+*.pid.lock
+.omx/
+
+# Local Android/Rust/JDK toolchains
+.toolchains/
+
+# Local Android release artifacts (published as GitHub Release assets)
+artifacts/
+upload/
+
+# Local Android signing material
+signing/*.jks
+signing/keystore.properties

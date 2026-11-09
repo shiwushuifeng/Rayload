@@ -1,0 +1,97 @@
+/** Typed access to the Android WebView bridge used by Rayload's native shell. */
+
+export type AndroidPermissionStatus = 'granted' | 'denied' | 'unavailable'
+
+interface RayloadNativeBridge {
+  lightTap(): void
+  chooseDirectory(): void
+  shareFile(path: string): boolean
+  storagePermissionStatus(): string
+  requestStoragePermission(): void
+  notificationPermissionStatus(): string
+  requestNotificationPermission(): void
+  batteryOptimizationStatus(): string
+  requestBatteryOptimizationExemption(): void
+}
+
+declare global {
+  interface Window {
+    RayloadNative?: RayloadNativeBridge
+  }
+}
+
+interface DirectorySelectionDetail {
+  path?: string
+  message?: string
+}
+
+function normalizeStatus(value: string | undefined): AndroidPermissionStatus {
+  return value === 'granted' || value === 'denied' ? value : 'unavailable'
+}
+
+export function getRayloadNativeBridge(): RayloadNativeBridge | null {
+  return typeof window === 'undefined' ? null : (window.RayloadNative ?? null)
+}
+
+export function readAndroidPermissionStatuses(): Record<
+  'storage' | 'notification' | 'battery',
+  AndroidPermissionStatus
+> {
+  const bridge = getRayloadNativeBridge()
+  if (!bridge) {
+    return { storage: 'unavailable', notification: 'unavailable', battery: 'unavailable' }
+  }
+  return {
+    storage: normalizeStatus(bridge.storagePermissionStatus()),
+    notification: normalizeStatus(bridge.notificationPermissionStatus()),
+    battery: normalizeStatus(bridge.batteryOptimizationStatus()),
+  }
+}
+
+export function requestAndroidStoragePermission(): void {
+  getRayloadNativeBridge()?.requestStoragePermission()
+}
+
+export function requestAndroidNotificationPermission(): void {
+  getRayloadNativeBridge()?.requestNotificationPermission()
+}
+
+export function requestAndroidBatteryOptimizationExemption(): void {
+  getRayloadNativeBridge()?.requestBatteryOptimizationExemption()
+}
+
+export function shareAndroidFile(path: string): boolean {
+  return getRayloadNativeBridge()?.shareFile(path) ?? false
+}
+
+/** Opens Android's DocumentsUI tree picker and resolves the selected filesystem path. */
+export function chooseAndroidDirectory(): Promise<string | null> {
+  const bridge = getRayloadNativeBridge()
+  if (!bridge) return Promise.resolve(null)
+
+  return new Promise((resolve) => {
+    let settled = false
+    const cleanup = () => {
+      window.removeEventListener('rayload-directory-selected', onSelected)
+      window.removeEventListener('rayload-directory-selection-cancelled', onCancelled)
+      window.removeEventListener('rayload-directory-selection-failed', onFailed)
+    }
+    const settle = (value: string | null) => {
+      if (settled) return
+      settled = true
+      cleanup()
+      resolve(value)
+    }
+    const onSelected = (event: Event) => {
+      const detail = (event as CustomEvent<DirectorySelectionDetail>).detail
+      settle(detail?.path?.trim() || null)
+    }
+    const onCancelled = () => settle(null)
+    const onFailed = () => settle(null)
+
+    window.addEventListener('rayload-directory-selected', onSelected)
+    window.addEventListener('rayload-directory-selection-cancelled', onCancelled)
+    window.addEventListener('rayload-directory-selection-failed', onFailed)
+    bridge.chooseDirectory()
+  })
+}

@@ -1,0 +1,136 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Rayload",
+  "identifier": "com.shiwushuifeng.rayload",
+  "build": {
+    "beforeDevCommand": {
+      "script": "pnpm build:native-launcher && node node_modules/vite/bin/vite.js",
+      "wait": false
+    },
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm build:native-launcher && pnpm build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Rayload",
+        "width": 1068,
+        "height": 680,
+        "minWidth": 373,
+        "minHeight": 240,
+        "transparent": true,
+        "decorations": false,
+        "visible": false,
+        "center": true,
+        "shadow": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; connect-src 'self' ipc: http://ipc.localhost; img-src 'self' asset: http://asset.localhost data: blob:; media-src 'self' asset: http://asset.localhost data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'"
+    },
+    "macOSPrivateApi": true
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "publisher": "shiwushuifeng",
+    "copyright": "Copyright (c) 2025-present shiwushuifeng. Based on Rayburst by AnInsomniacy (MIT).",
+    "createUpdaterArtifacts": false,
+    "externalBin": ["binaries/aria2-next", "generated-binaries/rayburst-browser-launcher"],
+    "resources": [
+      "data/ed2k-bootstrap/server.met",
+      "data/ed2k-bootstrap/nodes.dat",
+      "data/bt-peer-blocklist.txt",
+      "data/dbip-country-lite.mmdb",
+      "data/cacert.pem",
+      "native-messaging/manifests/chromium.json",
+      "native-messaging/manifests/firefox.json"
+    ],
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.ico"],
+    "fileAssociations": [
+      {
+        "ext": ["torrent"],
+        "name": "BitTorrent",
+        "mimeType": "application/x-bittorrent",
+        "description": "BitTorrent File",
+        "role": "Viewer"
+      }
+    ],
+    "macOS": {
+      "minimumSystemVersion": "11.0",
+      "signingIdentity": "-",
+      "dmg": {
+        "windowSize": {
+          "width": 660,
+          "height": 400
+        },
+        "appPosition": {
+          "x": 180,
+          "y": 170
+        },
+        "applicationFolderPosition": {
+          "x": 480,
+          "y": 170
+        }
+      }
+    },
+    "windows": {
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "installMode": "both",
+        "displayLanguageSelector": true,
+        "languages": [
+          "Arabic",
+          "Bulgarian",
+          "Catalan",
+          "German",
+          "Greek",
+          "English",
+          "Spanish",
+          "Farsi",
+          "French",
+          "Hungarian",
+          "Hindi",
+          "Indonesian",
+          "Italian",
+          "Japanese",
+          "Korean",
+          "Norwegian",
+          "Dutch",
+          "Polish",
+          "PortugueseBR",
+          "Romanian",
+          "Russian",
+          "Thai",
+          "Turkish",
+          "Ukrainian",
+          "Vietnamese",
+          "SimpChinese",
+          "TradChinese"
+        ],
+        "installerHooks": "nsis/hooks.nsh"
+      }
+    },
+    "linux": {
+      "deb": {
+        "desktopTemplate": "linux/rayload.desktop.hbs"
+      },
+      "rpm": {
+        "desktopTemplate": "linux/rayload.desktop.hbs"
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": ["https://github.com/shiwushuifeng/Rayload/releases/download/updater/latest.json"],
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc2MjEwNDUzQTk3OUM2NDUKUldSRnhubXBVd1FoZHUxeWtoRGJFblZaZ3V3UWZMQTYwL29CQTNySWxQMForTDA2YjN1Mk50Sk4K"
+    },
+    "deep-link": {
+      "desktop": {
+        "schemes": ["magnet", "ed2k", "thunder", "rayload"]
+      }
+    }
+  }
+}

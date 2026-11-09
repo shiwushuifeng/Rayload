@@ -1,0 +1,133 @@
+[package]
+name = "rayburst"
+version = "1.0.0"
+description = "Redefining the open-source download manager"
+authors = ["AnInsomniacy"]
+license = "MIT"
+edition = "2021"
+
+[workspace]
+members = [".", "native-messaging"]
+resolver = "2"
+
+[lib]
+name = "rayburst_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+serde_json = "1"
+tauri-build = { version = "2.6.2", features = [] }
+
+[dependencies]
+tauri = { version = "2.12.5", features = ["macos-private-api", "image-png"] }
+tauri-plugin-opener = "2"
+tauri-plugin-store = "2"
+tauri-plugin-updater = "2.14.1"
+tauri-plugin-deep-link = "2"
+tauri-plugin-shell = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-notification = "2"
+tauri-plugin-process = "2"
+tauri-plugin-os = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-clipboard-manager = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+uuid = { version = "1", features = ["v4", "serde"] }
+semver = "1"
+tokio = { version = "1", features = ["full"] }
+log = { version = "0.4", features = ["kv"] }
+anstream = "1"
+anstyle = "1"
+thiserror = "2"
+url = "2.5.8"
+urlencoding = "2"
+regex = "1"
+ipnet = "2"
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
+tokio-tungstenite = "0.28"
+futures-util = "0.3"
+tauri-plugin-log = "2.8.0"
+dirs = "6"
+zip = { version = "2", default-features = false, features = ["deflate"] }
+chrono = "0.4"
+notify = "8.1"
+dunce = "1"
+os_info = "3"
+sys-locale = "0.3"
+rusqlite = { version = "0.31", features = ["bundled"] }
+maxminddb = { version = "0.27", features = ["mmap"] }
+axum = "0.8"
+tower-http = { version = "0.6", features = ["cors", "fs"] }
+strip-ansi-escapes = "0.2.1"
+tempfile = "3"
+rust-i18n = "4.2.1"
+fluent-langneg = { version = "0.14.2", features = ["cldr"] }
+
+# Desktop-only integrations. Tauri itself is duplicated here so the tray
+# feature and desktop plugins never have to resolve an Android backend.
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri = { version = "2.12.5", features = ["macos-private-api", "tray-icon", "image-png"] }
+tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
+tauri-plugin-locale = "2.0.1"
+tauri-plugin-window-state = "2.4.1"
+trash = "5"
+drag = "2.1"
+rayburst-browser-launcher = { path = "native-messaging" }
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = [
+    "Win32_Graphics_Dwm",
+    "Win32_System_Power",
+    "Win32_System_Com",
+    "Win32_System_Registry",
+    "Win32_System_Threading",
+    "Win32_Storage_FileSystem",
+    "Win32_System_DataExchange",
+    "Win32_System_Diagnostics_ToolHelp",
+    "Win32_UI_HiDpi",
+    "Win32_UI_Shell",
+    "Win32_UI_Shell_Common",
+    "Win32_UI_WindowsAndMessaging",
+] }
+winreg = "0.56"
+tauri-winrt-notification = "0.7"
+# Same version and features as tauri-winrt-notification uses.
+windows = { version = "0.61", features = ["UI_Notifications"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[target.'cfg(target_os = "android")'.dependencies]
+jni = "0.21"
+ndk-context = "0.1"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+gtk = "0.18"
+ksni = "=0.3.6"
+gio = "0.18.4"
+webkit2gtk = { version = "=2.0.2", features = ["v2_16"] }
+ashpd = { version = "0.13.13", default-features = false, features = ["tokio", "inhibit"] }
+notify-rust = { version = "4.14", default-features = false, features = ["z-with-tokio"] }
+zbus = { version = "5", default-features = false, features = ["tokio"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+keepawake = "0.6"
+objc2 = "0.6"
+block2 = "0.6"
+objc2-app-kit = { version = "0.3", features = ["NSWorkspace", "NSDockTile", "NSPasteboard", "NSApplication", "NSAnimation", "NSAnimationContext", "NSResponder", "NSWindow", "block2", "objc2-core-foundation", "objc2-quartz-core"] }
+objc2-foundation = { version = "0.3", features = ["NSURL", "NSString", "NSBundle"] }
+objc2-quartz-core = { version = "0.3", features = ["CAMediaTimingFunction"] }
+core-foundation = "0.10"
+system-configuration = "0.7.0"
+
+[lints.clippy]
+unwrap_used = "deny"
+redundant_closure_for_method_calls = "warn"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1
+opt-level = "s"

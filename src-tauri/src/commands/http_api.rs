@@ -1,0 +1,119 @@
+use crate::error::AppError;
+use crate::services::{deep_link, external_input, frontend_action, http_api};
+
+/// Restart the embedded HTTP API server on a new port.
+///
+/// Called by the frontend when the user changes `extensionApiPort` in
+/// Advanced settings and confirms the port-switch dialog.  The old server
+/// is stopped before binding the new port.
+#[tauri::command]
+pub async fn restart_http_api(app: tauri::AppHandle, port: u16) -> Result<u16, AppError> {
+    http_api::restart_on_port(&app, port).await
+}
+
+/// Drain and return all pending deep-link URLs.
+///
+/// Called by the frontend during its boot sequence (`setupListeners` in
+/// `useAppEvents.ts`) to consume deep-link URLs that were queued by native
+/// external-input handlers while the WebView was being recreated.
+///
+/// Returns an empty vec if no URLs are pending (normal startup, or the
+/// window was already alive when the download was routed).
+#[tauri::command]
+pub fn take_pending_deep_links(
+    state: tauri::State<'_, deep_link::PendingDeepLinkState>,
+) -> deep_link::PendingDeepLinksPayload {
+    deep_link::take_pending_deep_links(state.inner())
+}
+
+#[tauri::command]
+pub fn take_pending_external_inputs(
+    state: tauri::State<'_, external_input::PendingExternalInputState>,
+) -> external_input::PendingExternalInputsPayload {
+    external_input::take_pending_external_inputs(state.inner())
+}
+
+#[tauri::command]
+pub fn add_window_attach(
+    state: tauri::State<'_, crate::services::add_window::AddWindowState>,
+) -> crate::services::add_window::AddWindowInputs {
+    crate::services::add_window::attach(state.inner())
+}
+
+/// The main window hands every new download to the add window.
+#[tauri::command]
+pub fn add_window_open(app: tauri::AppHandle, batch: crate::services::add_window::AddWindowInputs) {
+    crate::services::add_window::route(&app, batch, "main-window");
+}
+
+/// Builds the add window, hidden, once the main window is up.
+#[tauri::command]
+pub fn add_window_prepare(app: tauri::AppHandle) {
+    crate::services::add_window::prepare(&app);
+}
+
+/// Hides the add window between downloads; returns inputs that arrived while
+/// it was closing.
+#[tauri::command]
+pub fn add_window_park(app: tauri::AppHandle) -> crate::services::add_window::AddWindowInputs {
+    crate::services::add_window::park(&app)
+}
+
+/// Shows the add window once its content is sized.
+#[tauri::command]
+pub fn add_window_present(app: tauri::AppHandle, animate: bool) -> Result<(), AppError> {
+    crate::services::add_window::present(&app, animate)
+}
+
+/// Sizes the add window to its content, in logical pixels. Synchronous, so
+/// it runs on the main thread, where macOS sizes the window at once.
+#[tauri::command]
+pub fn add_window_fit(app: tauri::AppHandle, width: f64, height: f64) -> Result<(), AppError> {
+    crate::services::add_window::fit(&app, width, height)
+}
+
+/// Returns once the add window has moved away, before it is put away.
+#[tauri::command]
+pub async fn add_window_leave(app: tauri::AppHandle) {
+    crate::services::add_window::leave(&app).await;
+}
+
+/// Logical height of the screen the add window opens on. Synchronous, so it
+/// runs on the main thread (#725).
+#[tauri::command]
+pub fn add_window_screen_height(app: tauri::AppHandle) -> Option<f64> {
+    crate::services::add_window::screen_height(&app)
+}
+
+#[tauri::command]
+pub fn add_window_detach(
+    state: tauri::State<'_, crate::services::add_window::AddWindowState>,
+) -> crate::services::add_window::AddWindowInputs {
+    crate::services::add_window::detach(state.inner())
+}
+
+#[tauri::command]
+pub fn peek_pending_deep_links_silent(
+    state: tauri::State<'_, deep_link::PendingDeepLinkState>,
+) -> bool {
+    deep_link::peek_pending_deep_links_silent(state.inner())
+}
+
+#[tauri::command]
+pub fn peek_pending_external_inputs_silent(
+    state: tauri::State<'_, external_input::PendingExternalInputState>,
+) -> bool {
+    external_input::peek_pending_external_inputs_silent(state.inner())
+}
+
+/// Drain and return all pending frontend UI actions.
+///
+/// Called by the frontend during its boot sequence after menu and tray
+/// listeners are registered. This prevents lightweight-mode WebView
+/// recreation from dropping native tray or menu actions.
+#[tauri::command]
+pub fn take_pending_frontend_actions(
+    state: tauri::State<'_, frontend_action::PendingFrontendActionState>,
+) -> Vec<frontend_action::PendingFrontendAction> {
+    frontend_action::take_pending_frontend_actions(state.inner())
+}

@@ -1,0 +1,20 @@
+{
+  "_version": 1,
+  "notification.bt-complete-body": "Раздача: %{task_name}",
+  "notification.bt-complete-title": "BT-загрузка завершена",
+  "notification.download-batch-start-body": "Загрузка: %{task_name} и ещё %{count} задач",
+  "notification.download-complete-body": "Сохранено: %{task_name}",
+  "notification.download-complete-title": "Загрузка завершена",
+  "notification.download-failed-body": "%{task_name}: %{reason}",
+  "notification.download-failed-title": "Загрузка не удалась",
+  "notification.download-start-body": "Загрузка: %{task_name}",
+  "notification.download-start-title": "Загрузка начата",
+  "notification.ed2k-complete-body": "Раздача: %{task_name}",
+  "notification.ed2k-complete-title": "ED2K-загрузка завершена",
+  "notification.error-unknown": "Unknown error",
+  "notification.selection-title": "Ожидание выбора содержимого",
+  "notification.selection-body": "%{task_name}",
+  "notification.browser-kept-title": "Загрузка осталась в браузере",
+  "notification.browser-kept-body": "Rayload не смог подключиться к %{host}.",
+  "notification.browser-kept-proxy-body": "Rayload не смог подключиться к %{host}. Если браузер использует прокси, включите прокси в сетевых настройках Rayload."
+}

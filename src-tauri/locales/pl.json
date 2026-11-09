@@ -1,0 +1,20 @@
+{
+  "_version": 1,
+  "notification.bt-complete-body": "Udostępnianie: %{task_name}",
+  "notification.bt-complete-title": "Pobieranie BT ukończone",
+  "notification.download-batch-start-body": "Pobieranie: %{task_name} i %{count} innych zadań",
+  "notification.download-complete-body": "Zapisano: %{task_name}",
+  "notification.download-complete-title": "Pobieranie ukończone",
+  "notification.download-failed-body": "%{task_name}: %{reason}",
+  "notification.download-failed-title": "Pobieranie nie powiodło się",
+  "notification.download-start-body": "Pobieranie: %{task_name}",
+  "notification.download-start-title": "Pobieranie rozpoczęte",
+  "notification.ed2k-complete-body": "Udostępnianie: %{task_name}",
+  "notification.ed2k-complete-title": "Pobieranie ED2K ukończone",
+  "notification.error-unknown": "Unknown error",
+  "notification.selection-title": "Oczekiwanie na wybór zawartości",
+  "notification.selection-body": "%{task_name}",
+  "notification.browser-kept-title": "Pobieranie zostało w przeglądarce",
+  "notification.browser-kept-body": "Rayload nie mógł połączyć się z %{host}.",
+  "notification.browser-kept-proxy-body": "Rayload nie mógł połączyć się z %{host}. Jeśli przeglądarka używa proxy, włącz proxy w ustawieniach sieci Rayload."
+}

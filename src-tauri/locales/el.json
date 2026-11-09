@@ -1,0 +1,20 @@
+{
+  "_version": 1,
+  "notification.bt-complete-body": "Διαμοίραση: %{task_name}",
+  "notification.bt-complete-title": "Η BT λήψη ολοκληρώθηκε",
+  "notification.download-batch-start-body": "Γίνεται λήψη: %{task_name} και %{count} ακόμα εργασίες",
+  "notification.download-complete-body": "Αποθηκεύτηκε: %{task_name}",
+  "notification.download-complete-title": "Η λήψη ολοκληρώθηκε",
+  "notification.download-failed-body": "%{task_name}: %{reason}",
+  "notification.download-failed-title": "Η λήψη απέτυχε",
+  "notification.download-start-body": "Γίνεται λήψη: %{task_name}",
+  "notification.download-start-title": "Η λήψη ξεκίνησε",
+  "notification.ed2k-complete-body": "Κοινή χρήση: %{task_name}",
+  "notification.ed2k-complete-title": "Η ED2K λήψη ολοκληρώθηκε",
+  "notification.error-unknown": "Unknown error",
+  "notification.selection-title": "Αναμονή επιλογής περιεχομένου",
+  "notification.selection-body": "%{task_name}",
+  "notification.browser-kept-title": "Η λήψη έμεινε στο πρόγραμμα περιήγησης",
+  "notification.browser-kept-body": "Το Rayload δεν μπόρεσε να συνδεθεί στο %{host}.",
+  "notification.browser-kept-proxy-body": "Το Rayload δεν μπόρεσε να συνδεθεί στο %{host}. Αν το πρόγραμμα περιήγησης χρησιμοποιεί proxy, ενεργοποιήστε το proxy στις ρυθμίσεις δικτύου του Rayload."
+}

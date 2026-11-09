@@ -1,0 +1,46 @@
+# Changelog
+
+All notable changes to the independent Rayload Android port are documented in
+this file.
+
+## v1.0.0 - 2026-11-09
+
+### Added
+
+- Rebranded the Android application as Rayload with package name
+  `com.shiwushuifeng.rayload`, version `1.0.0`, and a dedicated signing
+  identity.
+- Rebuilt the About page with Rayload attribution, developer links, and MIT
+  attribution to AnInsomniacy.
+- Added a first-launch permission flow for storage, notifications, and battery
+  optimization exemption.
+- Added native directory selection and typed Android WebView bridge access.
+- Added DocumentsUI folder navigation, FileProvider sharing, and file opening.
+- Added foreground download service, completion notifications, haptics, share
+  target support, and partial wake-lock handling.
+- Added localized Rayload Android guidance across all 27 supported locales.
+
+### Changed
+
+- Moved add-task type tabs below the modal header with icon-over-label controls.
+- Locked the Android JSON-RPC port to `6800`.
+- Changed “shut down after downloads” to exit Rayload and stop its engine.
+- Changed deletion to move files and metadata into a hidden `.trash` folder.
+- Removed the desktop-only post-download executable option on Android.
+- Enabled R8, resource shrinking, Rust symbol stripping, LTO, and size-focused
+  release optimization.
+
+### Fixed
+
+- Fixed intermittent false “file deleted” errors from sharing downloaded files.
+- Fixed the public-download folder actions and native file-path handling.
+- Removed desktop-only integrations from the Android runtime and preferences.
+- Corrected mobile modal masking, tab overlap, stacking, and touch layouts.
+
+### Verified
+
+- Frontend: 90 test files and 1,174 tests passed.
+- Rust: 339 tests passed with 5 intentionally ignored.
+- Native Messaging: 8 tests passed.
+- Debug and Release APKs were built and verified for API 24/37, ARM64, package
+  identity, version, signatures, and release shrinking.

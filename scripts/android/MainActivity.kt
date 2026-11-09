@@ -1,0 +1,475 @@
+package com.shiwushuifeng.rayload
+
+import android.Manifest
+import android.annotation.SuppressLint
+import android.app.Activity
+import android.content.ClipData
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.net.Uri
+import android.os.Build
+import android.os.Bundle
+import android.os.Environment
+import android.os.PowerManager
+import android.os.Process
+import android.os.SystemClock
+import android.provider.DocumentsContract
+import android.provider.Settings
+import android.webkit.JavascriptInterface
+import android.webkit.MimeTypeMap
+import android.webkit.WebView
+import androidx.activity.OnBackPressedCallback
+import androidx.activity.enableEdgeToEdge
+import androidx.annotation.Keep
+import androidx.core.content.FileProvider
+import java.io.File
+import org.json.JSONObject
+
+class MainActivity : TauriActivity() {
+  private var activeWebView: WebView? = null
+  private var backCallback: OnBackPressedCallback? = null
+  private var lastBackAt = 0L
+  private val shareQueueFile by lazy { File(filesDir, "rayload-share-pending.txt") }
+
+  companion object {
+    private const val EXTERNAL_STORAGE_DOCUMENTS = "com.android.externalstorage.documents"
+    private const val APP_DOWNLOAD_DIRECTORY = "Download/Rayload"
+    private const val REQUEST_OPEN_DOCUMENT_TREE = 4101
+    private const val REQUEST_NOTIFICATION_PERMISSION = 4102
+    private const val REQUEST_LEGACY_STORAGE_PERMISSION = 4103
+    private const val WAKE_LOCK_TAG = "Rayload:active-downloads"
+
+    private var downloadWakeLock: PowerManager.WakeLock? = null
+
+    /**
+     * Opens DocumentsUI at the user-visible Rayload download directory.
+     * A tree picker is the compatibility fallback when a vendor DocumentsUI
+     * does not accept a direct document URI.
+     */
+    @Keep
+    @JvmStatic
+    fun openRayloadDownloadsFolder(context: Context): Boolean {
+      val folder = File(
+        Environment.getExternalStorageDirectory(),
+        APP_DOWNLOAD_DIRECTORY,
+      )
+      folder.mkdirs()
+      return openFolder(context, folder)
+    }
+
+    /** Opens the containing folder for a path through the Android DocumentsUI. */
+    @Keep
+    @JvmStatic
+    fun openFileOrFolder(context: Context, rawPath: String): Boolean {
+      val target = File(rawPath)
+      val folder = if (target.isDirectory) target else target.parentFile
+      if (folder != null && folder.isDirectory && openFolder(context, folder)) return true
+      return target.isFile && openFile(context, target.absolutePath)
+    }
+
+    /** Shares a downloaded file through a correctly scoped FileProvider URI. */
+    @Keep
+    @JvmStatic
+    fun shareFile(context: Context, rawPath: String): Boolean {
+      val file = File(rawPath)
+      if (!file.isFile || !file.canRead()) return false
+      val uri = fileProviderUri(context, file) ?: return false
+      val mime = context.contentResolver.getType(uri)
+        ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.extension.lowercase())
+        ?: "*/*"
+      val send = Intent(Intent.ACTION_SEND).apply {
+        type = mime
+        putExtra(Intent.EXTRA_STREAM, uri)
+        clipData = ClipData.newUri(context.contentResolver, file.name, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+      }
+      val chooser = Intent.createChooser(send, "Share ${file.name}").apply {
+        addFlags(
+          Intent.FLAG_GRANT_READ_URI_PERMISSION or
+            Intent.FLAG_ACTIVITY_NEW_TASK,
+        )
+      }
+      return startActivitySafely(context, chooser)
+    }
+
+    @Keep
+    @JvmStatic
+    fun openFile(context: Context, rawPath: String): Boolean {
+      val file = File(rawPath)
+      if (!file.isFile || !file.canRead()) return false
+      val uri = fileProviderUri(context, file) ?: return false
+      val extension = file.extension.lowercase()
+      val mime = context.contentResolver.getType(uri)
+        ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+        ?: "*/*"
+      val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, mime)
+        clipData = ClipData.newUri(context.contentResolver, file.name, uri)
+        addFlags(
+          Intent.FLAG_GRANT_READ_URI_PERMISSION or
+            Intent.FLAG_ACTIVITY_NEW_TASK,
+        )
+      }
+      return startActivitySafely(context, intent)
+    }
+
+    @Keep
+    @JvmStatic
+    @SuppressLint("WakelockTimeout")
+    fun acquireDownloadWakeLock(context: Context): Boolean {
+      val power = context.getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return false
+      val wakeLock = downloadWakeLock ?: power.newWakeLock(
+        PowerManager.PARTIAL_WAKE_LOCK,
+        WAKE_LOCK_TAG,
+      ).apply {
+        setReferenceCounted(false)
+        downloadWakeLock = this
+      }
+      if (!wakeLock.isHeld) wakeLock.acquire()
+      return wakeLock.isHeld
+    }
+
+    @Keep
+    @JvmStatic
+    fun releaseDownloadWakeLock(): Boolean {
+      val wakeLock = downloadWakeLock ?: return true
+      if (wakeLock.isHeld) wakeLock.release()
+      downloadWakeLock = null
+      return true
+    }
+
+    private fun openFolder(context: Context, folder: File): Boolean {
+      val root = Environment.getExternalStorageDirectory().absolutePath.trimEnd('/')
+      val relative = folder.absoluteFile.absolutePath
+        .removePrefix(root)
+        .trimStart('/')
+      val documentId = if (relative.isEmpty()) "primary:" else "primary:$relative"
+      val uri = DocumentsContract.buildDocumentUri(EXTERNAL_STORAGE_DOCUMENTS, documentId)
+
+      val view = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, DocumentsContract.Document.MIME_TYPE_DIR)
+        addFlags(
+          Intent.FLAG_ACTIVITY_NEW_TASK or
+            Intent.FLAG_GRANT_READ_URI_PERMISSION,
+        )
+      }
+      if (startActivitySafely(context, view)) return true
+
+      val picker = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+        putExtra(DocumentsContract.EXTRA_INITIAL_URI, uri)
+        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+      }
+      return startActivitySafely(context, picker)
+    }
+
+    private fun fileProviderUri(context: Context, file: File): Uri? {
+      val canonical = runCatching { file.canonicalFile }.getOrElse { return null }
+      return runCatching {
+        FileProvider.getUriForFile(
+          context,
+          "${context.packageName}.fileprovider",
+          canonical,
+        )
+      }.getOrNull()
+    }
+
+    private fun startActivitySafely(context: Context, intent: Intent): Boolean =
+      runCatching {
+        if (context !is Activity) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+        true
+      }.getOrDefault(false)
+
+    private fun documentTreePath(uri: Uri): String? {
+      val documentId = runCatching { DocumentsContract.getTreeDocumentId(uri) }.getOrNull()
+        ?: return null
+      val separator = documentId.indexOf(':')
+      if (separator < 0) return null
+      val storageId = documentId.substring(0, separator)
+      val relative = documentId.substring(separator + 1).trimStart('/')
+      val root = when (storageId) {
+        "primary" -> Environment.getExternalStorageDirectory()
+        else -> File("/storage/$storageId")
+      }
+      if (!root.isDirectory) return null
+      return File(root, relative).absolutePath
+    }
+  }
+
+  override fun onCreate(savedInstanceState: Bundle?) {
+    enableEdgeToEdge()
+    super.onCreate(savedInstanceState)
+    startEngineService()
+    captureShareIntent(intent)
+  }
+
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    setIntent(intent)
+    captureShareIntent(intent)
+  }
+
+  override fun onResume() {
+    super.onResume()
+    dispatchNativeEvent("rayload-permission-state-changed")
+  }
+
+  override fun onDestroy() {
+    backCallback?.remove()
+    backCallback = null
+    activeWebView = null
+    if (isFinishing) releaseDownloadWakeLock()
+    super.onDestroy()
+  }
+
+  override fun onWebViewCreate(webView: WebView) {
+    super.onWebViewCreate(webView)
+    activeWebView = webView
+    webView.addJavascriptInterface(NativeBridge(), "RayloadNative")
+    webView.setDownloadListener { url, userAgent, contentDisposition, _, contentLength ->
+      val detail = JSONObject()
+        .put("url", url)
+        .apply {
+          webView.url?.let { put("referer", it) }
+          userAgent?.let { put("userAgent", it) }
+          contentDisposition?.let { put("contentDisposition", it) }
+          if (contentLength > 0) put("contentLength", contentLength)
+        }
+      dispatchNativeEvent("rayload-download-requested", detail)
+    }
+    installBackNavigation(webView)
+  }
+
+  @Deprecated("Uses the platform request-code callback required by TauriActivity.")
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    super.onActivityResult(requestCode, resultCode, data)
+    if (requestCode != REQUEST_OPEN_DOCUMENT_TREE) return
+    if (resultCode != Activity.RESULT_OK || data?.data == null) {
+      dispatchNativeEvent("rayload-directory-selection-cancelled")
+      return
+    }
+
+    val uri = data.data!!
+    runCatching {
+      contentResolver.takePersistableUriPermission(
+        uri,
+        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+      )
+    }
+    val path = documentTreePath(uri)
+    if (path == null) {
+      dispatchNativeEvent(
+        "rayload-directory-selection-failed",
+        JSONObject().put("message", "Choose a folder on primary or removable storage."),
+      )
+      return
+    }
+    dispatchNativeEvent("rayload-directory-selected", JSONObject().put("path", path))
+  }
+
+  @Deprecated("Uses the platform request-code callback required by TauriActivity.")
+  override fun onRequestPermissionsResult(
+    requestCode: Int,
+    permissions: Array<out String>,
+    grantResults: IntArray,
+  ) {
+    super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    if (
+      requestCode == REQUEST_NOTIFICATION_PERMISSION ||
+      requestCode == REQUEST_LEGACY_STORAGE_PERMISSION
+    ) {
+      dispatchNativeEvent("rayload-permission-state-changed")
+    }
+  }
+
+  private inner class NativeBridge {
+    @JavascriptInterface
+    fun lightTap() {
+      activeWebView?.performHapticFeedback(android.view.HapticFeedbackConstants.KEYBOARD_TAP)
+    }
+
+    @JavascriptInterface
+    fun chooseDirectory() {
+      runOnUiThread { openDirectoryPicker() }
+    }
+
+    @JavascriptInterface
+    fun shareFile(path: String): Boolean = Companion.shareFile(this@MainActivity, path)
+
+    @JavascriptInterface
+    fun storagePermissionStatus(): String = currentStoragePermissionStatus()
+
+    @JavascriptInterface
+    fun requestStoragePermission() {
+      runOnUiThread { this@MainActivity.requestStoragePermission() }
+    }
+
+    @JavascriptInterface
+    fun notificationPermissionStatus(): String = currentNotificationPermissionStatus()
+
+    @JavascriptInterface
+    fun requestNotificationPermission() {
+      runOnUiThread { this@MainActivity.requestNotificationPermission() }
+    }
+
+    @JavascriptInterface
+    fun batteryOptimizationStatus(): String =
+      if (isIgnoringBatteryOptimizations()) "granted" else "denied"
+
+    @JavascriptInterface
+    fun requestBatteryOptimizationExemption() {
+      runOnUiThread { this@MainActivity.requestBatteryOptimizationExemption() }
+    }
+  }
+
+  private fun openDirectoryPicker() {
+    val initialFolder = File(Environment.getExternalStorageDirectory(), APP_DOWNLOAD_DIRECTORY)
+    initialFolder.mkdirs()
+    val initialUri = DocumentsContract.buildDocumentUri(
+      EXTERNAL_STORAGE_DOCUMENTS,
+      "primary:$APP_DOWNLOAD_DIRECTORY",
+    )
+    val intent = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+      putExtra(DocumentsContract.EXTRA_INITIAL_URI, initialUri)
+      addFlags(
+        Intent.FLAG_GRANT_READ_URI_PERMISSION or
+          Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+          Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION,
+      )
+    }
+    startActivityForResult(intent, REQUEST_OPEN_DOCUMENT_TREE)
+  }
+
+  private fun captureShareIntent(intent: Intent?) {
+    if (intent?.action != Intent.ACTION_SEND) return
+    if (intent.type?.startsWith("text/plain") != true) return
+    val sharedText = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()?.trim()
+    if (sharedText.isNullOrEmpty()) return
+
+    shareQueueFile.parentFile?.mkdirs()
+    shareQueueFile.appendText("$sharedText\n", Charsets.UTF_8)
+    dispatchNativeEvent("rayload-share-requested")
+  }
+
+  private fun dispatchNativeEvent(eventName: String, detail: JSONObject = JSONObject()) {
+    val webView = activeWebView ?: return
+    val script =
+      "window.dispatchEvent(new CustomEvent(" +
+        "${JSONObject.quote(eventName)},{detail:$detail}))"
+    webView.post { webView.evaluateJavascript(script, null) }
+  }
+
+  private fun installBackNavigation(webView: WebView) {
+    backCallback?.remove()
+    val callback = object : OnBackPressedCallback(true) {
+      override fun handleOnBackPressed() {
+        webView.evaluateJavascript(
+          "(window.__rayloadHandleBack && window.__rayloadHandleBack()) || false",
+        ) { result ->
+          if (result.trim('"') == "true") {
+            lastBackAt = 0L
+            return@evaluateJavascript
+          }
+
+          val now = SystemClock.elapsedRealtime()
+          if (lastBackAt > 0L && now - lastBackAt <= 2000L) {
+            lastBackAt = 0L
+            moveTaskToBack(true)
+          } else {
+            lastBackAt = now
+            dispatchNativeEvent("rayload-back-home")
+          }
+        }
+      }
+    }
+    backCallback = callback
+    onBackPressedDispatcher.addCallback(this, callback)
+  }
+
+  private fun currentStoragePermissionStatus(): String {
+    val granted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      Environment.isExternalStorageManager()
+    } else {
+      checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) ==
+        PackageManager.PERMISSION_GRANTED
+    }
+    return if (granted) "granted" else "denied"
+  }
+
+  private fun requestStoragePermission() {
+    if (currentStoragePermissionStatus() == "granted") {
+      dispatchNativeEvent("rayload-permission-state-changed")
+      return
+    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+      val appSettings = Intent(
+        Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION,
+        Uri.parse("package:$packageName"),
+      )
+      if (!startActivitySafely(this, appSettings)) {
+        startActivitySafely(
+          this,
+          Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION),
+        )
+      }
+      return
+    }
+    requestPermissions(
+      arrayOf(
+        Manifest.permission.READ_EXTERNAL_STORAGE,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+      ),
+      REQUEST_LEGACY_STORAGE_PERMISSION,
+    )
+  }
+
+  private fun currentNotificationPermissionStatus(): String {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return "granted"
+    return if (
+      checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) ==
+      PackageManager.PERMISSION_GRANTED
+    ) {
+      "granted"
+    } else {
+      "denied"
+    }
+  }
+
+  private fun requestNotificationPermission() {
+    if (
+      Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+      currentNotificationPermissionStatus() == "granted"
+    ) {
+      dispatchNativeEvent("rayload-permission-state-changed")
+      return
+    }
+    requestPermissions(
+      arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+      REQUEST_NOTIFICATION_PERMISSION,
+    )
+  }
+
+  private fun isIgnoringBatteryOptimizations(): Boolean {
+    val power = getSystemService(Context.POWER_SERVICE) as? PowerManager ?: return false
+    return power.isIgnoringBatteryOptimizations(packageName)
+  }
+
+  private fun requestBatteryOptimizationExemption() {
+    val request = Intent(
+      Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+      Uri.parse("package:$packageName"),
+    )
+    if (startActivitySafely(this, request)) return
+    startActivitySafely(this, Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+  }
+
+  private fun startEngineService() {
+    val intent = Intent(this, EngineForegroundService::class.java)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      startForegroundService(intent)
+    } else {
+      startService(intent)
+    }
+  }
+}
