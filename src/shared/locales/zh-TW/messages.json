@@ -665,7 +665,9 @@
     "android-app-icon-gold": "米白金",
     "android-app-icon-failed": "無法切換 Android 桌面圖示",
     "brand-logo-blue": "米藍色",
-    "brand-logo-teal": "青黑色"
+    "brand-logo-teal": "青黑色",
+    "android-app-icon-blue": "米藍色",
+    "android-app-icon-teal": "青黑色"
   },
   "task": {
     "scope-all": "全部",

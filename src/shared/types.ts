@@ -439,7 +439,7 @@ export interface AppConfig {
   colorScheme: string
   customColorScheme: string
   brandLogoStyle: 'auto' | 'gold' | 'violet' | 'blue' | 'teal'
-  androidAppIcon: 'purple' | 'gold'
+  androidAppIcon: 'purple' | 'gold' | 'blue' | 'teal'
   taskCardMode: 'full' | 'compact'
   showLogoWhenEmpty: boolean
   reduceMotion: boolean

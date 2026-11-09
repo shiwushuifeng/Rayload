@@ -243,6 +243,8 @@ const secondaryCopy = {
     androidIcon: 'Android 桌面图标',
     androidIconPurple: '经典紫罗兰',
     androidIconGold: '米白金',
+    androidIconBlue: '米蓝色',
+    androidIconTeal: '青黑色',
     androidIconFailed: '无法切换 Android 桌面图标',
   },
   'zh-TW': {
@@ -261,6 +263,8 @@ const secondaryCopy = {
     androidIcon: 'Android 桌面圖示',
     androidIconPurple: '經典紫羅蘭',
     androidIconGold: '米白金',
+    androidIconBlue: '米藍色',
+    androidIconTeal: '青黑色',
     androidIconFailed: '無法切換 Android 桌面圖示',
   },
 }
@@ -281,6 +285,8 @@ const englishSecondaryCopy = {
   androidIcon: 'Android Home Icon',
   androidIconPurple: 'Classic Violet',
   androidIconGold: 'Cream & Gold',
+  androidIconBlue: 'Cream & Blue',
+  androidIconTeal: 'Teal & Black',
   androidIconFailed: 'Could not change the Android Home icon',
 }
 
@@ -314,6 +320,8 @@ for (const locale of readdirSync(localesRoot, { withFileTypes: true })) {
   messages.preferences['android-app-icon'] = secondary.androidIcon
   messages.preferences['android-app-icon-purple'] = secondary.androidIconPurple
   messages.preferences['android-app-icon-gold'] = secondary.androidIconGold
+  messages.preferences['android-app-icon-blue'] = secondary.androidIconBlue
+  messages.preferences['android-app-icon-teal'] = secondary.androidIconTeal
   messages.preferences['android-app-icon-failed'] = secondary.androidIconFailed
   writeFileSync(path, `${JSON.stringify(messages, null, 2)}\n`)
 }

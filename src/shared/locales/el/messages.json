@@ -665,7 +665,9 @@
     "android-app-icon-gold": "Cream & Gold",
     "android-app-icon-failed": "Could not change the Android Home icon",
     "brand-logo-blue": "Cream & Blue",
-    "brand-logo-teal": "Teal & Black"
+    "brand-logo-teal": "Teal & Black",
+    "android-app-icon-blue": "Cream & Blue",
+    "android-app-icon-teal": "Teal & Black"
   },
   "task": {
     "scope-all": "Όλα",

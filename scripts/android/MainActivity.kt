@@ -103,10 +103,12 @@ class MainActivity : TauriActivity() {
       val selected = when (style) {
         "gold" -> ".LauncherGold"
         "purple" -> ".LauncherPurple"
+        "blue" -> ".LauncherBlue"
+        "teal" -> ".LauncherTeal"
         else -> return false
       }
       val packageManager = context.packageManager
-      val choices = listOf(".LauncherPurple", ".LauncherGold")
+      val choices = listOf(".LauncherPurple", ".LauncherGold", ".LauncherBlue", ".LauncherTeal")
       return runCatching {
         val selectedComponent = ComponentName(context.packageName, context.packageName + selected)
         val preferred = PackageManager.COMPONENT_ENABLED_STATE_ENABLED

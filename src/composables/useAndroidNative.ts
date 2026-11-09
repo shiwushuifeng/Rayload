@@ -7,7 +7,7 @@ interface RayloadNativeBridge {
   chooseDirectory(): void
   shareFile(path: string): boolean
   openFile(path: string): boolean
-  setAppIcon(style: 'purple' | 'gold'): boolean
+  setAppIcon(style: 'purple' | 'gold' | 'blue' | 'teal'): boolean
   storagePermissionStatus(): string
   requestStoragePermission(): void
   notificationPermissionStatus(): string
@@ -71,7 +71,7 @@ export function openAndroidFile(path: string): boolean {
   return getRayloadNativeBridge()?.openFile(path) ?? false
 }
 
-export function setAndroidAppIcon(style: 'purple' | 'gold'): boolean {
+export function setAndroidAppIcon(style: 'purple' | 'gold' | 'blue' | 'teal'): boolean {
   return getRayloadNativeBridge()?.setAppIcon(style) ?? false
 }
 

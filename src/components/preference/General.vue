@@ -311,8 +311,10 @@ const brandLogoOptions = computed(() => [
 ])
 
 const androidAppIconOptions = computed(() => [
-  { label: t('preferences.android-app-icon-purple'), value: 'purple' },
   { label: t('preferences.android-app-icon-gold'), value: 'gold' },
+  { label: t('preferences.android-app-icon-purple'), value: 'purple' },
+  { label: t('preferences.android-app-icon-blue'), value: 'blue' },
+  { label: t('preferences.android-app-icon-teal'), value: 'teal' },
 ])
 
 const taskCardModeOptions = computed(() => [

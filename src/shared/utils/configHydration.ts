@@ -204,7 +204,13 @@ function normalizeScalarValues(config: Record<string, unknown>, repairs: string[
     DEFAULT_APP_CONFIG.brandLogoStyle,
     repairs,
   )
-  repairEnum(config, 'androidAppIcon', ['purple', 'gold'] as const, DEFAULT_APP_CONFIG.androidAppIcon, repairs)
+  repairEnum(
+    config,
+    'androidAppIcon',
+    ['purple', 'gold', 'blue', 'teal'] as const,
+    DEFAULT_APP_CONFIG.androidAppIcon,
+    repairs,
+  )
   repairEnum(config, 'taskCardMode', ['full', 'compact'] as const, DEFAULT_APP_CONFIG.taskCardMode, repairs)
   repairEnum(config, 'colorScheme', getAllowedColorSchemeIds(), DEFAULT_APP_CONFIG.colorScheme, repairs)
   const customColorScheme = normalizeCustomColorScheme(config.customColorScheme)

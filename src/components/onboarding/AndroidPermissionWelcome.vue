@@ -12,6 +12,7 @@ import {
 } from '@vicons/ionicons5'
 import { useLocale } from '@/composables/useLocale'
 import { usePlatform } from '@/composables/usePlatform'
+import { useTheme } from '@/composables/useTheme'
 import { usePreferenceStore } from '@/stores/preference'
 import { COLOR_SCHEMES } from '@shared/constants'
 import {
@@ -19,6 +20,7 @@ import {
   requestAndroidBatteryOptimizationExemption,
   requestAndroidNotificationPermission,
   requestAndroidStoragePermission,
+  setAndroidAppIcon,
   type AndroidPermissionStatus,
 } from '@/composables/useAndroidNative'
 import { isSupportedLocale, LOCALE_CATALOG, type SupportedLocale } from '@shared/localeCatalog'
@@ -26,6 +28,10 @@ import { logger } from '@shared/logger'
 import { resolveSystemLocale } from '@shared/utils/locale'
 import { locale as getSystemLocale } from '@tauri-apps/plugin-os'
 import type { AppConfig } from '@shared/types'
+import brandLogoGold from '@/assets/logo.svg'
+import brandLogoViolet from '@/assets/logo-violet.svg'
+import brandLogoBlue from '@/assets/logo-blue.svg'
+import brandLogoTeal from '@/assets/logo-teal.svg'
 
 type PermissionKey = 'storage' | 'notification' | 'battery'
 
@@ -39,6 +45,7 @@ const LEGACY_STORAGE_KEY = 'rayload-onboarding-v1'
 const GUIDE_STORAGE_KEY = 'has_seen_permission_guide'
 const { t, locale } = useI18n()
 const { isAndroid } = usePlatform()
+const { isDark } = useTheme()
 const { setLocale } = useLocale()
 const preferenceStore = usePreferenceStore()
 const visible = ref(false)
@@ -50,6 +57,8 @@ const currentIndex = ref(0)
 const selectedLocale = ref(preferenceStore.locale || 'auto')
 const selectedTheme = ref<AppConfig['theme']>(preferenceStore.config.theme)
 const selectedColorScheme = ref(preferenceStore.config.colorScheme)
+const selectedBrandLogoStyle = ref<AppConfig['brandLogoStyle']>(preferenceStore.config.brandLogoStyle)
+const selectedAndroidAppIcon = ref<AppConfig['androidAppIcon']>(preferenceStore.config.androidAppIcon)
 const statuses = ref<Record<PermissionKey, AndroidPermissionStatus>>({
   storage: 'unavailable',
   notification: 'unavailable',
@@ -69,6 +78,57 @@ const themeOptions = computed(
       { label: t('preferences.theme-dark'), value: 'dark' },
     ] satisfies Array<{ label: string; value: AppConfig['theme'] }>,
 )
+
+const brandLogoOptions = computed(
+  () =>
+    [
+      { label: t('preferences.brand-logo-auto'), value: 'auto' },
+      { label: t('preferences.brand-logo-gold'), value: 'gold' },
+      { label: t('preferences.brand-logo-violet'), value: 'violet' },
+      { label: t('preferences.brand-logo-blue'), value: 'blue' },
+      { label: t('preferences.brand-logo-teal'), value: 'teal' },
+    ] satisfies Array<{ label: string; value: AppConfig['brandLogoStyle'] }>,
+)
+
+const androidAppIconOptions = computed(
+  () =>
+    [
+      { label: t('preferences.android-app-icon-gold'), value: 'gold' },
+      { label: t('preferences.android-app-icon-purple'), value: 'purple' },
+      { label: t('preferences.android-app-icon-blue'), value: 'blue' },
+      { label: t('preferences.android-app-icon-teal'), value: 'teal' },
+    ] satisfies Array<{ label: string; value: AppConfig['androidAppIcon'] }>,
+)
+
+const brandLogoPreview = computed(() => {
+  switch (selectedBrandLogoStyle.value) {
+    case 'gold':
+      return brandLogoGold
+    case 'violet':
+      return brandLogoViolet
+    case 'blue':
+      return brandLogoBlue
+    case 'teal':
+      return brandLogoTeal
+    default:
+      return selectedTheme.value === 'dark' || (selectedTheme.value === 'auto' && isDark.value)
+        ? brandLogoViolet
+        : brandLogoGold
+  }
+})
+
+const androidAppIconPreview = computed(() => {
+  switch (selectedAndroidAppIcon.value) {
+    case 'purple':
+      return brandLogoViolet
+    case 'blue':
+      return brandLogoBlue
+    case 'teal':
+      return brandLogoTeal
+    default:
+      return brandLogoGold
+  }
+})
 
 const allSteps = computed<PermissionStep[]>(() => [
   {
@@ -178,7 +238,12 @@ async function confirmAppearance(): Promise<void> {
   await preferenceStore.updateAndSave({
     theme: selectedTheme.value,
     colorScheme: selectedColorScheme.value,
+    brandLogoStyle: selectedBrandLogoStyle.value,
+    androidAppIcon: selectedAndroidAppIcon.value,
   })
+  if (isAndroid.value && !setAndroidAppIcon(selectedAndroidAppIcon.value)) {
+    logger.warn('AndroidPermissionWelcome.appIcon', 'Failed to apply Android launcher icon')
+  }
   appearanceStepActive.value = false
   currentIndex.value = 0
   if (steps.value.length === 0) finish()
@@ -311,6 +376,32 @@ onBeforeUnmount(() => {
             >
               <span aria-hidden="true" />
             </button>
+          </div>
+        </div>
+        <div class="onboarding-appearance-group">
+          <span class="onboarding-appearance-label">{{ t('preferences.brand-logo') }}</span>
+          <div class="onboarding-logo-selector">
+            <img :src="brandLogoPreview" alt="" width="52" height="52" />
+            <select v-model="selectedBrandLogoStyle" :aria-label="t('preferences.brand-logo')" class="language-select">
+              <option v-for="option in brandLogoOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+        </div>
+        <div class="onboarding-appearance-group">
+          <span class="onboarding-appearance-label">{{ t('preferences.android-app-icon') }}</span>
+          <div class="onboarding-logo-selector">
+            <img :src="androidAppIconPreview" alt="" width="52" height="52" />
+            <select
+              v-model="selectedAndroidAppIcon"
+              :aria-label="t('preferences.android-app-icon')"
+              class="language-select"
+            >
+              <option v-for="option in androidAppIconOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
           </div>
         </div>
       </div>
@@ -493,6 +584,17 @@ onBeforeUnmount(() => {
 }
 .onboarding-color-option.active {
   border-color: var(--m3-primary);
+}
+.onboarding-logo-selector {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+.onboarding-logo-selector img {
+  display: block;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--m3-shadow) 70%, transparent);
 }
 .permission-step h3 {
   margin: 0 0 5px;
