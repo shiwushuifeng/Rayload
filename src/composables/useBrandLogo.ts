@@ -1,7 +1,6 @@
 /** Theme-aware brand mark that keeps contrast on light and dark surfaces. */
 import { computed } from 'vue'
 import brandLogoForLight from '@/assets/logo.svg'
-import brandLogoForDark from '@/assets/logo-for-dark.svg'
 import brandLogoViolet from '@/assets/logo-violet.svg'
 import { useTheme } from '@/composables/useTheme'
 import { usePreferenceStore } from '@/stores/preference'
@@ -16,7 +15,7 @@ export function useBrandLogo() {
       case 'violet':
         return brandLogoViolet
       default:
-        return isDark.value ? brandLogoForDark : brandLogoForLight
+        return isDark.value ? brandLogoViolet : brandLogoForLight
     }
   })
   return { brandLogo }
