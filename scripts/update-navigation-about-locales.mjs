@@ -238,6 +238,10 @@ const secondaryCopy = {
     logoAuto: '自动（亮色米白金 / 暗色紫罗兰）',
     logoGold: '米白金',
     logoViolet: '紫罗兰',
+    androidIcon: 'Android 桌面图标',
+    androidIconPurple: '经典紫罗兰',
+    androidIconGold: '米白金',
+    androidIconFailed: '无法切换 Android 桌面图标',
   },
   'zh-TW': {
     appearance: '選擇淺色或深色外觀，並挑選喜歡的品牌配色。',
@@ -250,6 +254,10 @@ const secondaryCopy = {
     logoAuto: '自動（亮色米白金 / 暗色紫羅蘭）',
     logoGold: '米白金',
     logoViolet: '紫羅蘭',
+    androidIcon: 'Android 桌面圖示',
+    androidIconPurple: '經典紫羅蘭',
+    androidIconGold: '米白金',
+    androidIconFailed: '無法切換 Android 桌面圖示',
   },
 }
 
@@ -264,6 +272,10 @@ const englishSecondaryCopy = {
   logoAuto: 'Auto (cream-gold on light, violet on dark)',
   logoGold: 'Cream & Gold',
   logoViolet: 'Violet',
+  androidIcon: 'Android Home Icon',
+  androidIconPurple: 'Classic Violet',
+  androidIconGold: 'Cream & Gold',
+  androidIconFailed: 'Could not change the Android Home icon',
 }
 
 for (const locale of readdirSync(localesRoot, { withFileTypes: true })) {
@@ -291,6 +303,10 @@ for (const locale of readdirSync(localesRoot, { withFileTypes: true })) {
   messages.preferences['brand-logo-auto'] = secondary.logoAuto
   messages.preferences['brand-logo-gold'] = secondary.logoGold
   messages.preferences['brand-logo-violet'] = secondary.logoViolet
+  messages.preferences['android-app-icon'] = secondary.androidIcon
+  messages.preferences['android-app-icon-purple'] = secondary.androidIconPurple
+  messages.preferences['android-app-icon-gold'] = secondary.androidIconGold
+  messages.preferences['android-app-icon-failed'] = secondary.androidIconFailed
   writeFileSync(path, `${JSON.stringify(messages, null, 2)}\n`)
 }
 

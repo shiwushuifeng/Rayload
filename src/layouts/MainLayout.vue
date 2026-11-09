@@ -32,6 +32,7 @@ import PreferenceActionBar from '@/components/preference/PreferenceActionBar.vue
 import { providePreferenceActions } from '@/composables/usePreferenceActions'
 import { useNavigationVisibility } from '@/composables/useNavigationVisibility'
 import { useExtensionPanel } from '@/composables/useExtensionPanel'
+import { setAndroidAppIcon } from '@/composables/useAndroidNative'
 import TaskActions from '@/components/task/TaskActions.vue'
 import { useTaskDestinations } from '@/components/layout/navigation'
 import Speedometer from '@/components/layout/Speedometer.vue'
@@ -542,6 +543,7 @@ async function checkShutdownCondition() {
 
 onMounted(async () => {
   if (isAndroid.value) {
+    setAndroidAppIcon(preferenceStore.config.androidAppIcon)
     window.__rayloadHandleBack = handleAndroidBack
     window.addEventListener('rayload-back-home', onAndroidBackHome)
   }

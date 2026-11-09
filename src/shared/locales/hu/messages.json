@@ -659,7 +659,11 @@
     "brand-logo": "Brand logo",
     "brand-logo-auto": "Auto (cream-gold on light, violet on dark)",
     "brand-logo-gold": "Cream & Gold",
-    "brand-logo-violet": "Violet"
+    "brand-logo-violet": "Violet",
+    "android-app-icon": "Android Home Icon",
+    "android-app-icon-purple": "Classic Violet",
+    "android-app-icon-gold": "Cream & Gold",
+    "android-app-icon-failed": "Could not change the Android Home icon"
   },
   "task": {
     "scope-all": "Összes",

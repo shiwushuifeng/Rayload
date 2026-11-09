@@ -215,6 +215,7 @@ export const DEFAULT_APP_CONFIG = {
   colorScheme: DEFAULT_COLOR_SCHEME_ID,
   customColorScheme: DEFAULT_CUSTOM_COLOR_SCHEME,
   brandLogoStyle: 'auto' as const,
+  androidAppIcon: 'gold' as const,
   taskCardMode: 'full' as const,
   showLogoWhenEmpty: true,
   reduceMotion: false,

@@ -4,6 +4,7 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.ClipData
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -42,6 +43,7 @@ class MainActivity : TauriActivity() {
     private const val REQUEST_NOTIFICATION_PERMISSION = 4102
     private const val REQUEST_LEGACY_STORAGE_PERMISSION = 4103
     private const val WAKE_LOCK_TAG = "Rayload:active-downloads"
+    private const val LAUNCHER_ICON_PREFS = "rayload-launcher-icon"
 
     private var downloadWakeLock: PowerManager.WakeLock? = null
 
@@ -92,6 +94,40 @@ class MainActivity : TauriActivity() {
         )
       }
       return startActivitySafely(context, intent)
+    }
+
+    /** Switches the Android home-screen shortcut between bundled icon aliases. */
+    @Keep
+    @JvmStatic
+    fun setAppIcon(context: Context, style: String): Boolean {
+      val selected = when (style) {
+        "gold" -> ".LauncherGold"
+        "purple" -> ".LauncherPurple"
+        else -> return false
+      }
+      val packageManager = context.packageManager
+      val choices = listOf(".LauncherPurple", ".LauncherGold")
+      return runCatching {
+        val selectedComponent = ComponentName(context.packageName, context.packageName + selected)
+        val preferred = PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+        val disabled = PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+        val flags = PackageManager.DONT_KILL_APP
+        packageManager.setComponentEnabledSetting(selectedComponent, preferred, flags)
+        choices
+          .filter { it != selected }
+          .forEach { suffix ->
+            packageManager.setComponentEnabledSetting(
+              ComponentName(context.packageName, context.packageName + suffix),
+              disabled,
+              flags,
+            )
+          }
+        context.getSharedPreferences(LAUNCHER_ICON_PREFS, Context.MODE_PRIVATE)
+          .edit()
+          .putString("style", style)
+          .apply()
+        true
+      }.getOrDefault(false)
     }
 
     @Keep
@@ -250,6 +286,9 @@ class MainActivity : TauriActivity() {
 
     @JavascriptInterface
     fun openFile(path: String): Boolean = Companion.openFile(this@MainActivity, path)
+
+    @JavascriptInterface
+    fun setAppIcon(style: String): Boolean = Companion.setAppIcon(this@MainActivity, style)
 
     @JavascriptInterface
     fun storagePermissionStatus(): String = currentStoragePermissionStatus()

@@ -13,6 +13,7 @@ describe('triggerHaptic', () => {
       chooseDirectory: vi.fn(),
       shareFile: vi.fn(() => false),
       openFile: vi.fn(() => false),
+      setAppIcon: vi.fn(() => true),
       storagePermissionStatus: vi.fn(() => 'denied'),
       requestStoragePermission: vi.fn(),
       notificationPermissionStatus: vi.fn(() => 'denied'),

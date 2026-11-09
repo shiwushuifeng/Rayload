@@ -14,6 +14,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { relaunch } from '@tauri-apps/plugin-process'
 import { arch as osArch, locale as getLocale, version as osVersion } from '@tauri-apps/plugin-os'
 import { usePlatform } from '@/composables/usePlatform'
+import { setAndroidAppIcon } from '@/composables/useAndroidNative'
 import { getVersion as getAppVersion } from '@tauri-apps/api/app'
 import { getVersion as getAria2Version } from '@/api/aria2'
 import { resolveSystemLocale } from '@shared/utils/locale'
@@ -144,6 +145,12 @@ const { form, isDirty, handleSave, handleReset, patchSnapshot, resetSnapshot, co
         await invoke('set_autostart', { enabled: !!f.openAtLogin })
       } catch (e) {
         logger.error('General.autostart', e)
+      }
+    }
+
+    if (isAndroid.value && f.androidAppIcon !== prevConfig.androidAppIcon) {
+      if (!setAndroidAppIcon(f.androidAppIcon)) {
+        message.warning(t('preferences.android-app-icon-failed'))
       }
     }
 
@@ -299,6 +306,11 @@ const brandLogoOptions = computed(() => [
   { label: t('preferences.brand-logo-auto'), value: 'auto' },
   { label: t('preferences.brand-logo-gold'), value: 'gold' },
   { label: t('preferences.brand-logo-violet'), value: 'violet' },
+])
+
+const androidAppIconOptions = computed(() => [
+  { label: t('preferences.android-app-icon-purple'), value: 'purple' },
+  { label: t('preferences.android-app-icon-gold'), value: 'gold' },
 ])
 
 const taskCardModeOptions = computed(() => [
@@ -549,6 +561,9 @@ onMounted(async () => {
         </NFormItem>
         <NFormItem :label="t('preferences.brand-logo')">
           <NSelect v-model:value="form.brandLogoStyle" :options="brandLogoOptions" class="pref-control-auto" />
+        </NFormItem>
+        <NFormItem v-if="isAndroid" :label="t('preferences.android-app-icon')">
+          <NSelect v-model:value="form.androidAppIcon" :options="androidAppIconOptions" class="pref-control-auto" />
         </NFormItem>
         <NFormItem v-if="!isAndroid">
           <template #label>

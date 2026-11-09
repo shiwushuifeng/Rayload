@@ -7,6 +7,7 @@ interface RayloadNativeBridge {
   chooseDirectory(): void
   shareFile(path: string): boolean
   openFile(path: string): boolean
+  setAppIcon(style: 'purple' | 'gold'): boolean
   storagePermissionStatus(): string
   requestStoragePermission(): void
   notificationPermissionStatus(): string
@@ -68,6 +69,10 @@ export function shareAndroidFile(path: string): boolean {
 /** Launches an Android ACTION_VIEW intent for a local file through FileProvider. */
 export function openAndroidFile(path: string): boolean {
   return getRayloadNativeBridge()?.openFile(path) ?? false
+}
+
+export function setAndroidAppIcon(style: 'purple' | 'gold'): boolean {
+  return getRayloadNativeBridge()?.setAppIcon(style) ?? false
 }
 
 /** Opens Android's DocumentsUI tree picker and resolves the selected filesystem path. */

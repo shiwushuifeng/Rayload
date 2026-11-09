@@ -659,7 +659,11 @@
     "brand-logo": "品牌标志",
     "brand-logo-auto": "自动（亮色米白金 / 暗色紫罗兰）",
     "brand-logo-gold": "米白金",
-    "brand-logo-violet": "紫罗兰"
+    "brand-logo-violet": "紫罗兰",
+    "android-app-icon": "Android 桌面图标",
+    "android-app-icon-purple": "经典紫罗兰",
+    "android-app-icon-gold": "米白金",
+    "android-app-icon-failed": "无法切换 Android 桌面图标"
   },
   "task": {
     "scope-all": "全部",
