@@ -12,9 +12,9 @@
     "tagline": "Redefinimos el gestor de descargas de código abierto",
     "tech-stack": "Tecnologías",
     "developed-by": "Desarrollado por {author}",
-    "android-port-notice": "Rayload is independently maintained by shiwushuifeng. It is based on Rayburst by AnInsomniacy and follows the original project's MIT license.",
     "repository": "Repositorio",
-    "original-work": "Basado en Rayburst de AnInsomniacy, con licencia MIT."
+    "open-source-acknowledgement-label": "Agradecimiento al código abierto",
+    "open-source-acknowledgement": "{label}: Gracias a AnInsomniacy por desarrollar el proyecto de código abierto Rayburst. Rayload es un port no oficial para Android, mantenido de forma independiente y publicado bajo la licencia MIT."
   },
   "app": {
     "task-list": "Tareas",
@@ -653,7 +653,9 @@
     "request-section": "Solicitudes",
     "connection-section": "Conexión",
     "bt-protocol-section": "Protocolo",
-    "rpc-port-locked-android": "El puerto RPC está fijado en 6800 en Android por compatibilidad con la extensión."
+    "rpc-port-locked-android": "El puerto RPC está fijado en 6800 en Android por compatibilidad con la extensión.",
+    "navigation-customization": "Navegación inferior",
+    "navigation-customization-hint": "Elige qué destinos permanecen visibles abajo. Ajustes siempre estará disponible."
   },
   "task": {
     "scope-all": "Todas",
@@ -1003,7 +1005,13 @@
     "drop-to-add": "Suelta para añadir",
     "share-file": "Compartir archivo",
     "share-file-success": "Se abrió el menú para compartir el archivo",
-    "share-file-failed": "No se puede compartir el archivo"
+    "share-file-failed": "No se puede compartir el archivo",
+    "android-file-open-fallback": "El archivo se ha guardado en la carpeta Download/Rayload.",
+    "sha256": "SHA-256",
+    "sha256-calculating": "Calculating SHA-256 for {fileName}…",
+    "sha256-copy": "Copy SHA-256",
+    "sha256-copied": "SHA-256 copied",
+    "sha256-failed": "Could not calculate the file SHA-256"
   },
   "media": {
     "probing": "Analizando el contenido",
@@ -1073,7 +1081,8 @@
     "allow": "Permitir",
     "later": "Más tarde",
     "next": "Siguiente",
-    "finish": "Finalizar"
+    "finish": "Finalizar",
+    "appearance-description": "Choose a light or dark appearance and a brand color scheme."
   },
   "trash": {
     "title": "Trash",

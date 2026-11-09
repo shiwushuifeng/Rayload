@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import brandLogo from '@/assets/logo.svg'
+import { useBrandLogo } from '@/composables/useBrandLogo'
 
 defineProps<{ show: boolean }>()
+const { brandLogo } = useBrandLogo()
 </script>
 
 <template>

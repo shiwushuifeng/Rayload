@@ -12,9 +12,9 @@
     "tagline": "オープンソースのダウンロードマネージャーを再定義する",
     "tech-stack": "使用技術",
     "developed-by": "{author} が開発",
-    "android-port-notice": "Rayload is independently maintained by shiwushuifeng. It is based on Rayburst by AnInsomniacy and follows the original project's MIT license.",
     "repository": "リポジトリ",
-    "original-work": "AnInsomniacy の Rayburst を基にし、MIT ライセンスで提供されています。"
+    "open-source-acknowledgement-label": "オープンソースへの謝辞",
+    "open-source-acknowledgement": "{label}: オープンソースプロジェクト Rayburst を開発した AnInsomniacy に感謝します。Rayload はその非公式 Android 移植版であり、独立して維持され、MIT ライセンスで公開されています。"
   },
   "app": {
     "task-list": "タスク一覧",
@@ -653,7 +653,9 @@
     "request-section": "リクエスト",
     "connection-section": "接続",
     "bt-protocol-section": "プロトコル",
-    "rpc-port-locked-android": "ブラウザ拡張機能との互換性のため、Android の RPC ポートは 6800 に固定されています。"
+    "rpc-port-locked-android": "ブラウザ拡張機能との互換性のため、Android の RPC ポートは 6800 に固定されています。",
+    "navigation-customization": "下部ナビゲーション",
+    "navigation-customization-hint": "下部に表示するページを選択します。設定は常に利用できます。"
   },
   "task": {
     "scope-all": "すべて",
@@ -1003,7 +1005,13 @@
     "drop-to-add": "ドロップして追加",
     "share-file": "ファイルを共有",
     "share-file-success": "ファイル共有画面を開きました",
-    "share-file-failed": "ファイルを共有できません"
+    "share-file-failed": "ファイルを共有できません",
+    "android-file-open-fallback": "ファイルは Download/Rayload フォルダーに保存されています。",
+    "sha256": "SHA-256",
+    "sha256-calculating": "Calculating SHA-256 for {fileName}…",
+    "sha256-copy": "Copy SHA-256",
+    "sha256-copied": "SHA-256 copied",
+    "sha256-failed": "Could not calculate the file SHA-256"
   },
   "media": {
     "probing": "メディアを解析中",
@@ -1073,7 +1081,8 @@
     "allow": "許可",
     "later": "後で",
     "next": "次へ",
-    "finish": "完了"
+    "finish": "完了",
+    "appearance-description": "Choose a light or dark appearance and a brand color scheme."
   },
   "trash": {
     "title": "Trash",

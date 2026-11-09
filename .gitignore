@@ -75,6 +75,7 @@ src-tauri/gen/android/app/src/main/jniLibs/
 
 # Local release assets and archived builds (published as GitHub Release assets)
 release/
+upload/
 
 # Local Android signing material
 signing/*.jks

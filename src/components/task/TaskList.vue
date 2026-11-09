@@ -24,6 +24,7 @@ const emit = defineEmits<{
   'copy-link': [task: Aria2Task]
   'show-info': [task: Aria2Task]
   folder: [task: Aria2Task]
+  checksum: [task: Aria2Task]
   'open-file': [task: Aria2Task]
   'share-file': [task: Aria2Task]
   'select-files': [task: Aria2Task]
@@ -323,6 +324,7 @@ function handleCardBeforeLeave(element: Element) {
             @copy-link="emit('copy-link', item)"
             @show-info="emit('show-info', item)"
             @folder="emit('folder', item)"
+            @checksum="emit('checksum', item)"
             @open-file="emit('open-file', item)"
             @share-file="emit('share-file', item)"
             @select-files="emit('select-files', item)"

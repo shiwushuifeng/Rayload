@@ -15,7 +15,7 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { NButton, NIcon } from 'naive-ui'
 import { AddOutline, ArrowForwardOutline, PauseOutline, PlayOutline } from '@vicons/ionicons5'
 import aria2Api from '@/api/aria2'
-import brandLogo from '@/assets/logo.svg'
+import { useBrandLogo } from '@/composables/useBrandLogo'
 import SegmentBar from '@/components/task/SegmentBar.vue'
 import { useEscapeKey } from '@/composables/useEscapeKey'
 import { useFloatUpdates } from '@/composables/useFloatUpdates'
@@ -42,6 +42,7 @@ interface PanelSide {
 const LEAVE_MS = 170
 
 const { t } = useI18n()
+const { brandLogo } = useBrandLogo()
 const view = getCurrentWebviewWindow()
 const root = ref<HTMLElement | null>(null)
 const phase = ref<'hidden' | 'shown' | 'leaving'>('hidden')

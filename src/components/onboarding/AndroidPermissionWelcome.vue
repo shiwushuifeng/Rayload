@@ -13,6 +13,7 @@ import {
 import { useLocale } from '@/composables/useLocale'
 import { usePlatform } from '@/composables/usePlatform'
 import { usePreferenceStore } from '@/stores/preference'
+import { COLOR_SCHEMES } from '@shared/constants'
 import {
   readAndroidPermissionStatuses,
   requestAndroidBatteryOptimizationExemption,
@@ -24,6 +25,7 @@ import { isSupportedLocale, LOCALE_CATALOG, type SupportedLocale } from '@shared
 import { logger } from '@shared/logger'
 import { resolveSystemLocale } from '@shared/utils/locale'
 import { locale as getSystemLocale } from '@tauri-apps/plugin-os'
+import type { AppConfig } from '@shared/types'
 
 type PermissionKey = 'storage' | 'notification' | 'battery'
 
@@ -42,9 +44,12 @@ const preferenceStore = usePreferenceStore()
 const visible = ref(false)
 const firstRun = ref(true)
 const languageStepActive = ref(false)
+const appearanceStepActive = ref(false)
 const dismissedThisSession = ref(false)
 const currentIndex = ref(0)
 const selectedLocale = ref(preferenceStore.locale || 'auto')
+const selectedTheme = ref<AppConfig['theme']>(preferenceStore.config.theme)
+const selectedColorScheme = ref(preferenceStore.config.colorScheme)
 const statuses = ref<Record<PermissionKey, AndroidPermissionStatus>>({
   storage: 'unavailable',
   notification: 'unavailable',
@@ -55,6 +60,15 @@ const localeOptions = computed(() => [
   { label: t('preferences.follow-system'), value: 'auto' },
   ...LOCALE_CATALOG.map(({ code, label }) => ({ label, value: code })),
 ])
+
+const themeOptions = computed(
+  () =>
+    [
+      { label: t('preferences.theme-auto'), value: 'auto' },
+      { label: t('preferences.theme-light'), value: 'light' },
+      { label: t('preferences.theme-dark'), value: 'dark' },
+    ] satisfies Array<{ label: string; value: AppConfig['theme'] }>,
+)
 
 const allSteps = computed<PermissionStep[]>(() => [
   {
@@ -83,12 +97,15 @@ const steps = computed(() =>
 )
 const currentStep = computed(() => steps.value[currentIndex.value] ?? steps.value[0] ?? null)
 const currentStatus = computed(() => (currentStep.value ? statuses.value[currentStep.value.key] : 'unavailable'))
-const totalOnboardingSteps = computed(() => steps.value.length + (firstRun.value ? 1 : 0))
+const totalOnboardingSteps = computed(() => steps.value.length + (firstRun.value ? 2 : 0))
 const progress = computed(() => {
   if (totalOnboardingSteps.value === 0) return 100
-  const completedPermissions = languageStepActive.value ? 0 : currentIndex.value + 1
+  const completedPermissions = languageStepActive.value || appearanceStepActive.value ? 0 : currentIndex.value + 1
   const completedLanguage = firstRun.value && !languageStepActive.value ? 1 : 0
-  return Math.round(((completedPermissions + completedLanguage) / totalOnboardingSteps.value) * 100)
+  const completedAppearance = firstRun.value && !languageStepActive.value && !appearanceStepActive.value ? 1 : 0
+  return Math.round(
+    ((completedPermissions + completedLanguage + completedAppearance) / totalOnboardingSteps.value) * 100,
+  )
 })
 
 function readPermissionGuideSeen(): boolean {
@@ -115,7 +132,8 @@ function refreshStatuses(): void {
   if (!isAndroid.value) return
   statuses.value = readAndroidPermissionStatuses()
   if (currentIndex.value >= steps.value.length) currentIndex.value = Math.max(0, steps.value.length - 1)
-  visible.value = (languageStepActive.value || steps.value.length > 0) && !dismissedThisSession.value
+  visible.value =
+    (languageStepActive.value || appearanceStepActive.value || steps.value.length > 0) && !dismissedThisSession.value
 }
 
 function requestCurrentPermission(): void {
@@ -151,6 +169,17 @@ async function confirmLanguage(): Promise<void> {
   }
   await preferenceStore.updateAndSave({ locale: selectedLocale.value })
   languageStepActive.value = false
+  appearanceStepActive.value = true
+  currentIndex.value = 0
+  visible.value = true
+}
+
+async function confirmAppearance(): Promise<void> {
+  await preferenceStore.updateAndSave({
+    theme: selectedTheme.value,
+    colorScheme: selectedColorScheme.value,
+  })
+  appearanceStepActive.value = false
   currentIndex.value = 0
   if (steps.value.length === 0) finish()
   else visible.value = true
@@ -159,6 +188,10 @@ async function confirmLanguage(): Promise<void> {
 async function advance(): Promise<void> {
   if (languageStepActive.value) {
     await confirmLanguage()
+    return
+  }
+  if (appearanceStepActive.value) {
+    await confirmAppearance()
     return
   }
   if (currentStatus.value !== 'granted') {
@@ -210,8 +243,24 @@ onBeforeUnmount(() => {
     <section class="permission-welcome" role="dialog" aria-modal="true" :aria-label="t('onboarding.title')">
       <div class="permission-welcome__accent" />
       <div class="permission-welcome__heading">
-        <h2>{{ languageStepActive ? t('preferences.language') : t('onboarding.title') }}</h2>
-        <p>{{ languageStepActive ? t('preferences.select-language') : t('onboarding.description') }}</p>
+        <h2>
+          {{
+            languageStepActive
+              ? t('preferences.language')
+              : appearanceStepActive
+                ? t('preferences.appearance-section')
+                : t('onboarding.title')
+          }}
+        </h2>
+        <p>
+          {{
+            languageStepActive
+              ? t('preferences.select-language')
+              : appearanceStepActive
+                ? t('onboarding.appearance-description')
+                : t('onboarding.description')
+          }}
+        </p>
       </div>
 
       <div v-if="languageStepActive" class="permission-step permission-step--language">
@@ -224,6 +273,45 @@ onBeforeUnmount(() => {
               {{ option.label }}
             </option>
           </select>
+        </div>
+      </div>
+
+      <div v-else-if="appearanceStepActive" class="permission-step permission-step--appearance">
+        <div class="onboarding-appearance-group">
+          <span class="onboarding-appearance-label">{{ t('preferences.appearance') }}</span>
+          <div class="onboarding-theme-options" role="radiogroup" :aria-label="t('preferences.appearance')">
+            <button
+              v-for="option in themeOptions"
+              :key="option.value"
+              type="button"
+              class="onboarding-theme-option"
+              :class="{ active: selectedTheme === option.value }"
+              role="radio"
+              :aria-checked="selectedTheme === option.value"
+              @click="selectedTheme = option.value"
+            >
+              {{ option.label }}
+            </button>
+          </div>
+        </div>
+        <div class="onboarding-appearance-group">
+          <span class="onboarding-appearance-label">{{ t('preferences.color-scheme') }}</span>
+          <div class="onboarding-color-options" role="radiogroup" :aria-label="t('preferences.color-scheme')">
+            <button
+              v-for="scheme in COLOR_SCHEMES"
+              :key="scheme.id"
+              type="button"
+              class="onboarding-color-option"
+              :class="{ active: selectedColorScheme === scheme.id }"
+              :style="{ '--swatch-color': scheme.seed }"
+              role="radio"
+              :aria-label="t(scheme.labelKey)"
+              :aria-checked="selectedColorScheme === scheme.id"
+              @click="selectedColorScheme = scheme.id"
+            >
+              <span aria-hidden="true" />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -251,11 +339,13 @@ onBeforeUnmount(() => {
           {{
             languageStepActive
               ? t('onboarding.next')
-              : currentStatus === 'granted'
-                ? currentIndex + 1 < steps.length
-                  ? t('onboarding.next')
-                  : t('onboarding.finish')
-                : t('onboarding.allow')
+              : appearanceStepActive
+                ? t('onboarding.next')
+                : currentStatus === 'granted'
+                  ? currentIndex + 1 < steps.length
+                    ? t('onboarding.next')
+                    : t('onboarding.finish')
+                  : t('onboarding.allow')
           }}
         </NButton>
       </div>
@@ -337,6 +427,72 @@ onBeforeUnmount(() => {
 .language-select option {
   color: var(--m3-on-surface);
   background: var(--m3-surface-container-high);
+}
+.permission-step--appearance {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+.onboarding-appearance-group {
+  display: grid;
+  gap: 9px;
+}
+.onboarding-appearance-label {
+  color: var(--m3-on-surface);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+}
+.onboarding-theme-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+.onboarding-theme-option {
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--radius-lg);
+  background: var(--m3-surface-container-high);
+  color: var(--m3-on-surface-variant);
+  font: inherit;
+  cursor: pointer;
+}
+.onboarding-theme-option.active {
+  border-color: var(--m3-primary);
+  background: var(--m3-primary-container);
+  color: var(--m3-on-primary-container);
+  font-weight: 650;
+}
+.onboarding-theme-option:focus-visible,
+.onboarding-color-option:focus-visible {
+  outline: 2px solid var(--m3-primary);
+  outline-offset: 2px;
+}
+.onboarding-color-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.onboarding-color-option {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+.onboarding-color-option > span {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--swatch-color);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--m3-on-surface) 18%, transparent);
+}
+.onboarding-color-option.active {
+  border-color: var(--m3-primary);
 }
 .permission-step h3 {
   margin: 0 0 5px;

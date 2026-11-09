@@ -45,32 +45,6 @@ class MainActivity : TauriActivity() {
 
     private var downloadWakeLock: PowerManager.WakeLock? = null
 
-    /**
-     * Opens DocumentsUI at the user-visible Rayload download directory.
-     * A tree picker is the compatibility fallback when a vendor DocumentsUI
-     * does not accept a direct document URI.
-     */
-    @Keep
-    @JvmStatic
-    fun openRayloadDownloadsFolder(context: Context): Boolean {
-      val folder = File(
-        Environment.getExternalStorageDirectory(),
-        APP_DOWNLOAD_DIRECTORY,
-      )
-      folder.mkdirs()
-      return openFolder(context, folder)
-    }
-
-    /** Opens the containing folder for a path through the Android DocumentsUI. */
-    @Keep
-    @JvmStatic
-    fun openFileOrFolder(context: Context, rawPath: String): Boolean {
-      val target = File(rawPath)
-      val folder = if (target.isDirectory) target else target.parentFile
-      if (folder != null && folder.isDirectory && openFolder(context, folder)) return true
-      return target.isFile && openFile(context, target.absolutePath)
-    }
-
     /** Shares a downloaded file through a correctly scoped FileProvider URI. */
     @Keep
     @JvmStatic
@@ -104,9 +78,11 @@ class MainActivity : TauriActivity() {
       if (!file.isFile || !file.canRead()) return false
       val uri = fileProviderUri(context, file) ?: return false
       val extension = file.extension.lowercase()
-      val mime = context.contentResolver.getType(uri)
-        ?: MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-        ?: "*/*"
+      val mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+        ?: context.contentResolver.getType(uri)?.takeUnless {
+          it == "application/octet-stream" || it == "*/*"
+        }
+        ?: return false
       val intent = Intent(Intent.ACTION_VIEW).apply {
         setDataAndType(uri, mime)
         clipData = ClipData.newUri(context.contentResolver, file.name, uri)
@@ -141,30 +117,6 @@ class MainActivity : TauriActivity() {
       if (wakeLock.isHeld) wakeLock.release()
       downloadWakeLock = null
       return true
-    }
-
-    private fun openFolder(context: Context, folder: File): Boolean {
-      val root = Environment.getExternalStorageDirectory().absolutePath.trimEnd('/')
-      val relative = folder.absoluteFile.absolutePath
-        .removePrefix(root)
-        .trimStart('/')
-      val documentId = if (relative.isEmpty()) "primary:" else "primary:$relative"
-      val uri = DocumentsContract.buildDocumentUri(EXTERNAL_STORAGE_DOCUMENTS, documentId)
-
-      val view = Intent(Intent.ACTION_VIEW).apply {
-        setDataAndType(uri, DocumentsContract.Document.MIME_TYPE_DIR)
-        addFlags(
-          Intent.FLAG_ACTIVITY_NEW_TASK or
-            Intent.FLAG_GRANT_READ_URI_PERMISSION,
-        )
-      }
-      if (startActivitySafely(context, view)) return true
-
-      val picker = Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-        putExtra(DocumentsContract.EXTRA_INITIAL_URI, uri)
-        addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-      }
-      return startActivitySafely(context, picker)
     }
 
     private fun fileProviderUri(context: Context, file: File): Uri? {
@@ -295,6 +247,9 @@ class MainActivity : TauriActivity() {
 
     @JavascriptInterface
     fun shareFile(path: String): Boolean = Companion.shareFile(this@MainActivity, path)
+
+    @JavascriptInterface
+    fun openFile(path: String): Boolean = Companion.openFile(this@MainActivity, path)
 
     @JavascriptInterface
     fun storagePermissionStatus(): String = currentStoragePermissionStatus()

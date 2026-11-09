@@ -12,9 +12,9 @@
     "tagline": "Wir definieren den Open-Source-Downloadmanager neu",
     "tech-stack": "Technologien",
     "developed-by": "Entwickelt von {author}",
-    "android-port-notice": "Rayload is independently maintained by shiwushuifeng. It is based on Rayburst by AnInsomniacy and follows the original project's MIT license.",
     "repository": "Repository",
-    "original-work": "Basiert auf Rayburst von AnInsomniacy unter der MIT-Lizenz."
+    "open-source-acknowledgement-label": "Dank an Open Source",
+    "open-source-acknowledgement": "{label}: Danke an AnInsomniacy für die Entwicklung des Open-Source-Projekts Rayburst. Rayload ist ein inoffizieller Android-Port, unabhängig gepflegt und unter der MIT-Open-Source-Lizenz veröffentlicht."
   },
   "app": {
     "task-list": "Aufgaben",
@@ -653,7 +653,9 @@
     "request-section": "Anfragen",
     "connection-section": "Verbindung",
     "bt-protocol-section": "Protokoll",
-    "rpc-port-locked-android": "Der RPC-Port ist unter Android für die Erweiterungskompatibilität auf 6800 festgelegt."
+    "rpc-port-locked-android": "Der RPC-Port ist unter Android für die Erweiterungskompatibilität auf 6800 festgelegt.",
+    "navigation-customization": "Untere Navigation",
+    "navigation-customization-hint": "Wähle, welche Ziele unten sichtbar bleiben. Einstellungen bleiben immer verfügbar."
   },
   "task": {
     "scope-all": "Alle",
@@ -1003,7 +1005,13 @@
     "drop-to-add": "Zum Hinzufügen ablegen",
     "share-file": "Datei teilen",
     "share-file-success": "Dateifreigabe wurde geöffnet",
-    "share-file-failed": "Datei konnte nicht geteilt werden"
+    "share-file-failed": "Datei konnte nicht geteilt werden",
+    "android-file-open-fallback": "Die Datei wurde im Ordner Download/Rayload gespeichert.",
+    "sha256": "SHA-256",
+    "sha256-calculating": "Calculating SHA-256 for {fileName}…",
+    "sha256-copy": "Copy SHA-256",
+    "sha256-copied": "SHA-256 copied",
+    "sha256-failed": "Could not calculate the file SHA-256"
   },
   "media": {
     "probing": "Medium wird untersucht",
@@ -1073,7 +1081,8 @@
     "allow": "Zulassen",
     "later": "Später",
     "next": "Weiter",
-    "finish": "Fertig"
+    "finish": "Fertig",
+    "appearance-description": "Choose a light or dark appearance and a brand color scheme."
   },
   "trash": {
     "title": "Trash",

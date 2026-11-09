@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { NModal, NIcon } from 'naive-ui'
 import MTooltip from '@/components/common/MTooltip.vue'
 import { LogoGithub, HeartOutline, GlobeOutline, RocketOutline } from '@vicons/ionicons5'
-import brandLogo from '@/assets/logo.svg'
+import { useBrandLogo } from '@/composables/useBrandLogo'
 import { openUrl as openExternalUrl } from '@tauri-apps/plugin-opener'
 import { getVersion } from '@tauri-apps/api/app'
 import { getVersion as getAria2Version } from '@/api/aria2'
@@ -17,6 +17,7 @@ const props = defineProps<{ show: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 
 const { t } = useI18n()
+const { brandLogo } = useBrandLogo()
 const message = useAppMessage()
 const appVersion = ref('')
 const aria2Version = ref('')
@@ -200,7 +201,6 @@ function openUrl(url: string) {
 
       <!-- Slogan -->
       <p class="about-desc stagger stagger-3">{{ t('about.tagline') }}</p>
-      <p class="about-android-notice stagger stagger-3">{{ t('about.android-port-notice') }}</p>
 
       <!-- Tech Stack -->
       <div class="about-section-label stagger stagger-4">{{ t('about.tech-stack') }}</div>
@@ -240,20 +240,16 @@ function openUrl(url: string) {
 
       <!-- Footer -->
       <div class="about-footer stagger stagger-6">
-        <i18n-t keypath="about.developed-by" tag="span" scope="global">
+        <i18n-t keypath="about.developed-by" tag="div" scope="global" class="about-maintainer">
           <template #author>
             <a class="about-link" @click="openUrl('https://github.com/shiwushuifeng/')">shiwushuifeng</a>
           </template>
         </i18n-t>
-        <div class="about-legal">
-          <span>{{ t('about.original-work') }}</span>
-          <a
-            class="about-link"
-            href="https://github.com/AnInsomniacy/rayburst/blob/main/LICENSE"
-            @click.prevent="openUrl('https://github.com/AnInsomniacy/rayburst/blob/main/LICENSE')"
-            >{{ t('about.license') }}</a
-          >
-        </div>
+        <i18n-t keypath="about.open-source-acknowledgement" tag="p" scope="global">
+          <template #label>
+            <strong>{{ t('about.open-source-acknowledgement-label') }}</strong>
+          </template>
+        </i18n-t>
       </div>
     </div>
   </NModal>
@@ -376,18 +372,6 @@ function openUrl(url: string) {
   line-height: 1.7;
   color: var(--m3-on-surface-variant);
 }
-.about-android-notice {
-  margin: 12px auto 0;
-  max-width: 360px;
-  padding: 10px 12px;
-  border: 1px solid color-mix(in srgb, var(--m3-primary) 42%, var(--m3-outline-variant));
-  border-radius: var(--radius-lg);
-  background: color-mix(in srgb, var(--m3-primary-container) 48%, transparent);
-  color: var(--m3-on-primary-container);
-  font-size: var(--font-size-xs);
-  line-height: 1.55;
-}
-
 /* ── Section Label ────────────────────────────────────────────────── */
 .about-section-label {
   margin-top: 20px;
@@ -461,22 +445,27 @@ function openUrl(url: string) {
   outline-offset: 3px;
 }
 
-.about-legal {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: 4px 12px;
-}
-
 /* ── Footer ───────────────────────────────────────────────────────── */
 .about-footer {
   margin-top: 20px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  font-size: var(--font-size-2xs);
+  gap: 7px;
+  font-size: var(--font-size-xs);
+  line-height: 1.55;
   color: var(--m3-outline);
+}
+.about-maintainer {
+  color: var(--m3-on-surface-variant);
+  font-weight: 600;
+}
+.about-footer p {
+  margin: 0;
+  text-wrap: pretty;
+}
+.about-footer strong {
+  color: var(--m3-primary);
+  font-weight: 700;
 }
 .about-link {
   color: var(--m3-primary);

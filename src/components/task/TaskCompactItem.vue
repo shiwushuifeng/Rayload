@@ -29,6 +29,7 @@ const emit = defineEmits<{
   'copy-link': [task: Aria2Task]
   'show-info': [task: Aria2Task]
   folder: [task: Aria2Task]
+  checksum: [task: Aria2Task]
   'open-file': [task: Aria2Task]
   'select-files': [task: Aria2Task]
 }>()
@@ -132,6 +133,7 @@ const compactStatus = computed<{ label: string; tone: string; icon: Component } 
           @copy-link="emit('copy-link', task)"
           @show-info="emit('show-info', task)"
           @folder="emit('folder', task)"
+          @checksum="emit('checksum', task)"
           @select-files="emit('select-files', task)"
         />
       </div>

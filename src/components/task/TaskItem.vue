@@ -40,6 +40,7 @@ const emit = defineEmits<{
   'copy-link': [task: Aria2Task]
   'show-info': [task: Aria2Task]
   folder: [task: Aria2Task]
+  checksum: [task: Aria2Task]
   'open-file': [task: Aria2Task]
   'share-file': [task: Aria2Task]
   'select-files': [task: Aria2Task]
@@ -167,6 +168,7 @@ const contentDraggable = computed(
           @copy-link="emit('copy-link', task)"
           @show-info="emit('show-info', task)"
           @folder="emit('folder', task)"
+          @checksum="emit('checksum', task)"
           @share-file="emit('share-file', task)"
           @select-files="emit('select-files', task)"
         />

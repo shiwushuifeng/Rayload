@@ -59,7 +59,9 @@ const ExtensionHost = defineComponent({
     return { show: ref(false) }
   },
   template: `
-    <AppSidebar compact :extensions-open="show" @show-extensions="show = true" />
+    <button type="button" class="extension-test-trigger" :aria-expanded="String(show)" @click="show = true">
+      extension
+    </button>
     <ExtensionPanel :show="show" @close="show = false" />
   `,
 })
@@ -103,13 +105,13 @@ describe('unified navigation', () => {
     wrapper.unmount()
   })
 
-  it('opens the extension panel from compact navigation and restores focus on Escape', async () => {
+  it('opens the extension panel from settings and restores focus on Escape', async () => {
     const router = await setup('/task/progress')
     const wrapper = mount(ExtensionHost, {
       attachTo: document.body,
       global: { plugins: [router], stubs: { transition: false } },
     })
-    const trigger = wrapper.get<HTMLButtonElement>('button[aria-label="navigation.extensions"]')
+    const trigger = wrapper.get<HTMLButtonElement>('.extension-test-trigger')
     try {
       trigger.element.focus()
       await trigger.trigger('click')
@@ -134,7 +136,7 @@ describe('unified navigation', () => {
     router.beforeEach(() => allowNavigation)
     const wrapper = mount(ExtensionHost, { attachTo: document.body, global: { plugins: [router] } })
     try {
-      const trigger = wrapper.get('button[aria-label="navigation.extensions"]')
+      const trigger = wrapper.get('.extension-test-trigger')
       for (const allowed of [false, true]) {
         allowNavigation = allowed
         await trigger.trigger('click')

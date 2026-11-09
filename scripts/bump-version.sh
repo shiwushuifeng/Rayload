@@ -21,6 +21,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 CARGO_TOML="$PROJECT_ROOT/src-tauri/Cargo.toml"
 PACKAGE_JSON="$PROJECT_ROOT/package.json"
+ANDROID_CONFIG="$PROJECT_ROOT/src-tauri/tauri.android.conf.json"
 
 # Validate version format (SemVer with optional pre-release)
 if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?$ ]]; then
@@ -40,6 +41,20 @@ fi
 # Update package.json
 cd "$PROJECT_ROOT"
 npm pkg set "version=$VERSION"
+
+# Keep the Android-only Tauri config synchronized and make each release
+# upgradeable over the previous APK with a monotonically increasing code.
+node - "$ANDROID_CONFIG" "$VERSION" <<'NODE'
+const { readFileSync, writeFileSync } = require('node:fs')
+const [path, version] = process.argv.slice(2)
+const config = JSON.parse(readFileSync(path, 'utf8'))
+const previousCode = Number(config.bundle?.android?.versionCode ?? 0)
+config.version = version
+config.bundle ??= {}
+config.bundle.android ??= {}
+config.bundle.android.versionCode = previousCode + 1
+writeFileSync(path, `${JSON.stringify(config, null, 2)}\n`)
+NODE
 
 # Update workspace versions in Cargo.lock without compiling or upgrading dependencies.
 cd "$PROJECT_ROOT/src-tauri"

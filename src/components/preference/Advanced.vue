@@ -38,6 +38,7 @@ import {
   useDialog,
 } from 'naive-ui'
 import { useAppMessage } from '@/composables/useAppMessage'
+import { useExtensionPanel } from '@/composables/useExtensionPanel'
 import {
   CloudDownloadOutline,
   CloudUploadOutline,
@@ -46,6 +47,7 @@ import {
   FolderOpenOutline,
   TrashOutline,
   CopyOutline,
+  ExtensionPuzzleOutline,
 } from '@vicons/ionicons5'
 import { logger } from '@shared/logger'
 import PreferenceActionRegistration from './PreferenceActionRegistration.vue'
@@ -61,6 +63,7 @@ const message = useAppMessage()
 const { constraint, configFieldProps, areConfigFieldsValid } = usePreferenceNumericValidation()
 const dialog = useDialog()
 const { isLinux, isAndroid } = usePlatform()
+const { openExtensionPanel } = useExtensionPanel()
 
 import { diffConfig, checkIsNeedRestart } from '@shared/utils/config'
 import { writeAppClipboardText } from '@shared/utils'
@@ -394,6 +397,14 @@ onMounted(async () => {
               </template>
             </NButton>
           </NInputGroup>
+        </NFormItem>
+        <NFormItem :label="t('navigation.extensions')">
+          <NButton class="pref-action-button" @click="openExtensionPanel">
+            <template #icon>
+              <NIcon :size="16"><ExtensionPuzzleOutline /></NIcon>
+            </template>
+            {{ t('navigation.extensions') }}
+          </NButton>
         </NFormItem>
 
         <NDivider title-placement="left">{{ t('preferences.rpc') }}</NDivider>

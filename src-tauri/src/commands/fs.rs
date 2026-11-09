@@ -280,6 +280,38 @@ pub fn check_path_is_dir(path: String) -> bool {
     result
 }
 
+/// Streams a local file through SHA-256 without loading it all into memory.
+#[tauri::command]
+pub async fn sha256_file(path: String) -> Result<String, AppError> {
+    let normalized = normalize_path(&path);
+    tauri::async_runtime::spawn_blocking(move || sha256_path(Path::new(&normalized)))
+        .await
+        .map_err(|error| AppError::Io(format!("SHA-256 worker failed: {error}")))?
+}
+
+fn sha256_path(path: &Path) -> Result<String, AppError> {
+    use sha2::{Digest, Sha256};
+    use std::io::Read;
+
+    if !path.is_file() {
+        return Err(AppError::NotFound(format!(
+            "File is unavailable for SHA-256: {}",
+            path.display()
+        )));
+    }
+    let mut file = std::fs::File::open(path)?;
+    let mut hasher = Sha256::new();
+    let mut buffer = vec![0_u8; 1024 * 1024];
+    loop {
+        let read = file.read(&mut buffer)?;
+        if read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..read]);
+    }
+    Ok(format!("{:x}", hasher.finalize()))
+}
+
 /// Free bytes available to the user on the volume that holds `path`, or the
 /// nearest existing folder above it (a download folder may not exist yet).
 /// `None` when the path is relative or the system cannot tell.
@@ -443,25 +475,26 @@ fn reveal_in_explorer(path: &str) -> Result<(), AppError> {
     let activity = env
         .find_class("com/shiwushuifeng/rayload/MainActivity")
         .map_err(|error| AppError::Io(format!("Failed to find Android activity: {error}")))?;
+    let path_object = env
+        .new_string(path)
+        .map_err(|error| AppError::Io(format!("Failed to encode Android file path: {error}")))?;
     let opened = env
         .call_static_method(
             activity,
-            "openRayloadDownloadsFolder",
-            "(Landroid/content/Context;)Z",
-            &[JValue::Object(&application)],
+            "openFile",
+            "(Landroid/content/Context;Ljava/lang/String;)Z",
+            &[JValue::Object(&application), JValue::Object(&path_object)],
         )
         .and_then(|value| value.z())
         .map_err(|error| {
-            AppError::Io(format!(
-                "Failed to launch the Android file manager: {error}"
-            ))
+            AppError::Io(format!("Failed to launch an Android file viewer: {error}"))
         })?;
 
     if opened {
         Ok(())
     } else {
         Err(AppError::NotFound(format!(
-            "No Android file manager can display the Rayload download folder for {path}"
+            "No Android app can preview the downloaded file at {path}"
         )))
     }
 }
@@ -1063,6 +1096,17 @@ mod tests {
     fn delete_path_returns_false_for_empty_path() {
         let result = delete_path(String::new(), FileDeletionMode::Permanent);
         assert!(!result.expect("empty path is a no-op"));
+    }
+
+    #[test]
+    fn sha256_file_matches_known_digest() {
+        let dir = tempfile::tempdir().expect("create temp dir");
+        let file = dir.path().join("checksum.txt");
+        std::fs::write(&file, "hello").expect("write checksum file");
+        assert_eq!(
+            sha256_path(&file).expect("hash file"),
+            "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+        );
     }
 
     #[test]

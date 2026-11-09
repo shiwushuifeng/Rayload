@@ -14,6 +14,7 @@ import {
   resolveOpenTarget,
   canRestart,
   writeAppClipboardText,
+  checkTaskIsSharing,
   getSharingResultLabelKey,
   getTaskSharingKind,
 } from '@shared/utils'
@@ -21,8 +22,9 @@ import { getErrorMessage } from '@shared/utils/errorMessage'
 import { invoke } from '@tauri-apps/api/core'
 import { resolveTaskFilePath, requestFileRecheck } from '@/composables/useTaskPaths'
 import { logger } from '@shared/logger'
-import { shareAndroidFile } from '@/composables/useAndroidNative'
-import { NCheckbox, useDialog } from 'naive-ui'
+import { openAndroidFile, shareAndroidFile } from '@/composables/useAndroidNative'
+import { usePlatform } from '@/composables/usePlatform'
+import { NButton, NCheckbox, useDialog } from 'naive-ui'
 import type { Aria2Task, AppConfig, TaskDeletionOptions } from '@shared/types'
 
 interface TaskActionsDeps {
@@ -47,11 +49,17 @@ interface TaskActionsDeps {
     error: (msg: string) => void
     warning: (msg: string) => void
     info: (msg: string) => void
+    progress: (msg: string) => {
+      update: (msg: string, type?: 'loading' | 'success' | 'error' | 'warning' | 'info') => void
+      finish: (msg: string, type: 'success' | 'error') => void
+      destroy: () => void
+    }
   }
 }
 
 export function useTaskActions(deps: TaskActionsDeps) {
   const { taskStore, preferenceConfig, t, dialog, message, requestMagnetSelection } = deps
+  const { isAndroid } = usePlatform()
 
   const deleteFilesLabel = () =>
     t(
@@ -214,6 +222,12 @@ export function useTaskActions(deps: TaskActionsDeps) {
   }
 
   async function handleShowInFolder(task: Aria2Task) {
+    if (isAndroid.value) {
+      if (task.status !== 'complete' && task.status !== 'removed' && !checkTaskIsSharing(task)) return
+      await handleOpenAndroidFile(task)
+      return
+    }
+
     const files = task.files || []
     if (files.length === 0) return
 
@@ -244,6 +258,109 @@ export function useTaskActions(deps: TaskActionsDeps) {
       logger.warn('TaskView.showInFolder', e instanceof Error ? e.message : JSON.stringify(e))
       message.warning(t('task.file-not-exist'))
       requestFileRecheck()
+    }
+  }
+
+  /**
+   * Android cannot reveal arbitrary absolute paths without a broad SAF grant.
+   * The folder action therefore opens a readable file with ACTION_VIEW.
+   */
+  async function handleOpenAndroidFile(task: Aria2Task) {
+    let target: string | null
+    try {
+      target = await resolveExistingTaskFile(task)
+    } catch (error) {
+      logger.warn('TaskView.openAndroidFile', getErrorMessage(error))
+      target = null
+    }
+    if (!target) {
+      message.warning(t('task.file-not-exist'))
+      requestFileRecheck()
+      return
+    }
+    if (openAndroidFile(target)) {
+      message.success(t('task.open-file-success'))
+      return
+    }
+    message.info(t('task.android-file-open-fallback'))
+  }
+
+  async function resolveExistingTaskFile(task: Aria2Task): Promise<string | null> {
+    const candidates = [
+      resolveTaskFilePath(task),
+      ...(task.files ?? []).map((file) => file.path?.trim() || null),
+      await resolveOpenTarget(task),
+    ].filter((path): path is string => Boolean(path))
+
+    for (const path of new Set(candidates)) {
+      try {
+        if (!(await invoke<boolean>('check_path_exists', { path }))) continue
+        if (await invoke<boolean>('check_path_is_dir', { path })) continue
+        return path
+      } catch (error) {
+        logger.debug('TaskView.openAndroidFile.candidate', error)
+      }
+    }
+    return null
+  }
+
+  async function handleVerifyChecksum(task: Aria2Task) {
+    if (task.status !== 'complete' && task.status !== 'removed' && !checkTaskIsSharing(task)) return
+
+    let target: string | null
+    try {
+      target = await resolveExistingTaskFile(task)
+    } catch (error) {
+      logger.warn('TaskView.verifyChecksum.resolve', getErrorMessage(error))
+      target = null
+    }
+    if (!target) {
+      message.warning(t('task.file-not-exist'))
+      requestFileRecheck()
+      return
+    }
+
+    const fileName = target.split(/[\\/]/).pop() || target
+    const pending = message.progress(t('task.sha256-calculating', { fileName }))
+    try {
+      const digest = await invoke<string>('sha256_file', { path: target })
+      pending.destroy()
+      dialog.info({
+        title: t('task.sha256'),
+        content: () =>
+          h('div', { class: 'technical-text-wrap', style: 'display:grid;gap:12px' }, [
+            h('p', { style: 'margin:0;color:var(--m3-on-surface-variant)' }, fileName),
+            h(
+              'code',
+              {
+                style:
+                  'display:block;overflow-wrap:anywhere;user-select:text;font-family:var(--font-family-mono);line-height:1.6',
+              },
+              digest,
+            ),
+            h(
+              NButton,
+              {
+                size: 'small',
+                style: 'justify-self:start',
+                onClick: async () => {
+                  try {
+                    await writeAppClipboardText(digest)
+                    message.success(t('task.sha256-copied'))
+                  } catch (error) {
+                    logger.warn('TaskView.verifyChecksum.copy', getErrorMessage(error))
+                  }
+                },
+              },
+              { default: () => t('task.sha256-copy') },
+            ),
+          ]),
+        positiveText: t('app.close'),
+      })
+    } catch (error) {
+      pending.destroy()
+      logger.warn('TaskView.verifyChecksum', getErrorMessage(error))
+      message.error(t('task.sha256-failed'))
     }
   }
 
@@ -310,6 +427,7 @@ export function useTaskActions(deps: TaskActionsDeps) {
     handleCopyLink,
     handleShowInfo,
     handleShowInFolder,
+    handleVerifyChecksum,
     handleOpenFile,
     handleShareFile,
     handleSelectFiles,

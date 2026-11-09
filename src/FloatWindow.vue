@@ -22,7 +22,7 @@ import { getCurrentWebviewWindow } from '@tauri-apps/api/webviewWindow'
 import { NIcon } from 'naive-ui'
 import { Add, ArrowDown, ArrowUp, Checkmark, Pause, TimeOutline } from '@vicons/ionicons5'
 import aria2Api from '@/api/aria2'
-import brandLogo from '@/assets/logo.svg'
+import { useBrandLogo } from '@/composables/useBrandLogo'
 import { useFloatUpdates, type FloatUpdate } from '@/composables/useFloatUpdates'
 import { useFloatDrag } from '@/composables/useFloatDrag'
 import { usePreferenceStore } from '@/stores/preference'
@@ -54,6 +54,7 @@ const ICONS: Record<Exclude<Face, 'idle'>, Component> = {
 }
 
 const { t } = useI18n()
+const { brandLogo } = useBrandLogo()
 const preferenceStore = usePreferenceStore()
 const view = getCurrentWebviewWindow()
 const root = ref<HTMLElement | null>(null)

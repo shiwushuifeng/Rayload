@@ -1,12 +1,12 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "version": "1.0.1-beta2",
+  "version": "1.0.1",
   "build": {
     "beforeBuildCommand": "pnpm build"
   },
   "bundle": {
     "android": {
-      "versionCode": 10002,
+      "versionCode": 10003,
       "minSdkVersion": 24
     },
     "externalBin": ["binaries/aria2-next"],

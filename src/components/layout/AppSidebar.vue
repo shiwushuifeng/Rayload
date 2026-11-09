@@ -5,29 +5,31 @@ import { RouterLink, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import MTooltip from '@/components/common/MTooltip.vue'
 import { NIcon } from 'naive-ui'
-import { ExtensionPuzzleOutline, InformationCircleOutline, SettingsOutline, TrashOutline } from '@vicons/ionicons5'
+import { InformationCircleOutline, SettingsOutline, TrashOutline } from '@vicons/ionicons5'
 import { useTaskStore } from '@/stores/task'
 import { usePreferenceStore } from '@/stores/preference'
 import SidebarCount from './SidebarCount.vue'
 import { useTaskDestinations } from './navigation'
 import { triggerHaptic } from '@/composables/useHaptics'
 import { usePlatform } from '@/composables/usePlatform'
+import { useNavigationVisibility } from '@/composables/useNavigationVisibility'
 
-defineProps<{ compact?: boolean; extensionsOpen?: boolean; trashOpen?: boolean }>()
+const props = defineProps<{ compact?: boolean; trashOpen?: boolean }>()
 
-const emit = defineEmits<{ 'show-about': []; 'show-extensions': []; 'show-trash': [] }>()
+const emit = defineEmits<{ 'show-about': []; 'show-trash': [] }>()
 const { t } = useI18n()
 const route = useRoute()
 const taskDestinations = useTaskDestinations()
 const tasks = useTaskStore()
 const preferences = usePreferenceStore()
 const { isAndroid } = usePlatform()
+const { isItemVisible } = useNavigationVisibility()
 const isSettings = computed(() => route.matched.some((record) => record.name === 'preference'))
-
-function showExtensions(): void {
-  triggerHaptic()
-  emit('show-extensions')
-}
+const visibleTaskDestinations = computed(() =>
+  taskDestinations.value.filter((item) => !props.compact || isItemVisible(item.key)),
+)
+const trashVisible = computed(() => !props.compact || isItemVisible('trash'))
+const aboutVisible = computed(() => !props.compact || isItemVisible('about'))
 
 function showAbout(): void {
   triggerHaptic()
@@ -43,11 +45,11 @@ function showTrash(): void {
 <template>
   <nav
     class="sidebar"
-    :class="{ compact, counts: preferences.config.sidebarTaskCounts }"
+    :class="{ compact: props.compact, counts: preferences.config.sidebarTaskCounts }"
     :aria-label="t('app.task-list')"
   >
     <div class="sidebar-scopes">
-      <MTooltip v-for="item in taskDestinations" :key="item.key" placement="right" :disabled="compact">
+      <MTooltip v-for="item in visibleTaskDestinations" :key="item.key" placement="right" :disabled="props.compact">
         <template #trigger>
           <RouterLink
             :to="{ name: 'task', params: { status: item.key } }"
@@ -69,7 +71,7 @@ function showTrash(): void {
       </MTooltip>
     </div>
     <div class="sidebar-bottom">
-      <MTooltip placement="right" :disabled="compact">
+      <MTooltip placement="right" :disabled="props.compact">
         <template #trigger>
           <RouterLink
             :to="{ name: 'preference-general' }"
@@ -85,14 +87,14 @@ function showTrash(): void {
         </template>
         {{ t('navigation.settings') }}
       </MTooltip>
-      <MTooltip v-if="isAndroid" placement="right" :disabled="compact || trashOpen">
+      <MTooltip v-if="isAndroid && trashVisible" placement="right" :disabled="props.compact || props.trashOpen">
         <template #trigger>
           <button
             type="button"
             class="sidebar-item"
-            :class="{ active: trashOpen }"
+            :class="{ active: props.trashOpen }"
             :aria-label="t('navigation.trash')"
-            :aria-expanded="!!trashOpen"
+            :aria-expanded="!!props.trashOpen"
             aria-haspopup="dialog"
             @click="showTrash"
           >
@@ -102,24 +104,7 @@ function showTrash(): void {
         </template>
         {{ t('navigation.trash') }}
       </MTooltip>
-      <MTooltip placement="right" :disabled="compact || extensionsOpen">
-        <template #trigger>
-          <button
-            type="button"
-            class="sidebar-item"
-            :class="{ active: extensionsOpen }"
-            :aria-label="t('navigation.extensions')"
-            :aria-expanded="!!extensionsOpen"
-            aria-haspopup="dialog"
-            @click="showExtensions"
-          >
-            <NIcon :size="18" aria-hidden="true"><ExtensionPuzzleOutline /></NIcon>
-            <span class="sidebar-label">{{ t('navigation.extensions') }}</span>
-          </button>
-        </template>
-        {{ t('navigation.extensions') }}
-      </MTooltip>
-      <MTooltip placement="right" :disabled="compact">
+      <MTooltip v-if="aboutVisible" placement="right" :disabled="props.compact">
         <template #trigger>
           <button type="button" class="sidebar-item" :aria-label="t('navigation.about')" @click="showAbout">
             <NIcon :size="18" aria-hidden="true"><InformationCircleOutline /></NIcon>
@@ -241,45 +226,41 @@ function showTrash(): void {
   font-size: 9px;
   line-height: 13px;
 }
-@media (max-width: 768px) {
-  .sidebar {
-    display: grid;
-    grid-template-columns: repeat(8, minmax(44px, 1fr));
-    align-items: stretch;
-    gap: 2px;
-    height: auto;
-    min-height: 56px;
-    overflow-x: auto;
-    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
-    border-top: 1px solid var(--m3-outline-variant);
-    background: var(--m3-surface-container);
-  }
-  .sidebar-scopes,
-  .sidebar-bottom {
-    display: contents;
-  }
-  .sidebar-item,
-  .compact .sidebar-item {
-    flex-direction: column;
-    justify-content: center;
-    gap: 2px;
-    width: auto;
-    min-width: 44px;
-    min-height: 48px;
-    margin: 0;
-    padding: 6px 4px;
-    border-radius: var(--radius-lg);
-    text-align: center;
-  }
-  .sidebar-label {
-    display: none;
-  }
-  .sidebar :deep(.sidebar-count),
-  .compact :deep(.sidebar-count) {
-    top: 3px;
-    right: 3px;
-    transform: none;
-  }
+.sidebar.compact {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
+  align-items: stretch;
+  gap: 2px;
+  height: auto;
+  min-height: 56px;
+  overflow-x: auto;
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--m3-outline-variant);
+  background: var(--m3-surface-container);
+}
+.sidebar.compact .sidebar-scopes,
+.sidebar.compact .sidebar-bottom {
+  display: contents;
+}
+.sidebar.compact .sidebar-item {
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  width: auto;
+  min-width: 44px;
+  min-height: 48px;
+  margin: 0;
+  padding: 6px 4px;
+  border-radius: var(--radius-lg);
+  text-align: center;
+}
+.sidebar.compact .sidebar-label {
+  display: none;
+}
+.sidebar.compact :deep(.sidebar-count) {
+  top: 3px;
+  right: 3px;
+  transform: none;
 }
 @media (hover: none), (pointer: coarse) {
   .sidebar-item:hover {

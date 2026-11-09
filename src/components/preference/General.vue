@@ -50,6 +50,7 @@ import PreferenceHintLabel from './PreferenceHintLabel.vue'
 import PreferenceCheckboxGrid from './PreferenceCheckboxGrid.vue'
 import PreferenceAssociations from './PreferenceAssociations.vue'
 import NotificationAccess from './NotificationAccess.vue'
+import NavigationCustomization from './NavigationCustomization.vue'
 import { UI_SCALE_STEPS } from '@/composables/useInterfaceScale'
 
 const { t, locale } = useI18n()
@@ -588,6 +589,8 @@ onMounted(async () => {
         <NFormItem v-if="isMac" :label="t('preferences.dock-badge-speed')">
           <NSwitch v-model:value="form.dockBadgeSpeed" />
         </NFormItem>
+
+        <NavigationCustomization v-if="isAndroid" />
 
         <!-- ⑪ Startup & Tray -->
         <NDivider title-placement="left">{{ t('preferences.startup-behavior') }}</NDivider>

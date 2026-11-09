@@ -20,6 +20,7 @@ import {
   FolderOpenOutline,
   ListOutline,
   ShareSocialOutline,
+  ShieldCheckmarkOutline,
 } from '@vicons/ionicons5'
 import { type Component } from 'vue'
 import type { Aria2Task } from '@shared/types'
@@ -42,12 +43,14 @@ const emit = defineEmits<{
   'copy-link': []
   'show-info': []
   folder: []
+  checksum: []
   'share-file': []
   'select-files': []
 }>()
 
 const { t } = useI18n()
 const { isAndroid } = usePlatform()
+const folderActionLabel = computed(() => t(isAndroid.value ? 'task.open-file' : 'task.show-in-folder'))
 
 interface ActionDef {
   key: string
@@ -125,17 +128,17 @@ const actions = computed(() => {
         { key: 'delete', icon: CloseOutline, label: t('task.delete-task'), event: 'delete' },
       ],
       [TASK_STATUS.ERROR]: [
-        { key: 'folder', icon: FolderOpenOutline, label: t('task.show-in-folder'), event: 'folder' },
+        { key: 'folder', icon: FolderOpenOutline, label: folderActionLabel.value, event: 'folder' },
         { key: 'retry', icon: RefreshOutline, label: t('task.retry-task'), event: 'retry' },
         { key: 'trash', icon: TrashOutline, label: t('task.remove-record'), event: 'delete-record' },
       ],
       [TASK_STATUS.COMPLETE]: [
-        { key: 'folder', icon: FolderOpenOutline, label: t('task.show-in-folder'), event: 'folder' },
+        { key: 'folder', icon: FolderOpenOutline, label: folderActionLabel.value, event: 'folder' },
         { key: 'redownload', icon: RefreshOutline, label: t('task.restart-task'), event: 'redownload' },
         { key: 'trash', icon: TrashOutline, label: t('task.remove-record'), event: 'delete-record' },
       ],
       [TASK_STATUS.REMOVED]: [
-        { key: 'folder', icon: FolderOpenOutline, label: t('task.show-in-folder'), event: 'folder' },
+        { key: 'folder', icon: FolderOpenOutline, label: folderActionLabel.value, event: 'folder' },
         { key: 'redownload', icon: RefreshOutline, label: t('task.restart-task'), event: 'redownload' },
         { key: 'trash', icon: TrashOutline, label: t('task.remove-record'), event: 'delete-record' },
       ],
@@ -152,7 +155,14 @@ const actions = computed(() => {
   const trailing = primary.filter((a) => destructiveKeys.has(a.key))
 
   const common: ActionDef[] = [
-    { key: 'folder', icon: FolderOpenOutline, label: t('task.show-in-folder'), event: 'folder' },
+    ...(props.task.status === TASK_STATUS.COMPLETE || props.task.status === TASK_STATUS.REMOVED || sharing
+      ? [{ key: 'folder', icon: FolderOpenOutline, label: folderActionLabel.value, event: 'folder' }]
+      : !isAndroid.value
+        ? [{ key: 'folder', icon: FolderOpenOutline, label: folderActionLabel.value, event: 'folder' }]
+        : []),
+    ...(props.task.status === TASK_STATUS.COMPLETE || props.task.status === TASK_STATUS.REMOVED || sharing
+      ? [{ key: 'checksum', icon: ShieldCheckmarkOutline, label: t('task.sha256'), event: 'checksum' }]
+      : []),
     { key: 'link', icon: LinkOutline, label: t('task.copy-link'), event: 'copy-link' },
     { key: 'info', icon: InformationCircleOutline, label: t('task.task-detail-title'), event: 'show-info' },
     ...(isAndroid.value && (props.task.status === TASK_STATUS.COMPLETE || props.task.status === TASK_STATUS.REMOVED)
@@ -168,6 +178,14 @@ const actions = computed(() => {
   ].filter((a) => !primaryKeys.has(a.key))
 
   return [...leading, ...common, ...trailing]
+    .filter(
+      (action) =>
+        action.key !== 'folder' ||
+        !isAndroid.value ||
+        props.task.status === TASK_STATUS.COMPLETE ||
+        props.task.status === TASK_STATUS.REMOVED ||
+        sharing !== null,
+    )
     .map((action) =>
       action.key === 'retry' || action.key === 'redownload' ? { ...action, disabled: props.pending } : action,
     )
@@ -210,6 +228,9 @@ function onAction(event: string) {
       break
     case 'folder':
       emit('folder')
+      break
+    case 'checksum':
+      emit('checksum')
       break
     case 'share-file':
       emit('share-file')

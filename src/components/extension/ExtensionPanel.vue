@@ -22,13 +22,14 @@ import { getErrorMessage } from '@shared/utils/errorMessage'
 import { usePlatform } from '@/composables/usePlatform'
 import { usePreferenceStore } from '@/stores/preference'
 import { writeAppClipboardText } from '@shared/utils'
-import brandLogo from '@/assets/logo.svg'
+import { useBrandLogo } from '@/composables/useBrandLogo'
 // Rayload extension artwork shown in the non-Android configuration panel.
 import banner from '@/assets/extension-banner.webp'
 
 defineProps<{ show: boolean }>()
 const emit = defineEmits<{ close: [] }>()
 const { t } = useI18n()
+const { brandLogo } = useBrandLogo()
 const router = useRouter()
 const message = useAppMessage()
 const preferenceStore = usePreferenceStore()

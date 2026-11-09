@@ -12,9 +12,9 @@
     "tagline": "We geven de opensource-downloadmanager een nieuwe betekenis",
     "tech-stack": "Technologieën",
     "developed-by": "Ontwikkeld door {author}",
-    "android-port-notice": "Rayload is independently maintained by shiwushuifeng. It is based on Rayburst by AnInsomniacy and follows the original project's MIT license.",
     "repository": "Opslagplaats",
-    "original-work": "Gebaseerd op Rayburst van AnInsomniacy, onder de MIT-licentie."
+    "open-source-acknowledgement-label": "Dank aan open source",
+    "open-source-acknowledgement": "{label}: Dank aan AnInsomniacy voor de ontwikkeling van het opensourceproject Rayburst. Rayload is een onofficiële Android-port, onafhankelijk onderhouden en uitgegeven onder de MIT-licentie."
   },
   "app": {
     "task-list": "Taken",
@@ -653,7 +653,9 @@
     "request-section": "Verzoeken",
     "connection-section": "Verbinding",
     "bt-protocol-section": "Protocol",
-    "rpc-port-locked-android": "De RPC-poort is op Android vastgezet op 6800 voor compatibiliteit met de extensie."
+    "rpc-port-locked-android": "De RPC-poort is op Android vastgezet op 6800 voor compatibiliteit met de extensie.",
+    "navigation-customization": "Onderste navigatie",
+    "navigation-customization-hint": "Kies welke bestemmingen onderaan zichtbaar blijven. Instellingen blijven altijd beschikbaar."
   },
   "task": {
     "scope-all": "Alle",
@@ -1003,7 +1005,13 @@
     "drop-to-add": "Loslaten om toe te voegen",
     "share-file": "Bestand delen",
     "share-file-success": "Het deelvenster voor bestanden is geopend",
-    "share-file-failed": "Bestand kan niet worden gedeeld"
+    "share-file-failed": "Bestand kan niet worden gedeeld",
+    "android-file-open-fallback": "Het bestand is opgeslagen in de map Download/Rayload.",
+    "sha256": "SHA-256",
+    "sha256-calculating": "Calculating SHA-256 for {fileName}…",
+    "sha256-copy": "Copy SHA-256",
+    "sha256-copied": "SHA-256 copied",
+    "sha256-failed": "Could not calculate the file SHA-256"
   },
   "media": {
     "probing": "Media onderzoeken",
@@ -1073,7 +1081,8 @@
     "allow": "Toestaan",
     "later": "Later",
     "next": "Volgende",
-    "finish": "Voltooien"
+    "finish": "Voltooien",
+    "appearance-description": "Choose a light or dark appearance and a brand color scheme."
   },
   "trash": {
     "title": "Trash",

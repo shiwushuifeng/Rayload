@@ -20,6 +20,7 @@ vi.mock('@vicons/ionicons5', () => {
     InformationCircleOutline: icon,
     FolderOpenOutline: icon,
     ListOutline: icon,
+    ShieldCheckmarkOutline: icon,
   }
 })
 
@@ -196,12 +197,13 @@ describe('TaskItemActions', () => {
     expect(wrapper.emitted('retry')).toBeTruthy()
   })
 
-  it('keeps terminal actions accessible without the removed open-location button', () => {
+  it('keeps terminal actions accessible and offers SHA-256', () => {
     const wrapper = mountActions(makeTask('complete'))
     const actions = wrapper.findAll('.task-item-action')
-    expect(actions).toHaveLength(5)
+    expect(actions).toHaveLength(6)
     expect(actions.every((action) => Boolean(action.attributes('aria-label')))).toBe(true)
     expect(wrapper.find('[aria-label="task.open-file"]').exists()).toBe(false)
+    expect(wrapper.find('[aria-label="task.sha256"]').exists()).toBe(true)
   })
 
   it('separates retry, resume, and re-download actions', async () => {

@@ -35,6 +35,7 @@ const {
   handleCopyLink,
   handleShowInfo,
   handleShowInFolder,
+  handleVerifyChecksum,
   handleOpenFile,
   handleShareFile,
   handleSelectFiles,
@@ -73,6 +74,7 @@ watch(
           @copy-link="handleCopyLink"
           @show-info="handleShowInfo"
           @folder="handleShowInFolder"
+          @checksum="handleVerifyChecksum"
           @open-file="handleOpenFile"
           @share-file="handleShareFile"
           @select-files="handleSelectFiles"

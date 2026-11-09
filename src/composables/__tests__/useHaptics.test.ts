@@ -12,6 +12,7 @@ describe('triggerHaptic', () => {
       lightTap,
       chooseDirectory: vi.fn(),
       shareFile: vi.fn(() => false),
+      openFile: vi.fn(() => false),
       storagePermissionStatus: vi.fn(() => 'denied'),
       requestStoragePermission: vi.fn(),
       notificationPermissionStatus: vi.fn(() => 'denied'),

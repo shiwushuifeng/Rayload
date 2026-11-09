@@ -6,6 +6,7 @@ interface RayloadNativeBridge {
   lightTap(): void
   chooseDirectory(): void
   shareFile(path: string): boolean
+  openFile(path: string): boolean
   storagePermissionStatus(): string
   requestStoragePermission(): void
   notificationPermissionStatus(): string
@@ -62,6 +63,11 @@ export function requestAndroidBatteryOptimizationExemption(): void {
 
 export function shareAndroidFile(path: string): boolean {
   return getRayloadNativeBridge()?.shareFile(path) ?? false
+}
+
+/** Launches an Android ACTION_VIEW intent for a local file through FileProvider. */
+export function openAndroidFile(path: string): boolean {
+  return getRayloadNativeBridge()?.openFile(path) ?? false
 }
 
 /** Opens Android's DocumentsUI tree picker and resolves the selected filesystem path. */

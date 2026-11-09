@@ -12,9 +12,9 @@
     "tagline": "Redefining the open-source download manager",
     "tech-stack": "Tech Stack",
     "developed-by": "Developed by {author}",
-    "android-port-notice": "Rayload is independently maintained by shiwushuifeng. It is based on Rayburst by AnInsomniacy and follows the original project's MIT license.",
     "repository": "Repository",
-    "original-work": "Based on Rayburst by AnInsomniacy, licensed under MIT."
+    "open-source-acknowledgement-label": "Open-source acknowledgement",
+    "open-source-acknowledgement": "{label}: Thanks to AnInsomniacy for developing the open-source Rayburst project. Rayload is an unofficial Android port of it, independently maintained and released under the MIT open-source license."
   },
   "app": {
     "task-list": "Tasks",
@@ -653,7 +653,9 @@
     "request-section": "Requests",
     "connection-section": "Connection",
     "bt-protocol-section": "Protocol",
-    "rpc-port-locked-android": "The RPC port is fixed at 6800 on Android for browser extension compatibility."
+    "rpc-port-locked-android": "The RPC port is fixed at 6800 on Android for browser extension compatibility.",
+    "navigation-customization": "Bottom Navigation",
+    "navigation-customization-hint": "Choose which destinations stay visible. Settings always remains available."
   },
   "task": {
     "scope-all": "All",
@@ -1003,7 +1005,13 @@
     "drop-to-add": "Drop to add",
     "share-file": "Share file",
     "share-file-success": "File share sheet opened",
-    "share-file-failed": "Unable to share file"
+    "share-file-failed": "Unable to share file",
+    "android-file-open-fallback": "The file is saved in the Download/Rayload folder.",
+    "sha256": "SHA-256",
+    "sha256-calculating": "Calculating SHA-256 for {fileName}…",
+    "sha256-copy": "Copy SHA-256",
+    "sha256-copied": "SHA-256 copied",
+    "sha256-failed": "Could not calculate the file SHA-256"
   },
   "media": {
     "probing": "Inspecting media",
@@ -1073,7 +1081,8 @@
     "allow": "Allow",
     "later": "Later",
     "next": "Next",
-    "finish": "Finish"
+    "finish": "Finish",
+    "appearance-description": "Choose a light or dark appearance and a brand color scheme."
   },
   "trash": {
     "title": "Trash",

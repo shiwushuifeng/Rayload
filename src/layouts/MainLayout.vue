@@ -30,6 +30,8 @@ import { throttledResizeHandler, cancelPendingResize } from '@/layouts/resizeThr
 import AppSidebar from '@/components/layout/AppSidebar.vue'
 import PreferenceActionBar from '@/components/preference/PreferenceActionBar.vue'
 import { providePreferenceActions } from '@/composables/usePreferenceActions'
+import { useNavigationVisibility } from '@/composables/useNavigationVisibility'
+import { useExtensionPanel } from '@/composables/useExtensionPanel'
 import TaskActions from '@/components/task/TaskActions.vue'
 import { useTaskDestinations } from '@/components/layout/navigation'
 import Speedometer from '@/components/layout/Speedometer.vue'
@@ -154,26 +156,55 @@ const taskScope = computed(() => {
   return status === 'progress' || status === 'failed' || status === 'completed' ? status : 'all'
 })
 
-const compactNavigation = useMediaQuery('(max-width: 768px)')
+const { platform: currentPlatform, isMac, isLinux, isAndroid } = usePlatform()
+const narrowNavigation = useMediaQuery('(max-width: 768px)')
+const compactNavigation = computed(() => isAndroid.value || narrowNavigation.value)
 const mobileModalOpen = computed(() => isAndroid.value && appStore.addTaskVisible)
 const taskDestinations = useTaskDestinations()
+const { isItemVisible, visibleItems } = useNavigationVisibility()
 const pageTitle = computed(() =>
   isTaskPage.value
     ? (taskDestinations.value.find((item) => item.key === (route.params.status || 'all'))?.label ?? t('task.scope-all'))
     : t('navigation.settings'),
 )
 const showAbout = ref(false)
-const showExtensions = ref(false)
 const showTrash = ref(false)
+const { extensionPanelVisible: showExtensions, closeExtensionPanel } = useExtensionPanel()
 function openAbout() {
   showAbout.value = true
 }
+
+function isTaskDestinationVisible(status: string): boolean {
+  switch (status) {
+    case 'progress':
+      return isItemVisible('progress')
+    case 'failed':
+      return isItemVisible('failed')
+    case 'completed':
+      return isItemVisible('completed')
+    default:
+      return isItemVisible('all')
+  }
+}
+
+watch(
+  [compactNavigation, visibleItems, () => route.fullPath],
+  () => {
+    if (!compactNavigation.value) return
+    if (route.name === 'task' && !isTaskDestinationVisible(String(route.params.status || 'all'))) {
+      void router.replace({ name: 'task', params: { status: 'all' } })
+    }
+    if (!isItemVisible('trash')) showTrash.value = false
+    if (!isItemVisible('about')) showAbout.value = false
+  },
+  { immediate: true, flush: 'post' },
+)
+
 const showExitDialog = ref(false)
 const isExiting = ref(false)
 const rememberChoice = ref(false)
 const pendingTrayHide = ref(false)
 const isMaximized = ref(false)
-const { platform: currentPlatform, isMac, isLinux, isAndroid } = usePlatform()
 // Window managers that force server-side decorations draw their own buttons (#533).
 const systemTitleBar = computed(() => isLinux.value && preferenceStore.config.systemTitleBar)
 watch(
@@ -847,7 +878,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div id="container">
+  <div id="container" :class="{ 'compact-navigation': compactNavigation }">
     <!-- Minimal progress bar during engine initialization / restart -->
     <Transition name="engine-slide">
       <div v-if="engineStore.isBusy" class="engine-banner">
@@ -860,12 +891,10 @@ onUnmounted(() => {
     </div>
     <AppSidebar
       :compact="compactNavigation"
-      :extensions-open="showExtensions"
       :trash-open="showTrash"
       :inert="mobileModalOpen"
       class="sidebar-slot"
       @show-about="openAbout"
-      @show-extensions="showExtensions = true"
       @show-trash="showTrash = true"
     />
     <header class="page-header" data-tauri-drag-region :inert="mobileModalOpen">
@@ -927,7 +956,7 @@ onUnmounted(() => {
     </footer>
     <AboutPanel :show="showAbout" @close="showAbout = false" />
     <AndroidPermissionWelcome />
-    <ExtensionPanel :show="showExtensions" @close="showExtensions = false" />
+    <ExtensionPanel :show="showExtensions" @close="closeExtensionPanel" />
     <TrashPanel :show="showTrash" @close="showTrash = false" />
     <UpdateDialog ref="updateDialogRef" />
     <EngineRecoveryDialog />
@@ -1236,60 +1265,58 @@ onUnmounted(() => {
     gap: 8px;
   }
 }
-@media (max-width: 768px) {
-  #container {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: auto minmax(0, 1fr) auto auto;
-    height: 100dvh;
-    padding-top: env(safe-area-inset-top, 0px);
-  }
-  .window-chrome,
-  .sidebar-heading,
-  .window-controls {
-    display: none;
-  }
-  .page-header {
-    grid-column: 1;
-    grid-row: 1;
-    margin-inline: 16px;
-    padding: 8px 0 10px;
-    align-items: center;
-    flex-wrap: wrap;
-    row-gap: 6px;
-  }
-  .page-title-slot {
-    flex: 1 0 auto;
-  }
-  .page-header :deep(.task-actions) {
-    max-width: 100%;
-    margin-inline-start: auto;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .content {
-    grid-column: 1;
-    grid-row: 2;
-    width: 100%;
-  }
-  .content-footer {
-    grid-column: 1;
-    grid-row: 3;
-    min-height: 56px;
-    padding: 6px 16px;
-  }
-  .sidebar-slot {
-    grid-column: 1;
-    grid-row: 4;
-    width: 100%;
-    min-width: 0;
-  }
-  .engine-banner {
-    top: env(safe-area-inset-top, 0px);
-  }
-  .mobile-add-task {
-    width: 90vw;
-    max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px);
-  }
+#container.compact-navigation {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  height: 100dvh;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+#container.compact-navigation .window-chrome,
+#container.compact-navigation .sidebar-heading,
+#container.compact-navigation .window-controls {
+  display: none;
+}
+#container.compact-navigation .page-header {
+  grid-column: 1;
+  grid-row: 1;
+  margin-inline: 16px;
+  padding: 8px 0 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  row-gap: 6px;
+}
+#container.compact-navigation .page-title-slot {
+  flex: 1 0 auto;
+}
+#container.compact-navigation .page-header :deep(.task-actions) {
+  max-width: 100%;
+  margin-inline-start: auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+#container.compact-navigation .content {
+  grid-column: 1;
+  grid-row: 2;
+  width: 100%;
+}
+#container.compact-navigation .content-footer {
+  grid-column: 1;
+  grid-row: 3;
+  min-height: 56px;
+  padding: 6px 16px;
+}
+#container.compact-navigation .sidebar-slot {
+  grid-column: 1;
+  grid-row: 4;
+  width: 100%;
+  min-width: 0;
+}
+#container.compact-navigation .engine-banner {
+  top: env(safe-area-inset-top, 0px);
+}
+#container.compact-navigation .mobile-add-task {
+  width: 90vw;
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px);
 }
 @media (prefers-reduced-motion: reduce) {
   .page-title-enter-active,
