@@ -21,6 +21,7 @@ import android.webkit.MimeTypeMap
 import android.webkit.WebView
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.Keep
 import androidx.core.content.FileProvider
 import java.io.File
@@ -31,11 +32,13 @@ class MainActivity : TauriActivity() {
   private var backCallback: OnBackPressedCallback? = null
   private var lastBackAt = 0L
   private val shareQueueFile by lazy { File(filesDir, "rayload-share-pending.txt") }
+  private val directoryPicker = registerForActivityResult(
+    ActivityResultContracts.OpenDocumentTree(),
+  ) { uri -> handleDirectorySelection(uri) }
 
   companion object {
     private const val EXTERNAL_STORAGE_DOCUMENTS = "com.android.externalstorage.documents"
     private const val APP_DOWNLOAD_DIRECTORY = "Download/Rayload"
-    private const val REQUEST_OPEN_DOCUMENT_TREE = 4101
     private const val REQUEST_NOTIFICATION_PERMISSION = 4102
     private const val REQUEST_LEGACY_STORAGE_PERMISSION = 4103
     private const val WAKE_LOCK_TAG = "Rayload:active-downloads"
@@ -80,6 +83,7 @@ class MainActivity : TauriActivity() {
         ?: "*/*"
       val send = Intent(Intent.ACTION_SEND).apply {
         type = mime
+        setDataAndType(uri, mime)
         putExtra(Intent.EXTRA_STREAM, uri)
         clipData = ClipData.newUri(context.contentResolver, file.name, uri)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
@@ -241,16 +245,11 @@ class MainActivity : TauriActivity() {
     installBackNavigation(webView)
   }
 
-  @Deprecated("Uses the platform request-code callback required by TauriActivity.")
-  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    super.onActivityResult(requestCode, resultCode, data)
-    if (requestCode != REQUEST_OPEN_DOCUMENT_TREE) return
-    if (resultCode != Activity.RESULT_OK || data?.data == null) {
+  private fun handleDirectorySelection(uri: Uri?) {
+    if (uri == null) {
       dispatchNativeEvent("rayload-directory-selection-cancelled")
       return
     }
-
-    val uri = data.data!!
     runCatching {
       contentResolver.takePersistableUriPermission(
         uri,
@@ -338,7 +337,7 @@ class MainActivity : TauriActivity() {
           Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION,
       )
     }
-    startActivityForResult(intent, REQUEST_OPEN_DOCUMENT_TREE)
+    directoryPicker.launch(initialUri)
   }
 
   private fun captureShareIntent(intent: Intent?) {

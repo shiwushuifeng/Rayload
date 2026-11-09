@@ -72,6 +72,7 @@ import MoveDownload from './detail/MoveDownload.vue'
 import { forceBtRecheck } from '@/api/aria2'
 import { getErrorMessage } from '@shared/utils/errorMessage'
 import { formatSharingDuration, getBtLifecycleState } from '@/composables/useBtLifecycle'
+import { usePlatform } from '@/composables/usePlatform'
 
 const props = defineProps<{
   show: boolean
@@ -81,6 +82,7 @@ const props = defineProps<{
 const emit = defineEmits<{ close: [] }>()
 
 const { t, locale } = useI18n()
+const { isAndroid } = usePlatform()
 const preferenceStore = usePreferenceStore()
 const taskStore = useTaskStore()
 onBeforeUnmount(() => {
@@ -92,6 +94,7 @@ const message = useAppMessage()
 const taskRef = computed(() => props.task)
 const taskPrimaryUrl = computed(() => props.task?.files?.[0]?.uris?.[0]?.uri ?? '')
 const rechecking = ref(false)
+const drawerWidth = computed(() => (isAndroid.value ? '92vw' : '61.8%'))
 
 async function recheckTask() {
   const gid = props.task?.gid
@@ -411,7 +414,7 @@ async function onFileRenamed() {
 <template>
   <NDrawer
     :show="show"
-    :width="'61.8%'"
+    :width="drawerWidth"
     placement="right"
     :trap-focus="false"
     :block-scroll="false"
@@ -915,6 +918,23 @@ async function onFileRenamed() {
 
 .tab-content {
   padding: 16px 0;
+  min-width: 0;
+}
+
+:deep(.n-drawer-body-content-wrapper) {
+  min-width: 0;
+  padding-inline: 20px;
+}
+
+:deep(.n-descriptions-table-content),
+:deep(.n-descriptions-table-content-value) {
+  min-width: 0;
+}
+
+:deep(.detail-copyable-text),
+:deep(.detail-long-text) {
+  overflow-wrap: anywhere;
+  word-break: normal;
 }
 
 :deep(.detail-copyable-value) {

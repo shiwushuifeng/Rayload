@@ -268,18 +268,23 @@ export function useTaskActions(deps: TaskActionsDeps) {
   }
 
   async function handleShareFile(task: Aria2Task) {
-    const target = await resolveOpenTarget(task)
-    if (!target) return
+    const candidates = [
+      resolveTaskFilePath(task),
+      ...(task.files ?? []).map((file) => file.path?.trim() || null),
+      await resolveOpenTarget(task),
+    ].filter((path): path is string => Boolean(path))
+    const uniqueCandidates = [...new Set(candidates)]
+    if (uniqueCandidates.length === 0) {
+      message.warning(t('task.file-not-exist'))
+      requestFileRecheck()
+      return
+    }
     try {
-      const fileExists = await invoke<boolean>('check_path_exists', { path: target })
-      const isDir = fileExists && (await invoke<boolean>('check_path_is_dir', { path: target }))
-      if (!fileExists || isDir) {
+      // The native bridge checks readability and converts the path through
+      // FileProvider before opening the system share sheet.
+      if (!uniqueCandidates.some((path) => shareAndroidFile(path))) {
         message.warning(t('task.file-not-exist'))
         requestFileRecheck()
-        return
-      }
-      if (!shareAndroidFile(target)) {
-        message.error(t('task.share-file-failed'))
         return
       }
       message.success(t('task.share-file-success'))

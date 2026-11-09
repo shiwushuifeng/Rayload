@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import brandLogo from '@/assets/logo.svg'
+
 defineProps<{ show: boolean }>()
 </script>
 
 <template>
   <Transition name="empty-brand">
     <div v-if="show" class="empty-brand" aria-hidden="true">
-      <div class="empty-brand-mark" />
+      <img class="empty-brand-mark" :src="brandLogo" alt="" draggable="false" />
     </div>
   </Transition>
 </template>
@@ -26,10 +28,9 @@ defineProps<{ show: boolean }>()
 .empty-brand-mark {
   width: min(clamp(180px, 36cqw, 280px), 80cqw, 80cqh);
   aspect-ratio: 1;
-  background: color-mix(in srgb, var(--m3-on-surface-variant) 85%, var(--m3-primary));
-  opacity: 0.12;
-  mask: url('../../assets/logo.svg') center / contain no-repeat;
-  mask-mode: alpha;
+  object-fit: contain;
+  opacity: 0.64;
+  filter: drop-shadow(0 16px 30px color-mix(in srgb, var(--m3-primary) 24%, transparent));
 }
 .empty-brand-enter-active {
   transition: opacity var(--empty-brand-enter-duration) var(--empty-brand-easing);

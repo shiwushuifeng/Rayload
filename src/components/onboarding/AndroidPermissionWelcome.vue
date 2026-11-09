@@ -2,7 +2,7 @@
 /** @fileoverview Lightweight Android permission onboarding and battery prompt. */
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NButton, NIcon, NModal, NSelect } from 'naive-ui'
+import { NButton, NIcon, NModal } from 'naive-ui'
 import {
   BatteryHalfOutline,
   CheckmarkCircleOutline,
@@ -33,7 +33,8 @@ interface PermissionStep {
   icon: typeof FolderOpenOutline
 }
 
-const STORAGE_KEY = 'rayload-onboarding-v1'
+const LEGACY_STORAGE_KEY = 'rayload-onboarding-v1'
+const GUIDE_STORAGE_KEY = 'has_seen_permission_guide'
 const { t, locale } = useI18n()
 const { isAndroid } = usePlatform()
 const { setLocale } = useLocale()
@@ -76,7 +77,7 @@ const allSteps = computed<PermissionStep[]>(() => [
 const steps = computed(() =>
   allSteps.value.filter((step) => {
     if (statuses.value[step.key] === 'unavailable') return false
-    if (step.key === 'battery') return statuses.value.battery === 'denied'
+    if (step.key === 'battery') return firstRun.value && statuses.value.battery === 'denied'
     return firstRun.value && statuses.value[step.key] === 'denied'
   }),
 )
@@ -90,17 +91,21 @@ const progress = computed(() => {
   return Math.round(((completedPermissions + completedLanguage) / totalOnboardingSteps.value) * 100)
 })
 
-function readOnboardingComplete(): boolean {
+function readPermissionGuideSeen(): boolean {
   try {
-    return window.localStorage.getItem(STORAGE_KEY) === 'complete'
+    return (
+      window.localStorage.getItem(GUIDE_STORAGE_KEY) === 'true' ||
+      window.localStorage.getItem(LEGACY_STORAGE_KEY) === 'complete'
+    )
   } catch {
     return false
   }
 }
 
-function markOnboardingComplete(): void {
+function markPermissionGuideSeen(): void {
   try {
-    window.localStorage.setItem(STORAGE_KEY, 'complete')
+    window.localStorage.setItem(GUIDE_STORAGE_KEY, 'true')
+    window.localStorage.setItem(LEGACY_STORAGE_KEY, 'complete')
   } catch {
     // Storage can be unavailable in hardened WebViews; permission status still works.
   }
@@ -170,7 +175,7 @@ async function advance(): Promise<void> {
 function finish(): void {
   firstRun.value = false
   dismissedThisSession.value = true
-  markOnboardingComplete()
+  markPermissionGuideSeen()
   visible.value = false
 }
 
@@ -183,7 +188,7 @@ function onVisibilityOrFocus(): void {
 }
 
 onMounted(() => {
-  firstRun.value = !readOnboardingComplete()
+  firstRun.value = !readPermissionGuideSeen()
   languageStepActive.value = firstRun.value
   window.setTimeout(() => {
     refreshStatuses()
@@ -214,13 +219,11 @@ onBeforeUnmount(() => {
           <NIcon :size="26"><LanguageOutline /></NIcon>
         </div>
         <div class="permission-step__copy">
-          <NSelect
-            v-model:value="selectedLocale"
-            :options="localeOptions"
-            :aria-label="t('preferences.select-language')"
-            filterable
-            size="large"
-          />
+          <select v-model="selectedLocale" :aria-label="t('preferences.select-language')" class="language-select">
+            <option v-for="option in localeOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
         </div>
       </div>
 
@@ -314,6 +317,26 @@ onBeforeUnmount(() => {
 }
 .permission-step--language .permission-step__copy {
   width: 100%;
+}
+.language-select {
+  width: 100%;
+  min-height: 44px;
+  padding: 0 42px 0 14px;
+  color: var(--m3-on-surface);
+  background-color: var(--m3-surface-container-highest);
+  border: 1px solid var(--m3-outline);
+  border-radius: var(--radius-md);
+  font: inherit;
+  touch-action: manipulation;
+}
+.language-select:focus-visible {
+  border-color: var(--m3-primary);
+  outline: 2px solid color-mix(in srgb, var(--m3-primary) 36%, transparent);
+  outline-offset: 2px;
+}
+.language-select option {
+  color: var(--m3-on-surface);
+  background: var(--m3-surface-container-high);
 }
 .permission-step h3 {
   margin: 0 0 5px;

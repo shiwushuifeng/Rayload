@@ -3,6 +3,22 @@
 All notable changes to the independent Rayload Android port are documented in
 this file.
 
+## v1.0.1-beta1 - 2026-11-09
+
+### Fixed
+
+- Replaced the first-launch language dropdown with a WebView-safe native
+  selector.
+- Restored the empty-state logo artwork.
+- Expanded the Android task-detail drawer and prevented path text from collapsing
+  into vertical columns.
+- Routed Android file sharing through readable task-file candidates and
+  FileProvider content URIs without a premature Rust path check.
+- Persisted permission-guide completion in localStorage so dismissed battery
+  guidance does not reappear after a cold start.
+- Switched SAF folder selection to the Activity Result API so DocumentsUI
+  selections return reliably to the WebView bridge.
+
 ## v1.0.1 - 2026-11-09
 
 ### Changed
