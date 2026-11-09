@@ -8,6 +8,7 @@ export interface GeneralForm {
   theme: AppConfig['theme']
   colorScheme: string
   customColorScheme: string
+  brandLogoStyle: AppConfig['brandLogoStyle']
   taskCardMode: AppConfig['taskCardMode']
   showLogoWhenEmpty: boolean
   reduceMotion: boolean
@@ -59,6 +60,7 @@ export function buildGeneralForm(config: AppConfig): GeneralForm {
     theme: config.theme,
     colorScheme: config.colorScheme,
     customColorScheme: config.customColorScheme,
+    brandLogoStyle: config.brandLogoStyle,
     taskCardMode: config.taskCardMode,
     showLogoWhenEmpty: config.showLogoWhenEmpty,
     reduceMotion: config.reduceMotion,

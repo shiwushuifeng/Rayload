@@ -655,7 +655,11 @@
     "bt-protocol-section": "協定",
     "rpc-port-locked-android": "為相容瀏覽器擴充功能，Android 上的 RPC 連接埠固定為 6800。",
     "navigation-customization": "導覽列自訂",
-    "navigation-customization-hint": "選擇要保留在底部的頁面。設定入口始終可用。"
+    "navigation-customization-hint": "選擇要保留在底部的頁面。設定入口始終可用。",
+    "brand-logo": "品牌標誌",
+    "brand-logo-auto": "自動（亮色米白金 / 暗色紫羅蘭）",
+    "brand-logo-gold": "米白金",
+    "brand-logo-violet": "紫羅蘭"
   },
   "task": {
     "scope-all": "全部",

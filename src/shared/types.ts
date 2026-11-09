@@ -438,6 +438,7 @@ export interface AppConfig {
   theme: 'auto' | 'light' | 'dark'
   colorScheme: string
   customColorScheme: string
+  brandLogoStyle: 'auto' | 'gold' | 'violet'
   taskCardMode: 'full' | 'compact'
   showLogoWhenEmpty: boolean
   reduceMotion: boolean

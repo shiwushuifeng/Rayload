@@ -655,7 +655,11 @@
     "bt-protocol-section": "프로토콜",
     "rpc-port-locked-android": "브라우저 확장 프로그램 호환성을 위해 Android의 RPC 포트는 6800으로 고정됩니다.",
     "navigation-customization": "하단 탐색",
-    "navigation-customization-hint": "아래에 표시할 페이지를 선택하세요. 설정은 항상 사용할 수 있습니다."
+    "navigation-customization-hint": "아래에 표시할 페이지를 선택하세요. 설정은 항상 사용할 수 있습니다.",
+    "brand-logo": "Brand logo",
+    "brand-logo-auto": "Auto (cream-gold on light, violet on dark)",
+    "brand-logo-gold": "Cream & Gold",
+    "brand-logo-violet": "Violet"
   },
   "task": {
     "scope-all": "전체",

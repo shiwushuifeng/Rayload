@@ -655,7 +655,11 @@
     "bt-protocol-section": "协议",
     "rpc-port-locked-android": "为兼容浏览器扩展，Android 上的 RPC 端口固定为 6800。",
     "navigation-customization": "导航栏自定义",
-    "navigation-customization-hint": "选择要保留在底部的页面。设置入口始终可用。"
+    "navigation-customization-hint": "选择要保留在底部的页面。设置入口始终可用。",
+    "brand-logo": "品牌标志",
+    "brand-logo-auto": "自动（亮色米白金 / 暗色紫罗兰）",
+    "brand-logo-gold": "米白金",
+    "brand-logo-violet": "紫罗兰"
   },
   "task": {
     "scope-all": "全部",

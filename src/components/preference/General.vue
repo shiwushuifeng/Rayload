@@ -295,6 +295,12 @@ const themeOptions = computed(() => [
   { label: t('preferences.theme-dark'), value: 'dark' },
 ])
 
+const brandLogoOptions = computed(() => [
+  { label: t('preferences.brand-logo-auto'), value: 'auto' },
+  { label: t('preferences.brand-logo-gold'), value: 'gold' },
+  { label: t('preferences.brand-logo-violet'), value: 'violet' },
+])
+
 const taskCardModeOptions = computed(() => [
   { label: t('preferences.task-card-mode-full'), value: 'full' },
   { label: t('preferences.task-card-mode-compact'), value: 'compact' },
@@ -540,6 +546,9 @@ onMounted(async () => {
               @complete="handleCustomColorComplete"
             />
           </div>
+        </NFormItem>
+        <NFormItem :label="t('preferences.brand-logo')">
+          <NSelect v-model:value="form.brandLogoStyle" :options="brandLogoOptions" class="pref-control-auto" />
         </NFormItem>
         <NFormItem v-if="!isAndroid">
           <template #label>

@@ -655,7 +655,11 @@
     "bt-protocol-section": "Protocolo",
     "rpc-port-locked-android": "A porta RPC é fixa em 6800 no Android para compatibilidade com a extensão.",
     "navigation-customization": "Navegação inferior",
-    "navigation-customization-hint": "Escolha quais páginas permanecem visíveis abaixo. Configurações sempre fica disponível."
+    "navigation-customization-hint": "Escolha quais páginas permanecem visíveis abaixo. Configurações sempre fica disponível.",
+    "brand-logo": "Brand logo",
+    "brand-logo-auto": "Auto (cream-gold on light, violet on dark)",
+    "brand-logo-gold": "Cream & Gold",
+    "brand-logo-violet": "Violet"
   },
   "task": {
     "scope-all": "Todas",

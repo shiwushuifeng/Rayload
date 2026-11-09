@@ -234,6 +234,10 @@ const secondaryCopy = {
     copy: '复制 SHA-256',
     copied: 'SHA-256 已复制',
     failed: '无法计算该文件的 SHA-256',
+    logo: '品牌标志',
+    logoAuto: '自动（亮色米白金 / 暗色紫罗兰）',
+    logoGold: '米白金',
+    logoViolet: '紫罗兰',
   },
   'zh-TW': {
     appearance: '選擇淺色或深色外觀，並挑選喜歡的品牌配色。',
@@ -242,6 +246,10 @@ const secondaryCopy = {
     copy: '複製 SHA-256',
     copied: '已複製 SHA-256',
     failed: '無法計算該檔案的 SHA-256',
+    logo: '品牌標誌',
+    logoAuto: '自動（亮色米白金 / 暗色紫羅蘭）',
+    logoGold: '米白金',
+    logoViolet: '紫羅蘭',
   },
 }
 
@@ -252,6 +260,10 @@ const englishSecondaryCopy = {
   copy: 'Copy SHA-256',
   copied: 'SHA-256 copied',
   failed: 'Could not calculate the file SHA-256',
+  logo: 'Brand logo',
+  logoAuto: 'Auto (cream-gold on light, violet on dark)',
+  logoGold: 'Cream & Gold',
+  logoViolet: 'Violet',
 }
 
 for (const locale of readdirSync(localesRoot, { withFileTypes: true })) {
@@ -275,6 +287,10 @@ for (const locale of readdirSync(localesRoot, { withFileTypes: true })) {
   messages.task['sha256-copy'] = secondary.copy
   messages.task['sha256-copied'] = secondary.copied
   messages.task['sha256-failed'] = secondary.failed
+  messages.preferences['brand-logo'] = secondary.logo
+  messages.preferences['brand-logo-auto'] = secondary.logoAuto
+  messages.preferences['brand-logo-gold'] = secondary.logoGold
+  messages.preferences['brand-logo-violet'] = secondary.logoViolet
   writeFileSync(path, `${JSON.stringify(messages, null, 2)}\n`)
 }
 

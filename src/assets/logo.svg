@@ -1,12 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 512 512">
   <defs>
     <linearGradient id="gradC" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#E9D5FF" />
-      <stop offset="100%" stop-color="#9333EA" />
+      <stop offset="0%" stop-color="#FDE68A" />
+      <stop offset="100%" stop-color="#B45309" />
     </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="110" fill="#0A0A0A"/>
-  <g transform="rotate(-35 256 256)" stroke="#D8B4FE" fill="none" stroke-linejoin="miter" stroke-linecap="round">
+  <rect width="512" height="512" rx="110" fill="#FFF9E8"/>
+  <g transform="rotate(-35 256 256)" stroke="#B7791F" fill="none" stroke-linejoin="miter" stroke-linecap="round">
     <!-- Floating gradient accent -->
     <path d="M 256 120 L 290 170 L 222 170 Z" fill="url(#gradC)" stroke-width="8"/>
     <!-- Fine downward arrow outline -->

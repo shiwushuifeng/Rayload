@@ -2,10 +2,22 @@
 import { computed } from 'vue'
 import brandLogoForLight from '@/assets/logo.svg'
 import brandLogoForDark from '@/assets/logo-for-dark.svg'
+import brandLogoViolet from '@/assets/logo-violet.svg'
 import { useTheme } from '@/composables/useTheme'
+import { usePreferenceStore } from '@/stores/preference'
 
 export function useBrandLogo() {
   const { isDark } = useTheme()
-  const brandLogo = computed(() => (isDark.value ? brandLogoForDark : brandLogoForLight))
+  const preferences = usePreferenceStore()
+  const brandLogo = computed(() => {
+    switch (preferences.config.brandLogoStyle) {
+      case 'gold':
+        return brandLogoForLight
+      case 'violet':
+        return brandLogoViolet
+      default:
+        return isDark.value ? brandLogoForDark : brandLogoForLight
+    }
+  })
   return { brandLogo }
 }

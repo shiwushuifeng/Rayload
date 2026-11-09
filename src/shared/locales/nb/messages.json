@@ -655,7 +655,11 @@
     "bt-protocol-section": "Protokoll",
     "rpc-port-locked-android": "RPC-porten er låst til 6800 på Android for utvidelseskompatibilitet.",
     "navigation-customization": "Bunnnavigasjon",
-    "navigation-customization-hint": "Velg hvilke sider som skal være synlige nederst. Innstillinger er alltid tilgjengelig."
+    "navigation-customization-hint": "Velg hvilke sider som skal være synlige nederst. Innstillinger er alltid tilgjengelig.",
+    "brand-logo": "Brand logo",
+    "brand-logo-auto": "Auto (cream-gold on light, violet on dark)",
+    "brand-logo-gold": "Cream & Gold",
+    "brand-logo-violet": "Violet"
   },
   "task": {
     "scope-all": "Alle",

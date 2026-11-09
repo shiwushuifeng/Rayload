@@ -655,7 +655,11 @@
     "bt-protocol-section": "Protokół",
     "rpc-port-locked-android": "Port RPC jest zablokowany na 6800 w Androidzie dla zgodności z rozszerzeniem.",
     "navigation-customization": "Dolna nawigacja",
-    "navigation-customization-hint": "Wybierz strony widoczne na dole. Ustawienia pozostają zawsze dostępne."
+    "navigation-customization-hint": "Wybierz strony widoczne na dole. Ustawienia pozostają zawsze dostępne.",
+    "brand-logo": "Brand logo",
+    "brand-logo-auto": "Auto (cream-gold on light, violet on dark)",
+    "brand-logo-gold": "Cream & Gold",
+    "brand-logo-violet": "Violet"
   },
   "task": {
     "scope-all": "Wszystkie",
