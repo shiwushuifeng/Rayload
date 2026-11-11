@@ -448,8 +448,11 @@ onBeforeUnmount(() => {
 .permission-welcome {
   position: relative;
   width: min(440px, calc(100vw - 32px));
+  max-height: calc(100dvh - 24px);
   padding: 28px;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   color: var(--m3-on-surface);
   background: var(--m3-surface-container-high);
   border: 1px solid var(--m3-outline-variant);

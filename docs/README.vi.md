@@ -13,7 +13,7 @@ Rayload là bản chuyển độc lập, không chính thức của Rayburst cho
 
 ## Cài đặt APK ARM64 mới nhất
 
-Download `Rayload-v1.0.1-android17-arm64-release.apk` from
+Download `Rayload-v1.0.2-android17-arm64-release.apk` from
 [GitHub Releases](https://github.com/shiwushuifeng/Rayload/releases).
 
 - Minimum: Android 7.0 / API 24

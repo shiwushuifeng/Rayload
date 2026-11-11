@@ -1,13 +1,13 @@
 <script setup lang="ts">
-/** @fileoverview Two-line task row with stable progress and right-aligned metadata. */
+/** @fileoverview Single-line compact task row with percentage and actions. */
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { TASK_STATUS } from '@shared/constants'
-import { NEllipsis, NIcon } from 'naive-ui'
-import LinearProgress from '@/components/common/LinearProgress.vue'
-import MTooltip, { TOOLTIP_DEFAULTS } from '@/components/common/MTooltip.vue'
-import { ArrowDownOutline, ArrowUpOutline, AlertCircleOutline, RadioOutline, TimeOutline } from '@vicons/ionicons5'
+import { NIcon } from 'naive-ui'
+import MTooltip from '@/components/common/MTooltip.vue'
+import { AlertCircleOutline, RadioOutline, TimeOutline } from '@vicons/ionicons5'
 import { useTaskCardModel } from '@/composables/useTaskCardModel'
+import { useTaskFileIcon } from '@/composables/useTaskFileIcon'
 import { usePlatform } from '@/composables/usePlatform'
 import { canOpenTaskContent, dragTaskContent } from '@/composables/useTaskContentOpen'
 import { useTaskFileMissing } from '@/composables/useTaskFileMissing'
@@ -37,23 +37,8 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const { isAndroid } = usePlatform()
 const taskRef = computed(() => props.task)
-const {
-  taskFullName,
-  isSharing,
-  statusBadge,
-  taskStatus,
-  isActive,
-  indeterminate,
-  percent,
-  completedSize,
-  totalSize,
-  hasSizeInfo,
-  downloadSpeed,
-  uploadSpeed,
-  remaining,
-  remainingText,
-  transferSummary,
-} = useTaskCardModel(taskRef)
+const { taskFullName, isSharing, statusBadge, isActive, indeterminate, percent } = useTaskCardModel(taskRef)
+const fileIcon = useTaskFileIcon(taskFullName)
 const { fileMissing, fileState } = useTaskFileMissing(taskRef)
 // The rail orders the list; the rest of a finished card drags its file out.
 const contentDraggable = computed(
@@ -63,18 +48,6 @@ const contentDraggable = computed(
     !props.actionPending &&
     (props.task.status === TASK_STATUS.COMPLETE || isSharing.value),
 )
-
-const statusColorMap: Record<string, string> = {
-  active: 'var(--m3-status-active)',
-  waiting: 'var(--m3-status-waiting)',
-  paused: 'var(--m3-status-paused)',
-  error: 'var(--m3-status-error)',
-  complete: 'var(--m3-status-success)',
-  removed: 'var(--m3-status-paused)',
-  sharing: 'var(--m3-status-success)',
-}
-
-const progressColor = computed(() => statusColorMap[taskStatus.value] || 'var(--m3-status-active)')
 
 const compactStatus = computed<{ label: string; tone: string; icon: Component } | null>(() => {
   if (fileMissing.value) {
@@ -97,6 +70,20 @@ const compactStatus = computed<{ label: string; tone: string; icon: Component } 
       return { label: statusBadge.value.label, tone: statusBadge.value.tone, icon: RadioOutline }
   }
 })
+
+const compactStatusColor = computed(() => {
+  if (!compactStatus.value && isActive.value) return 'var(--m3-status-active)'
+  switch (compactStatus.value?.tone) {
+    case 'error':
+      return 'var(--m3-error)'
+    case 'success':
+      return 'var(--m3-status-success)'
+    case 'waiting':
+      return 'var(--m3-status-waiting)'
+    default:
+      return 'var(--m3-on-surface-variant)'
+  }
+})
 </script>
 
 <template>
@@ -108,69 +95,44 @@ const compactStatus = computed<{ label: string; tone: string; icon: Component } 
     @dblclick="!fileMissing && !actionPending && canOpenTaskContent(task, $event) && emit('open-file', task)"
   >
     <div class="compact-body" :draggable="contentDraggable" @dragstart="dragTaskContent(task, $event)">
-      <div class="compact-header">
-        <MTooltip placement="bottom-start">
-          <template #trigger>
-            <div class="compact-name">
-              <TaskTextTransition :value="taskFullName">{{ taskFullName }}</TaskTextTransition>
-            </div>
-          </template>
-          {{ taskFullName }}
-        </MTooltip>
-        <TaskItemActions
-          :task="task"
-          :file-missing="fileMissing"
-          :pending="actionPending"
-          density="compact"
-          @pause="emit('pause', task)"
-          @resume="emit('resume', task)"
-          @retry="emit('retry', task)"
-          @redownload="emit('redownload', task)"
-          @finish-sharing="emit('finish-sharing', task)"
-          @finish-media="emit('finish-media', task)"
-          @delete="emit('delete', task)"
-          @delete-record="emit('delete-record', task)"
-          @copy-link="emit('copy-link', task)"
-          @show-info="emit('show-info', task)"
-          @folder="emit('folder', task)"
-          @checksum="emit('checksum', task)"
-          @select-files="emit('select-files', task)"
-        />
-      </div>
-      <div class="compact-progress-row">
-        <LinearProgress
-          v-if="!indeterminate"
-          class="compact-progress"
-          :percentage="percent"
-          :color="progressColor"
-          :height="5"
-        />
-        <span v-if="!indeterminate" class="compact-percent">{{ indeterminate ? '—' : `${percent}%` }}</span>
-        <div class="compact-meta">
-          <NEllipsis :tooltip="TOOLTIP_DEFAULTS">
-            <TaskTextTransition
-              v-show="compactStatus"
-              class="compact-meta-item"
-              :value="fileMissing ? 'file-missing' : (statusBadge?.key ?? '')"
-            >
-              <span v-if="compactStatus" class="compact-status" :class="{ error: compactStatus.tone === 'error' }">
-                <NIcon :size="12"><component :is="compactStatus.icon" /></NIcon>
-                {{ compactStatus.label }}
-              </span>
-            </TaskTextTransition>
-            <span v-if="hasSizeInfo" class="compact-meta-item">{{ completedSize }} / {{ totalSize }}</span>
-            <span v-if="isActive && hasSizeInfo" class="compact-speed compact-meta-item">
-              <NIcon :size="10"><ArrowDownOutline /></NIcon>
-              {{ downloadSpeed }}/s
-            </span>
-            <span v-if="transferSummary.showUploadMetrics" class="compact-speed compact-meta-item">
-              <NIcon :size="10"><ArrowUpOutline /></NIcon>
-              {{ uploadSpeed }}/s
-            </span>
-            <span v-if="remaining > 0" class="compact-meta-item">{{ remainingText }}</span>
-          </NEllipsis>
-        </div>
-      </div>
+      <span class="compact-file-icon" :class="`compact-file-icon--${fileIcon.tone}`" aria-hidden="true">
+        <NIcon :size="15"><component :is="fileIcon.icon" /></NIcon>
+      </span>
+      <MTooltip placement="bottom-start">
+        <template #trigger>
+          <div class="compact-name">
+            <TaskTextTransition :value="taskFullName">{{ taskFullName }}</TaskTextTransition>
+          </div>
+        </template>
+        {{ taskFullName }}
+      </MTooltip>
+      <span
+        class="compact-percent"
+        :style="{ color: compactStatusColor }"
+        :title="compactStatus?.label ?? t('task.status-active')"
+      >
+        {{ indeterminate ? '—' : `${percent}%` }}
+      </span>
+      <span class="compact-status-text">{{ compactStatus?.label ?? t('task.status-active') }}</span>
+      <TaskItemActions
+        :task="task"
+        :file-missing="fileMissing"
+        :pending="actionPending"
+        density="compact"
+        @pause="emit('pause', task)"
+        @resume="emit('resume', task)"
+        @retry="emit('retry', task)"
+        @redownload="emit('redownload', task)"
+        @finish-sharing="emit('finish-sharing', task)"
+        @finish-media="emit('finish-media', task)"
+        @delete="emit('delete', task)"
+        @delete-record="emit('delete-record', task)"
+        @copy-link="emit('copy-link', task)"
+        @show-info="emit('show-info', task)"
+        @folder="emit('folder', task)"
+        @checksum="emit('checksum', task)"
+        @select-files="emit('select-files', task)"
+      />
     </div>
   </div>
 </template>
@@ -180,7 +142,7 @@ const compactStatus = computed<{ label: string; tone: string; icon: Component } 
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  min-height: 42px;
+  min-height: 44px;
   background-color: var(--task-item-bg);
   border: 1px solid var(--m3-outline-variant);
   border-left: 3px solid var(--m3-outline-variant);
@@ -205,71 +167,82 @@ const compactStatus = computed<{ label: string; tone: string; icon: Component } 
   opacity: 1;
 }
 .compact-body {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   min-width: 0;
-  padding: 8px 12px;
+  min-height: 44px;
+  padding: 6px 8px;
 }
-.compact-header {
+.compact-file-icon {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 12px;
-  align-items: start;
-  height: 26px;
-  overflow: hidden;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  color: var(--m3-primary);
+  background: color-mix(in srgb, var(--m3-primary) 12%, var(--m3-surface-container));
+  border-radius: 8px;
 }
-.compact-header :deep(.n-tooltip-trigger) {
+.compact-file-icon--video {
+  color: var(--m3-tertiary);
+  background: color-mix(in srgb, var(--m3-tertiary) 12%, var(--m3-surface-container));
+}
+.compact-file-icon--audio {
+  color: var(--m3-success);
+  background: color-mix(in srgb, var(--m3-success) 12%, var(--m3-surface-container));
+}
+.compact-file-icon--image {
+  color: var(--m3-secondary);
+  background: color-mix(in srgb, var(--m3-secondary) 12%, var(--m3-surface-container));
+}
+.compact-body :deep(.n-tooltip-trigger) {
+  flex: 1 1 auto;
   min-width: 0;
   max-width: 100%;
+}
+.compact-body :deep(.task-item-actions) {
+  flex: 0 0 auto;
 }
 .compact-name {
+  display: block;
   min-width: 0;
   max-width: 100%;
-  overflow: clip visible;
+  overflow: hidden;
   color: var(--m3-on-surface-variant);
   font-size: var(--font-size-base);
-  line-height: 24px;
+  line-height: 20px;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
-.compact-progress-row {
-  display: grid;
-  /* Live metadata must never determine the progress rail's width. */
-  grid-template-columns: minmax(0, 1fr) 6ch minmax(0, 2fr);
-  align-items: center;
-  column-gap: 10px;
-  height: 16px;
-  margin-top: 4px;
-  color: var(--m3-on-surface-variant);
-  font-size: var(--font-size-xs);
-  line-height: 14px;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-.compact-meta {
-  min-width: 0;
-  text-align: end;
-}
 .compact-name > .task-text-transition {
-  display: grid;
+  display: block;
+  min-width: 0;
 }
 .compact-name :deep(.task-text-transition-content) {
   display: block;
-  overflow: clip visible;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .compact-percent {
-  text-align: start;
+  flex: 0 0 auto;
+  min-width: 4ch;
+  font-size: var(--font-size-xs);
+  line-height: 14px;
+  font-weight: 600;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
 }
-.compact-meta-item:not(:last-child) {
-  margin-inline-end: 8px;
-}
-.compact-status,
-.compact-speed {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-.compact-status.error {
-  color: var(--m3-error);
+.compact-status-text {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 </style>

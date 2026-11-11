@@ -12,6 +12,8 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.os.Handler
+import android.os.Looper
 import android.os.PowerManager
 import android.os.Process
 import android.os.SystemClock
@@ -26,6 +28,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.Keep
 import androidx.core.content.FileProvider
 import java.io.File
+import java.lang.ref.WeakReference
 import org.json.JSONObject
 
 class MainActivity : TauriActivity() {
@@ -46,6 +49,7 @@ class MainActivity : TauriActivity() {
     private const val LAUNCHER_ICON_PREFS = "rayload-launcher-icon"
 
     private var downloadWakeLock: PowerManager.WakeLock? = null
+    private var activeActivity: WeakReference<MainActivity>? = null
 
     /** Shares a downloaded file through a correctly scoped FileProvider URI. */
     @Keep
@@ -150,10 +154,30 @@ class MainActivity : TauriActivity() {
 
     @Keep
     @JvmStatic
-    fun releaseDownloadWakeLock(): Boolean {
+    @Suppress("UNUSED_PARAMETER")
+    fun releaseDownloadWakeLock(context: Context): Boolean {
       val wakeLock = downloadWakeLock ?: return true
       if (wakeLock.isHeld) wakeLock.release()
       downloadWakeLock = null
+      return true
+    }
+
+    /** Stops the background service, finishes the task, and exits the process. */
+    @Keep
+    @JvmStatic
+    fun shutdownApplication(context: Context): Boolean {
+      releaseDownloadWakeLock(context)
+      runCatching {
+        context.stopService(Intent(context, EngineForegroundService::class.java))
+      }
+      val activity = (context as? Activity) ?: activeActivity?.get()
+      if (activity != null) {
+        activity.runOnUiThread { activity.finishAffinity() }
+      }
+      Handler(Looper.getMainLooper()).postDelayed({
+        Process.killProcess(Process.myPid())
+        System.exit(0)
+      }, 400)
       return true
     }
 
@@ -194,6 +218,7 @@ class MainActivity : TauriActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge()
     super.onCreate(savedInstanceState)
+    activeActivity = WeakReference(this)
     startEngineService()
     captureShareIntent(intent)
   }
@@ -213,7 +238,8 @@ class MainActivity : TauriActivity() {
     backCallback?.remove()
     backCallback = null
     activeWebView = null
-    if (isFinishing) releaseDownloadWakeLock()
+    if (activeActivity?.get() === this) activeActivity = null
+    if (isFinishing) releaseDownloadWakeLock(this)
     super.onDestroy()
   }
 
@@ -297,6 +323,22 @@ class MainActivity : TauriActivity() {
 
     @JavascriptInterface
     fun setAppIcon(style: String): Boolean = Companion.setAppIcon(this@MainActivity, style)
+
+    @JavascriptInterface
+    fun setEngineCredentials(port: Int, secret: String) {
+      EngineForegroundService.setCredentials(this@MainActivity, port, secret)
+    }
+
+    @JavascriptInterface
+    fun setEnginePaused(paused: Boolean) {
+      EngineForegroundService.setPaused(this@MainActivity, paused)
+    }
+
+    /** Keep-awake dashboard: clears automatically when the activity is destroyed. */
+    @JavascriptInterface
+    fun setKeepScreenOn(enabled: Boolean) {
+      runOnUiThread { this@MainActivity.window.decorView.keepScreenOn = enabled }
+    }
 
     @JavascriptInterface
     fun storagePermissionStatus(): String = currentStoragePermissionStatus()

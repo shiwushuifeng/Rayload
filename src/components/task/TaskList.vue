@@ -57,32 +57,60 @@ let sortable: Sortable | null = null
 const taskCardComponent = computed(() =>
   preferenceStore.config.taskCardMode === 'compact' ? TaskCompactItem : TaskItem,
 )
-const taskPage = computed(() => taskStore.taskPagination[taskStore.currentList].page)
-const pageSize = computed(() => taskStore.taskPagination.pageSize)
 const pageTransitionKey = computed(() => taskStore.currentList)
+const pageSize = computed(() => taskStore.taskPagination.pageSize)
+/** How many cards are mounted; grows as the sentinel scrolls into view. */
+const renderLimit = ref(pageSize.value)
 const visibleTaskList = computed<Aria2Task[]>({
-  get() {
-    const start = (taskPage.value - 1) * pageSize.value
-    return taskList.value.slice(start, start + pageSize.value)
-  },
+  get: () => taskList.value.slice(0, renderLimit.value),
   set(nextPageList) {
-    const start = (taskPage.value - 1) * pageSize.value
-    dragOrder.value = [
-      ...taskList.value.slice(0, start),
-      ...nextPageList,
-      ...taskList.value.slice(start + nextPageList.length),
-    ].map((task) => task.gid)
+    dragOrder.value = [...nextPageList, ...taskList.value.slice(nextPageList.length)].map((task) => task.gid)
   },
 })
+const hasMoreTasks = computed(() => renderLimit.value < taskList.value.length)
+const sentinelRef = ref<HTMLElement | null>(null)
+let loadObserver: IntersectionObserver | null = null
+
+function loadMoreTasks() {
+  if (!hasMoreTasks.value) return
+  renderLimit.value = Math.min(taskList.value.length, renderLimit.value + pageSize.value)
+}
+
+function disconnectLoadObserver() {
+  loadObserver?.disconnect()
+  loadObserver = null
+}
+
+function observeSentinel() {
+  disconnectLoadObserver()
+  if (!hasMoreTasks.value || typeof IntersectionObserver === 'undefined') return
+  const element = sentinelRef.value
+  if (!element) return
+  loadObserver = new IntersectionObserver(
+    (entries) => {
+      if (entries.some((entry) => entry.isIntersecting)) loadMoreTasks()
+    },
+    { rootMargin: '320px 0px' },
+  )
+  loadObserver.observe(element)
+}
 
 onBeforeUnmount(() => {
+  disconnectLoadObserver()
   stopFloatingRectTracking()
   destroySortable()
   lastFloatingRect = null
 })
 
 onMounted(() => {
-  void nextTick(mountSortable)
+  void nextTick(() => {
+    mountSortable()
+    observeSentinel()
+  })
+})
+
+watch([hasMoreTasks, sentinelRef], () => {
+  void nextTick(observeSentinel)
 })
 
 function trackFloatingRect() {
@@ -142,12 +170,26 @@ function animateDropSettle(event: SortableEvent | undefined): Promise<void> {
   })
 }
 
-watch([taskPage, pageSize, pageTransitionKey], () => {
+watch(pageTransitionKey, () => {
   dragOrder.value = null
   sorting.value = false
   stopFloatingRectTracking()
-  taskStore.clampCurrentTaskPage()
+  renderLimit.value = pageSize.value
+  void nextTick(observeSentinel)
 })
+
+watch(pageSize, (size, previous) => {
+  renderLimit.value = renderLimit.value === previous ? size : Math.max(renderLimit.value, size)
+  void nextTick(observeSentinel)
+})
+
+watch(
+  () => taskList.value.length,
+  (length) => {
+    if (renderLimit.value > length) renderLimit.value = length
+    void nextTick(observeSentinel)
+  },
+)
 
 watch(
   pageTransitionKey,
@@ -197,7 +239,7 @@ const sortableOptions: SortableOptions = {
     dragOrder.value = null
     stopFloatingRectTracking()
     try {
-      const saved = taskStore.saveVisiblePageManualOrder(gids)
+      const saved = taskStore.saveVisibleTaskOrder(gids)
       await nextTick()
       await Promise.all([animateDropSettle(event), saved])
     } catch (error) {
@@ -266,7 +308,7 @@ function handleKeydown(event: KeyboardEvent) {
     taskStore.clearChecked()
   } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'a') {
     event.preventDefault()
-    taskStore.checkAll(visibleTaskList.value.map((task) => task.gid))
+    taskStore.checkAll(taskList.value.map((task) => task.gid))
   }
 }
 
@@ -332,12 +374,13 @@ function handleCardBeforeLeave(element: Element) {
         </div>
       </TransitionGroup>
     </Transition>
+    <div v-if="hasMoreTasks" ref="sentinelRef" class="task-list-sentinel" aria-hidden="true" />
   </div>
 </template>
 
 <style scoped>
 .task-list {
-  --task-list-bottom-safety: 54px;
+  --task-list-bottom-safety: 96px;
   padding: 16px var(--content-gutter);
   min-height: 100%;
   box-sizing: border-box;
@@ -345,9 +388,9 @@ function handleCardBeforeLeave(element: Element) {
   flex-direction: column;
 }
 /*
- * Speedometer bottom safety area — only when cards are present.
+ * Floating speed-ball safety area — only when cards are present.
  * A ::after pseudo-element participates in flex layout, reliably
- * letting the final card scroll above the fixed Speedometer widget without
+ * letting the final card scroll above the floating widgets without
  * forcing short lists to show a scrollbar.
  */
 .task-list-inner:not(:empty)::after {
@@ -361,6 +404,11 @@ function handleCardBeforeLeave(element: Element) {
   flex: 1;
   position: relative;
   z-index: 1;
+}
+.task-list-sentinel {
+  width: 100%;
+  height: 1px;
+  flex: 0 0 1px;
 }
 .task-page-swap-enter-active {
   transition:

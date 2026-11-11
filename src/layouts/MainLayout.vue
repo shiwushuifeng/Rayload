@@ -32,10 +32,11 @@ import PreferenceActionBar from '@/components/preference/PreferenceActionBar.vue
 import { providePreferenceActions } from '@/composables/usePreferenceActions'
 import { useNavigationVisibility } from '@/composables/useNavigationVisibility'
 import { useExtensionPanel } from '@/composables/useExtensionPanel'
-import { setAndroidAppIcon } from '@/composables/useAndroidNative'
+import { setAndroidAppIcon, syncAndroidEngineCredentials } from '@/composables/useAndroidNative'
 import TaskActions from '@/components/task/TaskActions.vue'
 import { useTaskDestinations } from '@/components/layout/navigation'
 import Speedometer from '@/components/layout/Speedometer.vue'
+import KeepAwakeOverlay from '@/components/layout/KeepAwakeOverlay.vue'
 import WindowControls from '@/components/layout/WindowControls.vue'
 import EngineRecoveryDialog from '@/components/layout/EngineRecoveryDialog.vue'
 import AboutPanel from '@/components/about/AboutPanel.vue'
@@ -49,7 +50,7 @@ import AndroidPermissionWelcome from '@/components/onboarding/AndroidPermissionW
 import { useTaskStore } from '@/stores/task'
 import { usePreferenceStore } from '@/stores/preference'
 import { useAppMessage } from '@/composables/useAppMessage'
-import { NModal, NButton, NCheckbox, NProgress, NPagination, useDialog } from 'naive-ui'
+import { NModal, NButton, NCheckbox, NProgress, useDialog } from 'naive-ui'
 
 import { useAppEvents } from '@/composables/useAppEvents'
 import { useFloatWindowRelaunch } from '@/composables/useFloatWindowRelaunch'
@@ -63,13 +64,26 @@ const engineStore = useEngineStore()
 const taskStore = useTaskStore()
 const preferenceStore = usePreferenceStore()
 
+watch(
+  () => [preferenceStore.config.rpcListenPort, preferenceStore.config.rpcSecret] as const,
+  ([port, secret]) => {
+    if (isAndroid.value) syncAndroidEngineCredentials(port, secret)
+  },
+)
+
 declare global {
   interface Window {
     __rayloadHandleBack?: () => boolean
+    __rayloadDismissSpeedometerPanel?: () => boolean
   }
 }
 
 function handleAndroidBack(): boolean {
+  if (appStore.keepAwakeVisible) {
+    appStore.hideKeepAwake()
+    return true
+  }
+  if (window.__rayloadDismissSpeedometerPanel?.()) return true
   if (showAbout.value) {
     showAbout.value = false
     return true
@@ -203,6 +217,25 @@ watch(
 
 const showExitDialog = ref(false)
 const isExiting = ref(false)
+
+// Overlays live in a teleported layer outside the grid shell. Publish the
+// measured header bottom so dialogs can open below the title bar line instead
+// of covering it.
+let headerOffsetObserver: ResizeObserver | null = null
+let headerOffsetFrame = 0
+
+function syncHeaderOffset() {
+  headerOffsetFrame = 0
+  const header = document.querySelector<HTMLElement>('.page-header')
+  if (!header) return
+  const bottom = Math.round(header.getBoundingClientRect().bottom)
+  document.documentElement.style.setProperty('--app-header-bottom', `${bottom}px`)
+}
+
+function scheduleHeaderOffsetSync() {
+  if (headerOffsetFrame !== 0) return
+  headerOffsetFrame = requestAnimationFrame(syncHeaderOffset)
+}
 const rememberChoice = ref(false)
 const pendingTrayHide = ref(false)
 const isMaximized = ref(false)
@@ -227,11 +260,6 @@ useEscapeKey(
   },
   { when: () => taskStore.checkedGids.length === 0 && !showExitDialog.value },
 )
-const taskPaginationTab = computed(() => taskStore.currentList)
-const taskPaginationPage = computed(() => taskStore.taskPagination[taskPaginationTab.value].page)
-const taskPaginationPageSize = computed(() => taskStore.taskPagination.pageSize)
-const taskPaginationPageCount = computed(() => taskStore.currentTaskPageCount())
-const taskPaginationPageSizes = [5, 20, 40, 80, 100]
 // ── Auto-shutdown countdown state ──────────────────────────────────
 const showShutdownCountdown = ref(false)
 const shutdownCountdown = ref(60)
@@ -542,8 +570,18 @@ async function checkShutdownCondition() {
 }
 
 onMounted(async () => {
+  document.documentElement.classList.add('rayload-main-window')
+  const header = document.querySelector<HTMLElement>('.page-header')
+  if (header && typeof ResizeObserver !== 'undefined') {
+    headerOffsetObserver = new ResizeObserver(scheduleHeaderOffsetSync)
+    headerOffsetObserver.observe(header)
+  }
+  window.addEventListener('resize', scheduleHeaderOffsetSync)
+  scheduleHeaderOffsetSync()
+
   if (isAndroid.value) {
     setAndroidAppIcon(preferenceStore.config.androidAppIcon)
+    syncAndroidEngineCredentials(preferenceStore.config.rpcListenPort, preferenceStore.config.rpcSecret)
     window.__rayloadHandleBack = handleAndroidBack
     window.addEventListener('rayload-back-home', onAndroidBackHome)
   }
@@ -853,6 +891,16 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
+  document.documentElement.classList.remove('rayload-main-window')
+  document.documentElement.style.removeProperty('--app-header-bottom')
+  headerOffsetObserver?.disconnect()
+  headerOffsetObserver = null
+  window.removeEventListener('resize', scheduleHeaderOffsetSync)
+  if (headerOffsetFrame !== 0) {
+    cancelAnimationFrame(headerOffsetFrame)
+    headerOffsetFrame = 0
+  }
+
   if (isAndroid.value) {
     delete window.__rayloadHandleBack
     window.removeEventListener('rayload-back-home', onAndroidBackHome)
@@ -929,33 +977,18 @@ onUnmounted(() => {
       @close="requestClose"
       @maximize-toggled="onMaximizeToggled"
     />
-    <footer class="content-footer" :inert="mobileModalOpen">
-      <Transition name="fade" mode="out-in" appear>
-        <div v-if="!isTaskPage" id="preference-actions" key="preferences" :inert="isTaskPage">
-          <PreferenceActionBar
-            :is-dirty="activePreferenceActions?.isDirty ?? false"
-            :is-valid="activePreferenceActions?.isValid ?? false"
-            @save="activePreferenceActions?.save()"
-            @discard="activePreferenceActions?.discard()"
-          />
-        </div>
-        <div v-else key="tasks" class="task-pagination-control" :inert="!isTaskPage">
-          <NPagination
-            :page="taskPaginationPage"
-            :page-size="taskPaginationPageSize"
-            :page-count="taskPaginationPageCount"
-            :page-sizes="taskPaginationPageSizes"
-            size="small"
-            :page-slot="compactNavigation ? 3 : 5"
-            :simple="compactNavigation"
-            :show-size-picker="!compactNavigation"
-            @update:page="taskStore.setCurrentTaskPage"
-            @update:page-size="taskStore.setTaskPageSize"
-          />
-        </div>
-      </Transition>
-      <Speedometer />
+    <footer v-if="!isTaskPage" class="content-footer" :inert="mobileModalOpen">
+      <div id="preference-actions">
+        <PreferenceActionBar
+          :is-dirty="activePreferenceActions?.isDirty ?? false"
+          :is-valid="activePreferenceActions?.isValid ?? false"
+          @save="activePreferenceActions?.save()"
+          @discard="activePreferenceActions?.discard()"
+        />
+      </div>
     </footer>
+    <Speedometer />
+    <KeepAwakeOverlay />
     <AboutPanel :show="showAbout" @close="showAbout = false" />
     <AndroidPermissionWelcome />
     <ExtensionPanel :show="showExtensions" @close="closeExtensionPanel" />
@@ -1143,8 +1176,7 @@ onUnmounted(() => {
   min-width: 0;
   padding: 8px var(--content-gutter) 10px;
 }
-#preference-actions,
-.task-pagination-control {
+#preference-actions {
   grid-column: 1;
   grid-row: 1;
   min-width: 0;
@@ -1152,24 +1184,8 @@ onUnmounted(() => {
 #preference-actions {
   width: 100%;
 }
-.content-footer :deep(.speedometer) {
-  grid-column: 2;
-  grid-row: 1;
-  margin-left: auto;
-  flex-shrink: 0;
-}
 .window-controls {
   z-index: 100;
-}
-.task-pagination-control {
-  justify-self: start;
-  max-width: 100%;
-  overflow-x: auto;
-  min-width: 0;
-  padding: 3px 6px;
-  border: 1px solid var(--m3-outline-variant);
-  border-radius: var(--radius-lg);
-  background: var(--m3-surface-container);
 }
 /* The title and the task toolbar swap in place with the page's `fade`. */
 .page-title-enter-active,

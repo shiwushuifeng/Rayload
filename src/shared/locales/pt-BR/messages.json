@@ -88,7 +88,6 @@
     "speedometer-download-limit": "Download",
     "speedometer-upload-limit": "Upload",
     "speedometer-apply": "Aplicar",
-    "speedometer-needs-config": "Configure um limite pelo menu de contexto ou preferências (pelo menos um deve ser maior que 0)",
     "speedometer-needs-config-settings": "Configure um limite abaixo (pelo menos um deve ser maior que 0)",
     "speedometer-enable-limit": "Ativar limite de velocidade",
     "speedometer-enter-values": "Insira os valores do limite",
@@ -104,8 +103,23 @@
     "engine-open-settings": "Abrir configurações de rede",
     "generate-random": "Gerar valor aleatório",
     "choose-folder": "Escolher pasta",
-    "choose-file": "Escolher arquivo",
-    "press-back-again": "Pressione Voltar novamente para sair"
+    "press-back-again": "Pressione Voltar novamente para sair",
+    "speedometer-live-status": "Status ao vivo",
+    "speedometer-connection-quality": "Qualidade da conexão",
+    "speedometer-quality-idle": "Ocioso",
+    "speedometer-quality-excellent": "Excelente",
+    "speedometer-quality-good": "Boa",
+    "speedometer-quality-fair": "Regular",
+    "speedometer-quality-weak": "Fraca",
+    "speedometer-online": "Online",
+    "speedometer-offline": "Offline",
+    "speedometer-wifi": "Wi-Fi",
+    "speedometer-cellular": "Rede móvel",
+    "keep-awake-toast": "Modo de tela sempre ligada ativado. Recomenda-se conectar à energia.",
+    "keep-awake-mode": "Modo tela ligada",
+    "keep-awake-speed-label": "Velocidade total de download",
+    "keep-awake-active-tasks": "Downloads ativos: {count}",
+    "keep-awake-exit-hint": "Toque em qualquer lugar para sair"
   },
   "preferences": {
     "general": "Geral",
@@ -602,10 +616,6 @@
     "dns-over-https-hint": "DNS criptografado; escolha uma predefinição ou insira a URL de um resolvedor",
     "dns-over-https-invalid": "O resolvedor DNS over HTTPS deve ser uma URL https://",
     "dns-over-https-system": "Resolvedor do sistema",
-    "post-download-program": "Executar após o download",
-    "post-download-program-hint": "Ex.: um antivírus. Argumentos: {file} (caminho completo), {dir}, {name}",
-    "post-download-program-placeholder": "Nenhum programa",
-    "post-download-arguments": "Argumentos",
     "site-rules": "Regras por site",
     "site-rules-hint": "Configurações de download por site: conexões por servidor para sites que proíbem downloads paralelos e se o servidor proxy é usado. example.com também cobre seus subdomínios; * corresponde a quaisquer caracteres",
     "site-rule-add": "Adicionar regra",
@@ -667,7 +677,9 @@
     "brand-logo-blue": "Cream & Blue",
     "brand-logo-teal": "Teal & Black",
     "android-app-icon-blue": "Cream & Blue",
-    "android-app-icon-teal": "Teal & Black"
+    "android-app-icon-teal": "Teal & Black",
+    "android-app-icon-restart-hint": "Se o ícone não mudar imediatamente, reinicie o Rayload ou a tela inicial.",
+    "bt-port-randomized": "BT listen port randomized to {port}"
   },
   "task": {
     "scope-all": "Todas",
@@ -926,7 +938,7 @@
     "open-folder-success": "Pasta aberta",
     "get-task-name": "Obtendo nome da tarefa...",
     "remaining-prefix": "Restante",
-    "select-torrent": "Arraste um arquivo torrent aqui ou clique para selecionar",
+    "select-torrent": "Clique para escolher um arquivo .torrent local",
     "task-detail-title": "Detalhes da tarefa",
     "download-start-message": "Baixando: {taskName}",
     "download-batch-start-message": "Baixando: {taskName} e {count} outras tarefas",
@@ -1023,7 +1035,8 @@
     "sha256-calculating": "Calculating SHA-256 for {fileName}…",
     "sha256-copy": "Copy SHA-256",
     "sha256-copied": "SHA-256 copied",
-    "sha256-failed": "Could not calculate the file SHA-256"
+    "sha256-failed": "Could not calculate the file SHA-256",
+    "empty-hint": "Toque no botão + no canto inferior direito para criar uma tarefa, ou compartilhe um link do navegador com o Rayload."
   },
   "media": {
     "probing": "Analisando mídia",
@@ -1066,7 +1079,8 @@
     "about": "Sobre",
     "settings": "Configurações",
     "extensions": "Extensões",
-    "trash": "Trash"
+    "trash": "Trash",
+    "keep-awake": "Manter tela ligada"
   },
   "extension": {
     "description": "Envie os downloads do navegador para o Rayload e descubra mídias na web.",

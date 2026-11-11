@@ -156,6 +156,20 @@ html.float-window-document #app {
     touch-action: manipulation;
   }
 
+  /* Naive keeps the inner fill at the size's fixed height (34px for small),
+   * which leaves a translucent band inside the 44px touch frame. */
+  .n-base-selection-label,
+  .n-base-selection-tags,
+  .n-input__input-el,
+  .n-input__textarea-el {
+    height: auto;
+    min-height: 44px;
+  }
+
+  .n-input__input-el {
+    line-height: 44px;
+  }
+
   button,
   .n-button {
     min-width: 44px;

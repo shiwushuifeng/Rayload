@@ -16,6 +16,21 @@ Android only. It is built with Tauri, Rust, Vue 3, and Aria2 Next, with a
 mobile-first interface, system sharing, background downloads, notifications, a
 public Downloads integration, and a local Aria2 JSON-RPC service.
 
+## Highlights in v1.0.2
+
+- Seamless task list with infinite scroll, full/compact card modes, and a
+  clearer empty state.
+- Redesigned floating speedometer with a centered live-status panel, bulk
+  pause/resume, speed limits, engine restart, and edge docking.
+- Keep-awake dashboard with live speed, active task count, theme-aware colors,
+  reduced-motion support, and native screen-on handling.
+- Customizable bottom navigation, including a dedicated keep-awake entry.
+- Persistent Chinese foreground notification with working pause/resume actions.
+- Torrent picker improvements: select-all, scrollable file list, and a simpler
+  upload dialog.
+- Smaller release APK through Rust stripping and aggressive frontend
+  minification.
+
 ## Platform requirements
 
 | Item           | Requirement                 |
@@ -35,7 +50,7 @@ Download the latest ARM64 APK from
 [GitHub Releases](https://github.com/shiwushuifeng/Rayload/releases):
 
 ```text
-Rayload-v1.0.1-android17-arm64-release.apk
+Rayload-v1.0.2-android17-arm64-release.apk
 ```
 
 On first launch, choose your language and complete the Android setup steps:
@@ -157,6 +172,15 @@ Rayload 是 Rayburst 的独立非官方 Android 移植版，仅专注于 Android
 项目使用 Tauri、Rust、Vue 3 和 Aria2 Next 构建，提供移动端界面、系统分享、
 后台下载、通知、公共下载目录集成以及本地 Aria2 JSON-RPC 服务。
 
+### v1.0.2 更新亮点
+
+- 任务列表改为无缝无限滚动，支持完整/紧凑卡片模式，并优化空状态引导。
+- 重构悬浮速度球：居中实时状态面板、全部暂停/恢复、限速、重启引擎与贴边停靠。
+- 新增不息屏挂机模式：实时速度、任务数、主题色跟随、减弱动态效果与原生常亮。
+- 底部导航支持自定义，并新增“不息屏挂机”入口；常驻通知中文化并支持暂停/继续。
+- 种子选择弹窗支持全选、文件列表独立滚动，上传流程更简洁。
+- 通过 Rust 剥离与前端压缩降低 Release APK 体积。
+
 ### 平台要求
 
 | 项目     | 要求                        |
@@ -175,7 +199,7 @@ Rayload 不支持桌面平台。标准 Google Chrome for Android 不能加载桌
 下载最新 ARM64 APK：
 
 ```text
-Rayload-v1.0.1-android17-arm64-release.apk
+Rayload-v1.0.2-android17-arm64-release.apk
 ```
 
 首次启动时可以选择界面语言，随后完成 Android 初始化：

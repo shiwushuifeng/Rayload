@@ -216,6 +216,13 @@ mod platform {
         }
     }
 
+    /// Finishes the Android activity and terminates the process after the
+    /// engine has been stopped. Called by the completion-shutdown path.
+    pub(crate) fn shutdown_application() -> Result<(), PowerError> {
+        call_main_activity_bool("shutdownApplication")?;
+        Ok(())
+    }
+
     fn call_main_activity_bool(method: &str) -> Result<bool, PowerError> {
         use jni::{
             objects::{JObject, JValue},
@@ -254,6 +261,9 @@ mod platform {
 }
 
 use platform::PlatformPowerGuard;
+
+#[cfg(target_os = "android")]
+pub(crate) use platform::shutdown_application;
 
 #[cfg(test)]
 mod tests {

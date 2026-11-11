@@ -31,7 +31,7 @@ Rayload 不支持桌面平台。标准 Google Chrome for Android 不能加载桌
 下载最新 ARM64 APK：
 
 ```text
-Rayload-v1.0.1-android17-arm64-release.apk
+Rayload-v1.0.2-android17-arm64-release.apk
 ```
 
 首次启动时可以选择界面语言，随后完成 Android 初始化：

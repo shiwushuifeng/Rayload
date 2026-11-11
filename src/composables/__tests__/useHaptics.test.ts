@@ -20,6 +20,9 @@ describe('triggerHaptic', () => {
       requestNotificationPermission: vi.fn(),
       batteryOptimizationStatus: vi.fn(() => 'denied'),
       requestBatteryOptimizationExemption: vi.fn(),
+      setEngineCredentials: vi.fn(),
+      setEnginePaused: vi.fn(),
+      setKeepScreenOn: vi.fn(),
     }
 
     triggerHaptic()

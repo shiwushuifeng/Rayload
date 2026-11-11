@@ -1,4 +1,8 @@
 <resources>
     <string name="app_name">"Rayload"</string>
     <string name="main_activity_title">"Rayload"</string>
+    <string name="engine_channel_name">Download engine</string>
+    <string name="engine_channel_description">Keeps active Rayload downloads running in the background</string>
+    <string name="engine_running">Rayload is running in the background</string>
+    <string name="engine_paused">Rayload downloads are paused</string>
 </resources>

@@ -3,7 +3,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NDivider, NIcon, NSwitch } from 'naive-ui'
-import { InformationCircleOutline, TrashOutline } from '@vicons/ionicons5'
+import { InformationCircleOutline, SunnyOutline, TrashOutline } from '@vicons/ionicons5'
 import { useTaskDestinations } from '@/components/layout/navigation'
 import { type NavigationItemKey, useNavigationVisibility } from '@/composables/useNavigationVisibility'
 
@@ -13,6 +13,7 @@ const { visibility, setItemVisible } = useNavigationVisibility()
 
 const items = computed(() => [
   ...taskDestinations.value,
+  { key: 'keep-awake' as const, label: t('navigation.keep-awake'), icon: SunnyOutline },
   { key: 'trash' as const, label: t('navigation.trash'), icon: TrashOutline },
   { key: 'about' as const, label: t('navigation.about'), icon: InformationCircleOutline },
 ])

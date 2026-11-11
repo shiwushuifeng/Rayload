@@ -88,7 +88,6 @@
     "speedometer-download-limit": "دانلود",
     "speedometer-upload-limit": "آپلود",
     "speedometer-apply": "اعمال",
-    "speedometer-needs-config": "محدودیت سرعت را از طریق منوی راست‌کلیک یا تنظیمات پیکربندی کنید (حداقل یکی باید بیشتر از 0 باشد)",
     "speedometer-needs-config-settings": "لطفاً محدودیت سرعت را در زیر پیکربندی کنید (حداقل یکی باید بیشتر از 0 باشد)",
     "speedometer-enable-limit": "فعال‌سازی محدودیت سرعت",
     "speedometer-enter-values": "لطفاً مقادیر محدودیت را وارد کنید",
@@ -104,8 +103,23 @@
     "engine-open-settings": "بازکردن تنظیمات شبکه",
     "generate-random": "ایجاد مقدار تصادفی",
     "choose-folder": "انتخاب پوشه",
-    "choose-file": "انتخاب فایل",
-    "press-back-again": "برای خروج دوباره برگشت را بزنید"
+    "press-back-again": "برای خروج دوباره برگشت را بزنید",
+    "speedometer-live-status": "وضعیت زنده",
+    "speedometer-connection-quality": "کیفیت اتصال",
+    "speedometer-quality-idle": "بیکار",
+    "speedometer-quality-excellent": "عالی",
+    "speedometer-quality-good": "خوب",
+    "speedometer-quality-fair": "متوسط",
+    "speedometer-quality-weak": "ضعیف",
+    "speedometer-online": "آنلاین",
+    "speedometer-offline": "آفلاین",
+    "speedometer-wifi": "Wi-Fi",
+    "speedometer-cellular": "شبکه موبایل",
+    "keep-awake-toast": "حالت روشن ماندن صفحه فعال شد. اتصال به برق توصیه می‌شود.",
+    "keep-awake-mode": "حالت روشن ماندن صفحه",
+    "keep-awake-speed-label": "سرعت کل دانلود",
+    "keep-awake-active-tasks": "دانلودهای فعال: {count}",
+    "keep-awake-exit-hint": "برای خروج هر جا را لمس کنید"
   },
   "preferences": {
     "general": "عمومی",
@@ -602,10 +616,6 @@
     "dns-over-https-hint": "DNS رمزگذاری‌شده؛ یک پیش‌تنظیم انتخاب کنید یا نشانی URL حل‌کننده را وارد کنید",
     "dns-over-https-invalid": "حل‌کنندهٔ DNS over HTTPS باید یک نشانی https:// باشد",
     "dns-over-https-system": "حل‌کنندهٔ سیستم",
-    "post-download-program": "اجرا پس از دانلود",
-    "post-download-program-hint": "مثلاً یک ضدویروس. آرگومان‌ها: {file} (مسیر کامل)، {dir}، {name}",
-    "post-download-program-placeholder": "بدون برنامه",
-    "post-download-arguments": "آرگومان‌ها",
     "site-rules": "قوانین سایت",
     "site-rules-hint": "تنظیمات دانلود برای هر سایت: تعداد اتصال به هر سرور برای سایت‌هایی که دانلود موازی را ممنوع می‌کنند، و استفاده یا عدم استفاده از سرور پروکسی. example.com زیردامنه‌هایش را هم شامل می‌شود؛ * با هر نویسه‌ای مطابقت دارد",
     "site-rule-add": "افزودن قانون",
@@ -667,7 +677,9 @@
     "brand-logo-blue": "Cream & Blue",
     "brand-logo-teal": "Teal & Black",
     "android-app-icon-blue": "Cream & Blue",
-    "android-app-icon-teal": "Teal & Black"
+    "android-app-icon-teal": "Teal & Black",
+    "android-app-icon-restart-hint": "اگر نماد فوراً تغییر نکرد، Rayload یا صفحه اصلی را دوباره راه‌اندازی کنید.",
+    "bt-port-randomized": "BT listen port randomized to {port}"
   },
   "task": {
     "scope-all": "همه",
@@ -926,7 +938,7 @@
     "open-folder-success": "پوشه باز شد",
     "get-task-name": "در حال دریافت نام وظیفه...",
     "remaining-prefix": "باقی‌مانده",
-    "select-torrent": "یک فایل torrent را اینجا بکشید یا برای انتخاب کلیک کنید",
+    "select-torrent": "برای انتخاب یک فایل .torrent محلی کلیک کنید",
     "task-detail-title": "جزئیات وظیفه",
     "download-start-message": "در حال دانلود: {taskName}",
     "download-batch-start-message": "در حال دانلود: {taskName} و {count} وظیفه دیگر",
@@ -1023,7 +1035,8 @@
     "sha256-calculating": "Calculating SHA-256 for {fileName}…",
     "sha256-copy": "Copy SHA-256",
     "sha256-copied": "SHA-256 copied",
-    "sha256-failed": "Could not calculate the file SHA-256"
+    "sha256-failed": "Could not calculate the file SHA-256",
+    "empty-hint": "برای ایجاد وظیفه، دکمه + در پایین سمت راست را بزنید یا پیوندی را از مرورگر با Rayload به اشتراک بگذارید."
   },
   "media": {
     "probing": "در حال بررسی رسانه",
@@ -1066,7 +1079,8 @@
     "about": "درباره",
     "settings": "تنظیمات",
     "extensions": "افزونه‌ها",
-    "trash": "Trash"
+    "trash": "Trash",
+    "keep-awake": "روشن نگه داشتن صفحه"
   },
   "extension": {
     "description": "دانلودهای مرورگر را به Rayload بفرستید و محتوای رسانه‌ای وب را پیدا کنید.",

@@ -397,9 +397,9 @@ onMounted(() => {
   width: 100%;
   min-height: 44px;
   padding: 8px 10px;
-  border: 1px solid color-mix(in srgb, var(--m3-outline-variant) 62%, transparent);
+  border: 1px solid var(--m3-outline-variant);
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--m3-surface-container-low) 54%, transparent);
+  background: var(--m3-surface-container-low);
 }
 .ua-manager-entry-text {
   display: flex;

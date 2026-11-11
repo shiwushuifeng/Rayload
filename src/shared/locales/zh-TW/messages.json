@@ -88,7 +88,6 @@
     "speedometer-download-limit": "下載",
     "speedometer-upload-limit": "上傳",
     "speedometer-apply": "套用",
-    "speedometer-needs-config": "請在右鍵選單或偏好設定中配置限速值（至少一項大於 0）",
     "speedometer-needs-config-settings": "請先在下方配置限速值（至少一項大於 0）",
     "speedometer-enable-limit": "啟用限速",
     "speedometer-enter-values": "請輸入限速值",
@@ -104,8 +103,23 @@
     "engine-open-settings": "開啟網路設定",
     "generate-random": "隨機產生",
     "choose-folder": "選擇資料夾",
-    "choose-file": "選擇檔案",
-    "press-back-again": "再按一次返回鍵退出"
+    "press-back-again": "再按一次返回鍵退出",
+    "speedometer-live-status": "即時狀態",
+    "speedometer-connection-quality": "連線品質",
+    "speedometer-quality-idle": "閒置",
+    "speedometer-quality-excellent": "優秀",
+    "speedometer-quality-good": "良好",
+    "speedometer-quality-fair": "一般",
+    "speedometer-quality-weak": "較弱",
+    "speedometer-online": "線上",
+    "speedometer-offline": "離線",
+    "speedometer-wifi": "Wi-Fi",
+    "speedometer-cellular": "行動網路",
+    "keep-awake-toast": "已開啟不息屏模式，建議連接電源使用。",
+    "keep-awake-mode": "不息屏掛機",
+    "keep-awake-speed-label": "目前總下載速度",
+    "keep-awake-active-tasks": "正在下載 {count} 個任務",
+    "keep-awake-exit-hint": "點擊螢幕任意位置退出掛機模式"
   },
   "preferences": {
     "general": "一般",
@@ -602,10 +616,6 @@
     "dns-over-https-hint": "加密 DNS 解析；可選預設或輸入自訂位址",
     "dns-over-https-invalid": "DNS over HTTPS 解析器必須是 https:// 網址",
     "dns-over-https-system": "系統解析器",
-    "post-download-program": "下載完成後執行",
-    "post-download-program-hint": "如防毒軟體。參數：{file}（完整路徑）、{dir}、{name}",
-    "post-download-program-placeholder": "不執行程式",
-    "post-download-arguments": "參數",
     "site-rules": "網站規則",
     "site-rules-hint": "依網站限制連線數、選擇是否走代理；example.com 含子網域，* 符合任意字元",
     "site-rule-add": "新增規則",
@@ -667,7 +677,9 @@
     "brand-logo-blue": "米藍色",
     "brand-logo-teal": "青黑色",
     "android-app-icon-blue": "米藍色",
-    "android-app-icon-teal": "青黑色"
+    "android-app-icon-teal": "青黑色",
+    "android-app-icon-restart-hint": "若更換圖示後未立即生效，請嘗試重新啟動軟體或手機桌面。",
+    "bt-port-randomized": "BT 監聽埠已隨機為 {port}"
   },
   "task": {
     "scope-all": "全部",
@@ -926,7 +938,7 @@
     "open-folder-success": "資料夾已開啟",
     "get-task-name": "正在取得任務名稱...",
     "remaining-prefix": "剩餘",
-    "select-torrent": "將種子拖到此處，或點擊選擇",
+    "select-torrent": "點擊選擇本機 .torrent 檔案",
     "task-detail-title": "任務詳情",
     "download-start-message": "下載中：{taskName}",
     "download-batch-start-message": "下載中：{taskName} 等 {count} 個任務",
@@ -1023,7 +1035,8 @@
     "sha256-calculating": "正在計算 {fileName} 的 SHA-256…",
     "sha256-copy": "複製 SHA-256",
     "sha256-copied": "已複製 SHA-256",
-    "sha256-failed": "無法計算該檔案的 SHA-256"
+    "sha256-failed": "無法計算該檔案的 SHA-256",
+    "empty-hint": "點擊右下角 + 號新建任務，或從瀏覽器分享連結至 Rayload"
   },
   "media": {
     "probing": "正在探測媒體",
@@ -1066,7 +1079,8 @@
     "about": "關於",
     "settings": "設定",
     "extensions": "擴充功能",
-    "trash": "回收站"
+    "trash": "回收站",
+    "keep-awake": "不息屏掛機"
   },
   "extension": {
     "description": "接管下載，探索網頁媒體。",

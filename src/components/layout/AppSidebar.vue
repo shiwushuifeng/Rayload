@@ -5,14 +5,16 @@ import { RouterLink, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import MTooltip from '@/components/common/MTooltip.vue'
 import { NIcon } from 'naive-ui'
-import { InformationCircleOutline, SettingsOutline, TrashOutline } from '@vicons/ionicons5'
+import { InformationCircleOutline, SettingsOutline, SunnyOutline, TrashOutline } from '@vicons/ionicons5'
 import { useTaskStore } from '@/stores/task'
 import { usePreferenceStore } from '@/stores/preference'
+import { useAppStore } from '@/stores/app'
 import SidebarCount from './SidebarCount.vue'
 import { useTaskDestinations } from './navigation'
 import { triggerHaptic } from '@/composables/useHaptics'
 import { usePlatform } from '@/composables/usePlatform'
 import { useNavigationVisibility } from '@/composables/useNavigationVisibility'
+import { useAppMessage } from '@/composables/useAppMessage'
 
 const props = defineProps<{ compact?: boolean; trashOpen?: boolean }>()
 
@@ -22,6 +24,8 @@ const route = useRoute()
 const taskDestinations = useTaskDestinations()
 const tasks = useTaskStore()
 const preferences = usePreferenceStore()
+const appStore = useAppStore()
+const appMessage = useAppMessage()
 const { isAndroid } = usePlatform()
 const { isItemVisible } = useNavigationVisibility()
 const isSettings = computed(() => route.matched.some((record) => record.name === 'preference'))
@@ -30,6 +34,7 @@ const visibleTaskDestinations = computed(() =>
 )
 const trashVisible = computed(() => !props.compact || isItemVisible('trash'))
 const aboutVisible = computed(() => !props.compact || isItemVisible('about'))
+const keepAwakeVisible = computed(() => !props.compact || isItemVisible('keep-awake'))
 
 function showAbout(): void {
   triggerHaptic()
@@ -39,6 +44,12 @@ function showAbout(): void {
 function showTrash(): void {
   triggerHaptic()
   emit('show-trash')
+}
+
+function enterKeepAwake(): void {
+  triggerHaptic()
+  appStore.showKeepAwake()
+  appMessage.success(t('app.keep-awake-toast'))
 }
 </script>
 
@@ -71,6 +82,20 @@ function showTrash(): void {
       </MTooltip>
     </div>
     <div class="sidebar-bottom">
+      <MTooltip v-if="isAndroid && keepAwakeVisible" placement="right" :disabled="props.compact">
+        <template #trigger>
+          <button
+            type="button"
+            class="sidebar-item keep-awake-item"
+            :aria-label="t('navigation.keep-awake')"
+            @click="enterKeepAwake"
+          >
+            <NIcon :size="18" aria-hidden="true"><SunnyOutline /></NIcon>
+            <span class="sidebar-label">{{ t('navigation.keep-awake') }}</span>
+          </button>
+        </template>
+        {{ t('navigation.keep-awake') }}
+      </MTooltip>
       <MTooltip placement="right" :disabled="props.compact">
         <template #trigger>
           <RouterLink
@@ -172,6 +197,12 @@ function showTrash(): void {
 .sidebar-item.active {
   background: var(--sidebar-active-bg);
   color: var(--m3-on-surface);
+}
+.keep-awake-item {
+  color: color-mix(in srgb, var(--m3-primary) 78%, var(--m3-on-surface-variant));
+}
+.keep-awake-item:hover {
+  color: var(--m3-primary);
 }
 .sidebar-item:focus-visible {
   outline: 2px solid var(--m3-primary);

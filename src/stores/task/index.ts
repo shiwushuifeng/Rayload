@@ -402,16 +402,14 @@ export const useTaskStore = defineStore('task', () => {
     await saveManualOrder(createManualOrderSnapshot(taskList.value))
   }
 
-  async function saveVisiblePageManualOrder(gids: string[]) {
-    const tab = currentTaskTab()
-    const start = (taskPagination[tab].page - 1) * taskPagination.pageSize
+  async function saveVisibleTaskOrder(gids: string[]) {
     const tasks = new Map(taskList.value.map((task) => [task.gid, task]))
     const reordered = gids.flatMap((gid) => {
       const task = tasks.get(gid)
       return task ? [task] : []
     })
-    const nextList = [...taskList.value]
-    nextList.splice(start, reordered.length, ...reordered)
+    const moved = new Set(gids)
+    const nextList = [...reordered, ...taskList.value.filter((task) => !moved.has(task.gid))]
     taskList.value = nextList
     await saveManualOrder(createManualOrderSnapshot(nextList))
   }
@@ -626,7 +624,7 @@ export const useTaskStore = defineStore('task', () => {
     applySnapshot,
     saveManualOrder,
     saveCurrentManualOrder,
-    saveVisiblePageManualOrder,
+    saveVisibleTaskOrder,
     setTaskPage,
     setCurrentTaskPage,
     setTaskPageSize,

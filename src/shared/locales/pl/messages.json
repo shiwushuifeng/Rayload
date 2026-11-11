@@ -88,7 +88,6 @@
     "speedometer-download-limit": "Pobieranie",
     "speedometer-upload-limit": "Wysyłanie",
     "speedometer-apply": "Zastosuj",
-    "speedometer-needs-config": "Skonfiguruj limit prędkości w menu kontekstowym lub ustawieniach (co najmniej jeden musi być większy od 0)",
     "speedometer-needs-config-settings": "Skonfiguruj limit prędkości poniżej (co najmniej jeden musi być większy od 0)",
     "speedometer-enable-limit": "Włącz limit prędkości",
     "speedometer-enter-values": "Proszę wprowadzić wartości limitu",
@@ -104,8 +103,23 @@
     "engine-open-settings": "Otwórz ustawienia sieci",
     "generate-random": "Wygeneruj losową wartość",
     "choose-folder": "Wybierz folder",
-    "choose-file": "Wybierz plik",
-    "press-back-again": "Naciśnij ponownie Wstecz, aby wyjść"
+    "press-back-again": "Naciśnij ponownie Wstecz, aby wyjść",
+    "speedometer-live-status": "Stan na żywo",
+    "speedometer-connection-quality": "Jakość połączenia",
+    "speedometer-quality-idle": "Bezczynne",
+    "speedometer-quality-excellent": "Doskonała",
+    "speedometer-quality-good": "Dobra",
+    "speedometer-quality-fair": "Przeciętna",
+    "speedometer-quality-weak": "Słaba",
+    "speedometer-online": "Online",
+    "speedometer-offline": "Offline",
+    "speedometer-wifi": "Wi-Fi",
+    "speedometer-cellular": "Sieć komórkowa",
+    "keep-awake-toast": "Tryb niegasnącego ekranu włączony. Zalecane podłączenie do zasilania.",
+    "keep-awake-mode": "Tryb aktywnego ekranu",
+    "keep-awake-speed-label": "Łączna prędkość pobierania",
+    "keep-awake-active-tasks": "Aktywne pobierania: {count}",
+    "keep-awake-exit-hint": "Dotknij dowolnego miejsca, aby wyjść"
   },
   "preferences": {
     "general": "Ogólne",
@@ -602,10 +616,6 @@
     "dns-over-https-hint": "Szyfrowany DNS; wybierz ustawienie wstępne lub wpisz adres URL resolvera",
     "dns-over-https-invalid": "Resolver DNS over HTTPS musi być adresem URL https://",
     "dns-over-https-system": "Resolver systemowy",
-    "post-download-program": "Uruchom po pobraniu",
-    "post-download-program-hint": "Np. skaner antywirusowy. Argumenty: {file} (pełna ścieżka), {dir}, {name}",
-    "post-download-program-placeholder": "Brak programu",
-    "post-download-arguments": "Argumenty",
     "site-rules": "Reguły witryn",
     "site-rules-hint": "Ustawienia pobierania dla witryn: połączenia na serwer dla witryn zabraniających pobierania równoległego oraz użycie serwera proxy. example.com obejmuje też subdomeny; * pasuje do dowolnych znaków",
     "site-rule-add": "Dodaj regułę",
@@ -667,7 +677,9 @@
     "brand-logo-blue": "Cream & Blue",
     "brand-logo-teal": "Teal & Black",
     "android-app-icon-blue": "Cream & Blue",
-    "android-app-icon-teal": "Teal & Black"
+    "android-app-icon-teal": "Teal & Black",
+    "android-app-icon-restart-hint": "Jeśli ikona nie zmieni się od razu, uruchom ponownie Rayload lub ekran główny.",
+    "bt-port-randomized": "BT listen port randomized to {port}"
   },
   "task": {
     "scope-all": "Wszystkie",
@@ -926,7 +938,7 @@
     "open-folder-success": "Folder otwarty",
     "get-task-name": "Pobieranie nazwy zadania...",
     "remaining-prefix": "Pozostało",
-    "select-torrent": "Przeciągnij plik torrent tutaj lub kliknij, aby wybrać",
+    "select-torrent": "Kliknij, aby wybrać lokalny plik .torrent",
     "task-detail-title": "Szczegóły zadania",
     "download-start-message": "Pobieranie: {taskName}",
     "download-batch-start-message": "Pobieranie: {taskName} i {count} innych zadań",
@@ -1023,7 +1035,8 @@
     "sha256-calculating": "Calculating SHA-256 for {fileName}…",
     "sha256-copy": "Copy SHA-256",
     "sha256-copied": "SHA-256 copied",
-    "sha256-failed": "Could not calculate the file SHA-256"
+    "sha256-failed": "Could not calculate the file SHA-256",
+    "empty-hint": "Dotknij przycisku + w prawym dolnym rogu, aby utworzyć zadanie, lub udostępnij link z przeglądarki do Rayload."
   },
   "media": {
     "probing": "Analizowanie multimediów",
@@ -1066,7 +1079,8 @@
     "about": "O programie",
     "settings": "Ustawienia",
     "extensions": "Rozszerzenia",
-    "trash": "Trash"
+    "trash": "Trash",
+    "keep-awake": "Utrzymuj ekran włączony"
   },
   "extension": {
     "description": "Przesyłaj pobieranie z przeglądarki do Rayload i odkrywaj multimedia w sieci.",

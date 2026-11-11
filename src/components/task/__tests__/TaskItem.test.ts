@@ -31,20 +31,6 @@ vi.mock('naive-ui', async (importOriginal) => {
   }
 })
 
-vi.mock('@vicons/ionicons5', () => ({
-  ArrowUpOutline: { template: '<i />' },
-  ArrowDownOutline: { template: '<i />' },
-  GitNetworkOutline: { template: '<i />' },
-  MagnetOutline: { template: '<i />' },
-  AlertCircleOutline: { template: '<i />' },
-  CloudUploadOutline: { template: '<i />' },
-  CheckmarkCircleOutline: { template: '<i />' },
-  TrashOutline: { template: '<i />' },
-  RadioOutline: { template: '<i />' },
-  PauseOutline: { template: '<i />' },
-  TimeOutline: { template: '<i />' },
-}))
-
 vi.mock('../TaskItemActions.vue', () => ({
   default: { template: '<div class="task-item-actions-stub" />' },
 }))
@@ -95,15 +81,12 @@ describe('TaskItem', () => {
     const wrapper = mount(component, { props: { task } })
     const surface = wrapper.element
     const name = wrapper.findAll('.task-text-transition-content')[0].element
-    const status = wrapper.findAll('.task-text-transition-content')[1].element
     await wrapper.setProps({ task: { ...task, completedLength: '50' } })
     expect(wrapper.findAll('.task-text-transition-content')[0].element).toBe(name)
-    expect(wrapper.findAll('.task-text-transition-content')[1].element).toBe(status)
     await wrapper.setProps({
       task: { ...task, status: 'active', bittorrent: { state: 'seeding', info: { name: 'renamed.zip' } } },
     })
     expect(wrapper.findAll('.task-text-transition-content')[0].element).not.toBe(name)
-    expect(wrapper.findAll('.task-text-transition-content')[1].element).not.toBe(status)
     expect(wrapper.element).toBe(surface)
     wrapper.unmount()
   })
@@ -171,7 +154,7 @@ describe('TaskItem', () => {
     expect(compact.get('.compact-percent').text()).toBe('25%')
   })
 
-  it('keeps compact progress mounted while transfer metadata changes', async () => {
+  it('keeps the compact row mounted while progress changes', async () => {
     const task = {
       ...createTask('/downloads/active.bin'),
       status: 'active',
@@ -181,17 +164,15 @@ describe('TaskItem', () => {
       bittorrent: undefined,
     } satisfies Aria2Task
     const wrapper = mount(TaskCompactItem, { props: { task } })
-    const progress = wrapper.get('.compact-progress').element
     const surface = wrapper.get('.task-compact-item').element
-    // Layout styles must survive the real ellipsis/tooltip rendering boundary.
+    const percent = wrapper.get('.compact-percent').element
+    // Scoped layout styles must survive the tooltip/ellipsis rendering boundary.
     for (const scope of surface.getAttributeNames().filter((name) => name.startsWith('data-v-'))) {
-      expect(wrapper.get('.compact-meta').element.hasAttribute(scope)).toBe(true)
+      expect(wrapper.get('.compact-name').element.hasAttribute(scope)).toBe(true)
     }
 
-    expect(wrapper.get('.compact-meta').text()).toContain('1.00 MB / 100.00 MB')
-    expect(wrapper.findAll('.compact-speed')).toHaveLength(1)
-    expect(wrapper.get('.compact-percent').element.previousElementSibling).toBe(progress)
-    expect(wrapper.get('.compact-meta').text()).not.toContain('%')
+    expect(wrapper.get('.compact-percent').text()).toBe('1%')
+    expect(wrapper.find('.compact-progress').exists()).toBe(false)
 
     await wrapper.setProps({
       task: {
@@ -204,17 +185,14 @@ describe('TaskItem', () => {
       },
     })
 
-    expect(wrapper.get('.compact-progress').element).toBe(progress)
-    expect(wrapper.get('.compact-progress').attributes('aria-valuenow')).toBe('100')
+    expect(wrapper.get('.task-compact-item').element).toBe(surface)
+    expect(wrapper.get('.compact-percent').element).toBe(percent)
     expect(wrapper.get('.compact-percent').text()).toBe('100%')
-    expect(wrapper.get('.compact-meta').text()).toContain('100.00 MB / 100.00 MB')
-    expect(wrapper.get('.compact-status').text()).toBe('task.seeding')
-    expect(wrapper.findAll('.compact-speed')).toHaveLength(2)
-    expect(wrapper.get('.compact-meta').text()).toContain('10.0 MB/s')
+    expect(wrapper.get('.compact-status-text').text()).toContain('task.seeding')
     wrapper.unmount()
   })
 
-  it('does not show a status tag for paused tasks', () => {
+  it('shows paused status text', () => {
     const task = {
       ...createTask('/downloads/paused.bin'),
       status: 'paused',
@@ -228,11 +206,10 @@ describe('TaskItem', () => {
       },
     })
 
-    expect(wrapper.text()).not.toContain('task.status-paused')
-    expect(wrapper.find('.task-status-slot').classes()).not.toContain('task-status-slot--visible')
+    expect(wrapper.get('.task-status-text').text()).toContain('task.status-paused')
   })
 
-  it('keeps the status slot mounted when no status tag is visible', () => {
+  it('shows the active status text without a separate status slot', () => {
     const task = {
       ...createTask('/downloads/active.bin'),
       status: 'active',
@@ -246,9 +223,8 @@ describe('TaskItem', () => {
       },
     })
 
-    expect(wrapper.find('.task-status-slot').exists()).toBe(true)
-    expect(wrapper.find('.task-tags').exists()).toBe(true)
-    expect(wrapper.find('.task-status-slot').classes()).not.toContain('task-status-slot--visible')
+    expect(wrapper.find('.task-status-slot').exists()).toBe(false)
+    expect(wrapper.get('.task-status-text').text()).toContain('task.status-active')
   })
 
   it('shows torrent metadata fetching status once', () => {

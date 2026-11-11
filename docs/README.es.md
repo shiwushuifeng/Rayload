@@ -13,7 +13,7 @@ Rayload es un port independiente y no oficial de Rayburst para Android, con inte
 
 ## Instalar el APK ARM64 más reciente
 
-Download `Rayload-v1.0.1-android17-arm64-release.apk` from
+Download `Rayload-v1.0.2-android17-arm64-release.apk` from
 [GitHub Releases](https://github.com/shiwushuifeng/Rayload/releases).
 
 - Minimum: Android 7.0 / API 24

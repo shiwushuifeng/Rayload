@@ -1,19 +1,21 @@
 /** Persisted visibility for destinations in the compact bottom navigation. */
 import { computed, reactive } from 'vue'
 
-export const NAVIGATION_ITEM_KEYS = ['all', 'progress', 'failed', 'completed', 'trash', 'about'] as const
+export const NAVIGATION_ITEM_KEYS = ['all', 'progress', 'failed', 'completed', 'keep-awake', 'trash', 'about'] as const
 
 export type NavigationItemKey = (typeof NAVIGATION_ITEM_KEYS)[number]
 export type NavigationVisibility = Record<NavigationItemKey, boolean>
 
-const STORAGE_KEY = 'rayload.bottom-navigation.visibility.v1'
+// v2 hides the secondary task scopes by default on a fresh configuration.
+const STORAGE_KEY = 'rayload.bottom-navigation.visibility.v2'
 
 function createDefaults(): NavigationVisibility {
   return {
     all: true,
-    progress: true,
-    failed: true,
-    completed: true,
+    progress: false,
+    failed: false,
+    completed: false,
+    'keep-awake': true,
     trash: true,
     about: true,
   }

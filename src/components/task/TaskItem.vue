@@ -9,7 +9,6 @@ import MTooltip from '@/components/common/MTooltip.vue'
 import {
   ArrowUpOutline,
   ArrowDownOutline,
-  GitNetworkOutline,
   MagnetOutline,
   AlertCircleOutline,
   CloudUploadOutline,
@@ -18,8 +17,10 @@ import {
   RadioOutline,
   TimeOutline,
   ListOutline,
+  PauseOutline,
 } from '@vicons/ionicons5'
 import { useTaskCardModel } from '@/composables/useTaskCardModel'
+import { useTaskFileIcon } from '@/composables/useTaskFileIcon'
 import { usePlatform } from '@/composables/usePlatform'
 import { canOpenTaskContent, dragTaskContent } from '@/composables/useTaskContentOpen'
 import { useTaskFileMissing } from '@/composables/useTaskFileMissing'
@@ -67,6 +68,7 @@ const {
   remainingText,
   transferSummary,
 } = useTaskCardModel(taskRef)
+const fileIcon = useTaskFileIcon(taskFullName)
 
 const statusColorMap: Record<string, string> = {
   active: 'var(--m3-status-active)',
@@ -79,10 +81,28 @@ const statusColorMap: Record<string, string> = {
 }
 
 const progressColor = computed(() => statusColorMap[taskStatus.value] || 'var(--m3-status-active)')
-const hasStatusLine = computed(() => Boolean(statusBadge.value || fileMissing.value))
 const displayErrorMessage = computed(() => props.task.errorMessage || props.task.bittorrent?.error?.message || '')
-
-const statusBadgeStyle = computed(() => {
+const displayStatus = computed(() => {
+  if (fileMissing.value)
+    return fileState.value === 'inaccessible' ? t('task.file-inaccessible') : t('task.file-missing')
+  if (statusBadge.value) return statusBadge.value.label
+  switch (taskStatus.value) {
+    case 'waiting':
+      return t('task.status-waiting')
+    case 'paused':
+      return t('task.status-paused')
+    case 'error':
+      return t('task.status-error')
+    case 'complete':
+      return t('task.status-complete')
+    case 'sharing':
+      return t('task.status-sharing')
+    default:
+      return t('task.status-active')
+  }
+})
+const statusTextStyle = computed(() => {
+  if (fileMissing.value) return { color: 'var(--m3-error)' }
   switch (statusBadge.value?.tone) {
     case 'success':
       return { color: 'var(--m3-status-success)' }
@@ -92,12 +112,41 @@ const statusBadgeStyle = computed(() => {
       return { color: 'var(--m3-status-waiting)' }
     case 'muted':
       return { color: 'var(--m3-status-paused)' }
-    default:
+  }
+  switch (taskStatus.value) {
+    case 'active':
+      return { color: 'var(--m3-status-active)' }
+    case 'paused':
       return { color: 'var(--m3-status-paused)' }
+    case 'waiting':
+      return { color: 'var(--m3-status-waiting)' }
+    case 'complete':
+    case 'sharing':
+      return { color: 'var(--m3-status-success)' }
+    case 'error':
+      return { color: 'var(--m3-status-error)' }
+    default:
+      return { color: 'var(--m3-on-surface-variant)' }
   }
 })
 
 const statusBadgeIcon = computed(() => {
+  if (!statusBadge.value) {
+    switch (taskStatus.value) {
+      case 'active':
+        return RadioOutline
+      case 'paused':
+        return PauseOutline
+      case 'waiting':
+        return TimeOutline
+      case 'complete':
+        return CheckmarkCircleOutline
+      case 'error':
+        return AlertCircleOutline
+      default:
+        return CloudUploadOutline
+    }
+  }
   switch (statusBadge.value?.key) {
     case TASK_STATUS.COMPLETE:
       return CheckmarkCircleOutline
@@ -142,21 +191,56 @@ const contentDraggable = computed(
     @dblclick="!fileMissing && !actionPending && canOpenTaskContent(task, $event) && emit('open-file', task)"
   >
     <div class="task-body" :draggable="contentDraggable" @dragstart="dragTaskContent(task, $event)">
-      <div class="task-header">
-        <MTooltip placement="bottom-start">
-          <template #trigger>
-            <div class="task-name">
-              <TaskTextTransition :value="taskFullName">
-                <span class="technical-text-wrap">{{ taskFullName }}</span>
-              </TaskTextTransition>
+      <div class="task-primary">
+        <span class="file-type-icon" :class="`file-type-icon--${fileIcon.tone}`" aria-hidden="true">
+          <NIcon :size="18"><component :is="fileIcon.icon" /></NIcon>
+        </span>
+        <div class="task-heading">
+          <MTooltip placement="bottom-start">
+            <template #trigger>
+              <div class="task-name">
+                <TaskTextTransition :value="taskFullName">
+                  <span class="technical-text-wrap">{{ taskFullName }}</span>
+                </TaskTextTransition>
+              </div>
+            </template>
+            {{ taskFullName }}
+          </MTooltip>
+          <div class="task-progress">
+            <LinearProgress v-if="!indeterminate" :percentage="percent" :color="progressColor" :height="6" />
+            <div class="task-progress-info">
+              <span class="progress-left" :class="{ 'info-hidden': !hasSizeInfo }">
+                {{ indeterminate ? '' : `${percent}% · ` }}{{ completedSize }} / {{ totalSize }}
+              </span>
+              <span class="progress-right" :class="{ 'is-idle': !isActive }">
+                <span v-if="remaining > 0" class="speed-text">{{ remainingText }}</span>
+                <span v-if="transferSummary.showUploadMetrics" class="speed-text">
+                  <NIcon :size="10"><ArrowUpOutline /></NIcon>
+                  <span>{{ uploadSpeed }}/s</span>
+                </span>
+                <span class="speed-text">
+                  <NIcon :size="10"><ArrowDownOutline /></NIcon>
+                  <span>{{ downloadSpeed }}/s</span>
+                </span>
+                <span v-if="transferSummary.showSeeders" class="speed-text">
+                  <NIcon :size="10"><MagnetOutline /></NIcon>
+                  <span>{{ task.numSeeders }}</span>
+                </span>
+              </span>
             </div>
-          </template>
-          {{ taskFullName }}
-        </MTooltip>
+          </div>
+        </div>
+        <span class="task-status-text" :style="statusTextStyle">
+          <NIcon :size="13"><component :is="statusBadgeIcon" /></NIcon>
+          <span>{{ displayStatus }}</span>
+        </span>
+      </div>
+      <div class="task-actions-row">
         <TaskItemActions
           :task="task"
           :file-missing="fileMissing"
           :pending="actionPending"
+          density="compact"
           @pause="emit('pause', task)"
           @resume="emit('resume', task)"
           @retry="emit('retry', task)"
@@ -173,53 +257,8 @@ const contentDraggable = computed(
           @select-files="emit('select-files', task)"
         />
       </div>
-      <div class="task-status-slot" :class="{ 'task-status-slot--visible': hasStatusLine }">
-        <div class="task-status-slot__inner">
-          <div class="task-tags" :class="{ 'task-tags--visible': hasStatusLine }">
-            <TaskTextTransition v-show="statusBadge" :value="statusBadge?.key ?? ''">
-              <span v-if="statusBadge" class="status-tag" :style="statusBadgeStyle">
-                <NIcon :size="13"><component :is="statusBadgeIcon" /></NIcon>
-                {{ statusBadge.label }}
-              </span>
-            </TaskTextTransition>
-            <span v-show="fileMissing" class="file-missing-tag">
-              <NIcon :size="13"><AlertCircleOutline /></NIcon>
-              {{ fileState === 'inaccessible' ? t('task.file-inaccessible') : t('task.file-missing') }}
-            </span>
-          </div>
-        </div>
-      </div>
-      <div class="task-progress">
-        <LinearProgress v-if="!indeterminate" :percentage="percent" :color="progressColor" :height="6" />
-        <div class="task-progress-info">
-          <div class="progress-left" :class="{ 'info-hidden': !hasSizeInfo }">
-            <span>{{ indeterminate ? '' : `${percent}% · ` }}{{ completedSize }} / {{ totalSize }}</span>
-          </div>
-          <div class="progress-right" :class="{ 'info-hidden': !isActive }">
-            <span class="speed-text" :class="{ 'info-hidden': remaining <= 0 }">
-              <span>{{ remainingText }}</span>
-            </span>
-            <span v-if="transferSummary.showUploadMetrics" class="speed-text">
-              <NIcon :size="10"><ArrowUpOutline /></NIcon>
-              <span>{{ uploadSpeed }}/s</span>
-            </span>
-            <span class="speed-text">
-              <NIcon :size="10"><ArrowDownOutline /></NIcon>
-              <span>{{ downloadSpeed }}/s</span>
-            </span>
-            <span v-if="transferSummary.showSeeders" class="speed-text">
-              <NIcon :size="10"><MagnetOutline /></NIcon>
-              <span>{{ task.numSeeders }}</span>
-            </span>
-            <span class="speed-text">
-              <NIcon :size="10"><GitNetworkOutline /></NIcon>
-              <span>{{ task.connections }}</span>
-            </span>
-          </div>
-          <div class="error-message technical-text-wrap" :class="{ 'info-hidden': !displayErrorMessage }">
-            {{ displayErrorMessage }}
-          </div>
-        </div>
+      <div v-if="displayErrorMessage" class="error-message technical-text-wrap">
+        {{ displayErrorMessage }}
       </div>
     </div>
   </div>
@@ -258,100 +297,149 @@ const contentDraggable = computed(
   opacity: 1;
 }
 .task-body {
-  display: grid;
-  grid-template-rows: auto auto auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   min-width: 0;
-  padding: 16px 12px;
+  padding: 12px;
 }
-.task-header {
+/*
+ * Information row: icon, filename/progress, status badge.
+ * The action toolbar lives on its own row below so the metadata line and
+ * buttons can never share width or collide.
+ */
+.task-primary {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 20px;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  column-gap: 10px;
   align-items: start;
+  min-width: 0;
 }
-.task-header :deep(.n-tooltip-trigger) {
+.file-type-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  align-self: center;
+  border-radius: 10px;
+  color: var(--m3-primary);
+  background: color-mix(in srgb, var(--m3-primary) 12%, var(--m3-surface-container));
+}
+.file-type-icon--video {
+  color: var(--m3-tertiary);
+  background: color-mix(in srgb, var(--m3-tertiary) 12%, var(--m3-surface-container));
+}
+.file-type-icon--audio {
+  color: var(--m3-success);
+  background: color-mix(in srgb, var(--m3-success) 12%, var(--m3-surface-container));
+}
+.file-type-icon--image {
+  color: var(--m3-secondary);
+  background: color-mix(in srgb, var(--m3-secondary) 12%, var(--m3-surface-container));
+}
+.file-type-icon--archive,
+.file-type-icon--disk {
+  color: var(--m3-status-waiting);
+  background: color-mix(in srgb, var(--m3-status-waiting) 14%, var(--m3-surface-container));
+}
+.task-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.task-primary :deep(.n-tooltip-trigger) {
   display: block;
-  width: 100%;
   min-width: 0;
   max-width: 100%;
 }
 .task-name {
   display: block;
-  width: 100%;
+  min-width: 0;
   color: var(--m3-on-surface-variant);
   overflow: hidden;
-  min-height: 26px;
-  min-width: 0;
-  max-width: 100%;
 }
 .task-name > .task-text-transition {
   display: block;
-  width: 100%;
   min-width: 0;
 }
 .task-name :deep(.task-text-transition-content) {
-  display: -webkit-box;
-  width: 100%;
+  display: block;
   font-size: var(--font-size-base);
-  line-height: 26px;
+  line-height: 22px;
   overflow: hidden;
   text-overflow: ellipsis;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  white-space: nowrap;
 }
 .task-name :deep(.technical-text-wrap) {
   display: block;
-  width: 100%;
   min-width: 0;
-  word-break: break-all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.file-missing-tag {
+.task-status-text {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  flex-shrink: 0;
+  gap: 4px;
+  max-width: min(10em, 36vw);
+  padding: 3px 8px;
+  overflow: hidden;
   font-size: var(--font-size-sm);
-  color: var(--m3-error);
-  opacity: 0.85;
-  vertical-align: middle;
-  animation: m3-tag-enter 0.35s cubic-bezier(0.05, 0.7, 0.1, 1);
+  line-height: 18px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  border-radius: var(--radius-full);
+  background: color-mix(in srgb, currentColor 9%, transparent);
 }
-/* M3 emphasized-decelerate tag entrance — shared by all status tags */
-@keyframes m3-tag-enter {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-  to {
-    opacity: 0.9;
-    transform: translateY(0);
-  }
+.task-status-text > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .task-progress {
-  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 .task-progress-info {
   display: flex;
   flex-wrap: wrap;
+  align-content: flex-start;
+  align-items: center;
   justify-content: space-between;
+  gap: 2px 10px;
+  min-width: 0;
+  /* Reserve two metadata lines so pausing hides the speed metrics without
+   * changing the card height. */
+  min-height: 30px;
+  margin-top: 4px;
+  color: var(--m3-on-surface-variant);
   font-size: var(--font-size-xs);
   line-height: 14px;
-  min-height: 14px;
-  color: var(--m3-on-surface-variant);
-  margin-top: 8px;
+  white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 .progress-left {
-  display: inline-flex;
-  align-items: center;
+  flex: 1 1 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
   transition: opacity var(--task-motion-state) var(--task-motion-ease);
 }
 .progress-right {
-  display: flex;
-  gap: 8px;
-  text-align: right;
+  display: inline-flex;
+  flex: 1 1 100%;
+  flex-wrap: wrap;
+  justify-content: flex-start;
   align-items: center;
+  gap: 2px 8px;
+  white-space: nowrap;
   transition: opacity var(--task-motion-state) var(--task-motion-ease);
+}
+.progress-right.is-idle {
+  opacity: 0.55;
 }
 .speed-text {
   display: inline-flex;
@@ -362,64 +450,20 @@ const contentDraggable = computed(
   white-space: nowrap;
   transition: opacity 0.25s cubic-bezier(0.2, 0, 0, 1);
 }
-/* ── Pure CSS show/hide (polling-safe) ────────────────────────────── */
-/* Bypasses Vue <Transition> to avoid leave-animation loss when       */
-/* reactive polling updates child content in the same render tick.    */
 .info-hidden {
-  opacity: 0;
-  pointer-events: none;
+  display: none;
 }
-.task-status-slot {
-  height: 0;
-  overflow: hidden;
-  transition:
-    height 0.42s cubic-bezier(0.05, 0.7, 0.1, 1),
-    opacity 0.28s cubic-bezier(0.2, 0, 0, 1);
-  opacity: 0;
-}
-.task-status-slot--visible {
-  height: 18px;
-  opacity: 1;
-}
-.task-status-slot__inner {
-  min-height: 18px;
-}
-.task-tags {
+.task-actions-row {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 18px;
-  font-size: var(--font-size-sm);
-  line-height: 18px;
-  opacity: 0;
-  transform: translateY(-3px);
-  transition:
-    opacity 0.3s cubic-bezier(0.2, 0, 0, 1),
-    transform 0.3s cubic-bezier(0.05, 0.7, 0.1, 1);
-  pointer-events: none;
-}
-.task-tags--visible {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-.task-tags > .task-text-transition {
-  min-height: 18px;
-}
-.status-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: var(--font-size-sm);
-  line-height: 18px;
-  opacity: 0.9;
-  vertical-align: middle;
+  justify-content: flex-end;
+  min-width: 0;
+  padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, var(--m3-outline-variant) 60%, transparent);
 }
 .error-message {
   flex-basis: 100%;
   font-size: var(--font-size-2xs);
   color: var(--m3-error);
-  margin-top: 4px;
   opacity: 0.85;
   line-height: 1.4;
 }

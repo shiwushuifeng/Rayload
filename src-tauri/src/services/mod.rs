@@ -28,7 +28,6 @@ pub mod http_api;
 pub mod media;
 pub mod monitor;
 pub mod notification;
-pub mod post_download;
 pub mod power;
 pub mod pump;
 pub mod speed;

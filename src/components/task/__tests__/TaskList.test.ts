@@ -64,7 +64,7 @@ describe('TaskList', () => {
     const store = useTaskStore()
     store.taskList = [createTask()]
     let rejectSave!: (error: Error) => void
-    vi.spyOn(store, 'saveVisiblePageManualOrder').mockImplementationOnce(
+    vi.spyOn(store, 'saveVisibleTaskOrder').mockImplementationOnce(
       () =>
         new Promise((_, reject) => {
           rejectSave = reject
@@ -139,7 +139,7 @@ describe('TaskList', () => {
     wrapper.unmount()
   })
 
-  it('renders only the current task page', async () => {
+  it('renders an initial window of the infinite task list', async () => {
     const wrapper = mount(TaskList, {
       global: {
         plugins: [pinia],
@@ -148,29 +148,23 @@ describe('TaskList', () => {
     const taskStore = useTaskStore()
     taskStore.setTaskPageSize(2)
     taskStore.taskList = ['a', 'b', 'c', 'd', 'e'].map(createTaskWithGid)
-    taskStore.taskPagination.progress.total = 5
-    taskStore.taskPagination.progress.loaded = true
-    taskStore.setTaskPage('progress', 2)
 
     await wrapper.vm.$nextTick()
 
     expect(wrapper.findAll('.full-task-item')).toHaveLength(2)
-    expect(wrapper.text()).not.toContain('a')
+    expect(wrapper.find('.task-list-sentinel').exists()).toBe(true)
   })
 
-  it('saves page-local drag order through the store', async () => {
+  it('saves visible drag order through the store', async () => {
     const wrapper = mount(TaskList, {
       global: {
         plugins: [pinia],
       },
     })
     const taskStore = useTaskStore()
-    const saveSpy = vi.spyOn(taskStore, 'saveVisiblePageManualOrder').mockResolvedValue(undefined)
+    const saveSpy = vi.spyOn(taskStore, 'saveVisibleTaskOrder').mockResolvedValue(undefined)
     taskStore.setTaskPageSize(2)
     taskStore.taskList = ['a', 'b', 'c', 'd'].map(createTaskWithGid)
-    taskStore.taskPagination.progress.total = 4
-    taskStore.taskPagination.progress.loaded = true
-    taskStore.setTaskPage('progress', 2)
     await wrapper.vm.$nextTick()
     await wrapper.vm.$nextTick()
 
@@ -181,7 +175,7 @@ describe('TaskList', () => {
     sortableOptions?.onStart?.({} as SortableEvent)
     await sortableOptions?.onEnd?.({} as SortableEvent)
 
-    expect(saveSpy).toHaveBeenCalledWith(['c', 'd'])
+    expect(saveSpy).toHaveBeenCalledWith(['a', 'b'])
   })
 
   it('marks a single removed card for collapse with its current height', async () => {

@@ -2,7 +2,7 @@
 /** @fileoverview Shared BitTorrent file selector for local torrents and magnets: a folder tree with type shortcuts. */
 import { computed, h, ref, watch, type Component } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NButton, NDataTable, NIcon } from 'naive-ui'
+import { NButton, NCheckbox, NDataTable, NIcon } from 'naive-ui'
 import type { DataTableColumns, DataTableRowKey } from 'naive-ui'
 import {
   AppsOutline,
@@ -118,6 +118,10 @@ const selectedFiles = computed(() => {
   return props.files.filter((file) => selected.has(file.index))
 })
 const selectedSize = computed(() => selectedFiles.value.reduce((sum, file) => sum + file.length, 0))
+const allSelected = computed(
+  () => props.files.length > 0 && props.files.every((file) => selectedSet.value.has(file.index)),
+)
+const partiallySelected = computed(() => props.selectedIndices.length > 0 && !allSelected.value)
 
 watch(
   () => props.selectedIndices.length,
@@ -145,6 +149,10 @@ function toggleGroup(indices: number[]) {
 function invertSelection() {
   emit('update:selectedIndices', invertBtFileSelection(props.files, props.selectedIndices))
 }
+
+function toggleAll(checked: boolean) {
+  emit('update:selectedIndices', checked ? props.files.map((file) => file.index) : [])
+}
 </script>
 
 <template>
@@ -168,6 +176,14 @@ function invertSelection() {
         </NButton>
       </template>
       <div class="file-summary" aria-live="polite">
+        <NCheckbox
+          v-if="files.length > 1"
+          :checked="allSelected"
+          :indeterminate="partiallySelected"
+          @update:checked="toggleAll"
+        >
+          {{ t('app.menu-select-all') }}
+        </NCheckbox>
         <Transition :name="countDirection" mode="out-in">
           <span :key="selectedIndices.length" class="summary-value">
             {{ selectedIndices.length }}/{{ files.length }}
@@ -206,6 +222,7 @@ function invertSelection() {
 <style scoped>
 .bt-file-selector {
   display: grid;
+  min-height: 0;
   gap: 10px;
 }
 
@@ -224,6 +241,8 @@ function invertSelection() {
 }
 
 .bt-file-table {
+  min-height: 0;
+  max-height: 100%;
   border: 1px solid var(--m3-outline-variant);
   border-radius: var(--radius-md);
   overflow: hidden;
@@ -264,7 +283,9 @@ function invertSelection() {
 
 .file-summary {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 6px;
   margin-left: auto;
   color: var(--m3-on-surface-variant);

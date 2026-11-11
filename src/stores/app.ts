@@ -56,6 +56,8 @@ export const useAppStore = defineStore('app', () => {
     numStoppedTotal: 0,
   })
   const addTaskVisible = ref(false)
+  /** Full-screen keep-awake dashboard; native screen-on is applied by its view. */
+  const keepAwakeVisible = ref(false)
   const pendingBatch = ref<BatchItem[]>([])
   const addTaskOptions = ref<Aria2EngineOptions>({})
   /** Referer from the most recent deep-link, pre-filled into AddTask form. */
@@ -84,6 +86,14 @@ export const useAppStore = defineStore('app', () => {
     pendingFilename.value = ''
     pendingUserAgent.value = ''
     pendingRequestHeaders.value = []
+  }
+
+  function showKeepAwake() {
+    keepAwakeVisible.value = true
+  }
+
+  function hideKeepAwake() {
+    keepAwakeVisible.value = false
   }
 
   function requestUpdateCheck() {
@@ -416,6 +426,9 @@ export const useAppStore = defineStore('app', () => {
     aboutPanelVisible,
     stat,
     addTaskVisible,
+    keepAwakeVisible,
+    showKeepAwake,
+    hideKeepAwake,
     pendingBatch,
     addTaskOptions,
     pendingReferer,

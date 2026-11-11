@@ -88,7 +88,6 @@
     "speedometer-download-limit": "Descărcare",
     "speedometer-upload-limit": "Încărcare",
     "speedometer-apply": "Aplică",
-    "speedometer-needs-config": "Configurați o limită prin meniul contextual sau preferințe (cel puțin una trebuie să fie mai mare de 0)",
     "speedometer-needs-config-settings": "Configurați o limită mai jos (cel puțin una trebuie să fie mai mare de 0)",
     "speedometer-enable-limit": "Activează limita de viteză",
     "speedometer-enter-values": "Introduceți valorile limitei",
@@ -104,8 +103,23 @@
     "engine-open-settings": "Deschide setările de rețea",
     "generate-random": "Generează o valoare aleatorie",
     "choose-folder": "Alege dosarul",
-    "choose-file": "Alege fișierul",
-    "press-back-again": "Apăsați din nou Înapoi pentru a ieși"
+    "press-back-again": "Apăsați din nou Înapoi pentru a ieși",
+    "speedometer-live-status": "Stare live",
+    "speedometer-connection-quality": "Calitatea conexiunii",
+    "speedometer-quality-idle": "Inactiv",
+    "speedometer-quality-excellent": "Excelentă",
+    "speedometer-quality-good": "Bună",
+    "speedometer-quality-fair": "Medie",
+    "speedometer-quality-weak": "Slabă",
+    "speedometer-online": "Online",
+    "speedometer-offline": "Offline",
+    "speedometer-wifi": "Wi-Fi",
+    "speedometer-cellular": "Rețea mobilă",
+    "keep-awake-toast": "Modul ecran aprins este activat. Se recomandă conectarea la alimentare.",
+    "keep-awake-mode": "Mod ecran aprins",
+    "keep-awake-speed-label": "Viteza totală de descărcare",
+    "keep-awake-active-tasks": "Descărcări active: {count}",
+    "keep-awake-exit-hint": "Atinge oriunde pentru a ieși"
   },
   "preferences": {
     "general": "General",
@@ -602,10 +616,6 @@
     "dns-over-https-hint": "DNS criptat; alegeți o presetare sau introduceți URL-ul unui resolver",
     "dns-over-https-invalid": "Resolverul DNS over HTTPS trebuie să fie un URL https://",
     "dns-over-https-system": "Resolverul sistemului",
-    "post-download-program": "Rulează după descărcare",
-    "post-download-program-hint": "De ex. un antivirus. Argumente: {file} (cale completă), {dir}, {name}",
-    "post-download-program-placeholder": "Niciun program",
-    "post-download-arguments": "Argumente",
     "site-rules": "Reguli pentru site-uri",
     "site-rules-hint": "Setări de descărcare pe site: conexiuni per server pentru site-urile care interzic descărcările paralele și dacă se folosește serverul proxy. example.com acoperă și subdomeniile; * se potrivește cu orice caractere",
     "site-rule-add": "Adaugă regulă",
@@ -667,7 +677,9 @@
     "brand-logo-blue": "Cream & Blue",
     "brand-logo-teal": "Teal & Black",
     "android-app-icon-blue": "Cream & Blue",
-    "android-app-icon-teal": "Teal & Black"
+    "android-app-icon-teal": "Teal & Black",
+    "android-app-icon-restart-hint": "Dacă pictograma nu se schimbă imediat, repornește Rayload sau ecranul principal.",
+    "bt-port-randomized": "BT listen port randomized to {port}"
   },
   "task": {
     "scope-all": "Toate",
@@ -926,7 +938,7 @@
     "open-folder-success": "Folder deschis",
     "get-task-name": "Se obține numele sarcinii...",
     "remaining-prefix": "Rămas",
-    "select-torrent": "Trageți un fișier torrent aici sau faceți click pentru selectare",
+    "select-torrent": "Faceți clic pentru a alege un fișier .torrent local",
     "task-detail-title": "Detalii sarcină",
     "download-start-message": "Se descarcă: {taskName}",
     "download-batch-start-message": "Se descarcă: {taskName} și alte {count} sarcini",
@@ -1023,7 +1035,8 @@
     "sha256-calculating": "Calculating SHA-256 for {fileName}…",
     "sha256-copy": "Copy SHA-256",
     "sha256-copied": "SHA-256 copied",
-    "sha256-failed": "Could not calculate the file SHA-256"
+    "sha256-failed": "Could not calculate the file SHA-256",
+    "empty-hint": "Atinge butonul + din dreapta jos pentru a crea o sarcină sau partajează un link din browser către Rayload."
   },
   "media": {
     "probing": "Analizare conținut",
@@ -1066,7 +1079,8 @@
     "about": "Despre",
     "settings": "Setări",
     "extensions": "Extensii",
-    "trash": "Trash"
+    "trash": "Trash",
+    "keep-awake": "Menține ecranul aprins"
   },
   "extension": {
     "description": "Trimite descărcările din browser către Rayload și descoperă conținut media pe web.",

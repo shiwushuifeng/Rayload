@@ -303,7 +303,10 @@ export async function forcePauseTask(params: { gid: string }): Promise<string> {
 
 /** Forcefully pauses every active task through Aria2 Next's native RPC. */
 export async function forcePauseAll(): Promise<string> {
-  return invoke<string>('aria2_force_pause_all')
+  const result = await invoke<string>('aria2_force_pause_all')
+  const { setAndroidEnginePaused } = await import('@/composables/useAndroidNative')
+  setAndroidEnginePaused(true)
+  return result
 }
 
 /** Pauses a download task by GID (graceful). */
@@ -318,7 +321,10 @@ export async function resumeTask(params: { gid: string }): Promise<string> {
 
 /** Resumes all eligible paused tasks while preserving magnet selection guards. */
 export async function resumeEligible(): Promise<ResumeEligibleResult> {
-  return invoke<ResumeEligibleResult>('aria2_resume_eligible')
+  const result = await invoke<ResumeEligibleResult>('aria2_resume_eligible')
+  const { setAndroidEnginePaused } = await import('@/composables/useAndroidNative')
+  setAndroidEnginePaused(false)
+  return result
 }
 
 /** Saves the current aria2 session to disk. */

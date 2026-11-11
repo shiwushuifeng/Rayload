@@ -136,15 +136,19 @@ describe('TaskView', () => {
     wrapper.unmount()
   })
 
-  it('shows the decorative mark only for an empty list with the preference enabled', async () => {
+  it('shows the empty-state hint for an empty list and hides the logo when disabled', async () => {
     const wrapper = mount(TaskView)
     expect(wrapper.find('.empty-brand').exists()).toBe(false)
     taskStore.isCurrentListEmpty = true
     await flushPromises()
-    expect(wrapper.find('.empty-brand').attributes('aria-hidden')).toBe('true')
+    expect(wrapper.find('.empty-brand').exists()).toBe(true)
+    expect(wrapper.find('.empty-brand-mark').exists()).toBe(true)
+    expect(wrapper.find('.empty-brand-hint').exists()).toBe(true)
     preferenceStore.config.showLogoWhenEmpty = false
     await flushPromises()
-    expect(wrapper.find('.empty-brand').exists()).toBe(false)
+    expect(wrapper.find('.empty-brand').exists()).toBe(true)
+    expect(wrapper.find('.empty-brand-mark').exists()).toBe(false)
+    expect(wrapper.find('.empty-brand-hint').exists()).toBe(true)
     preferenceStore.config.showLogoWhenEmpty = true
     taskStore.isCurrentListEmpty = false
     await flushPromises()

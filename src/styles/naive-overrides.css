@@ -13,6 +13,19 @@
   overflow: hidden;
 }
 
+/* Every modal surface must stay inside the visual viewport. Naive UI adds
+ * the `n-modal` class to preset dialogs, cards, and custom default slots. */
+.n-modal {
+  max-width: calc(100vw - 24px);
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 24px);
+}
+
+.n-modal .n-dialog__content,
+.n-modal .n-card__content {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
 /* Modal masks must block touch and scroll gestures from reaching the app shell. */
 .n-modal-mask {
   background-color: rgb(0 0 0 / 0.62) !important;
@@ -21,4 +34,122 @@
   overscroll-behavior: contain;
   -webkit-backdrop-filter: blur(2px);
   backdrop-filter: blur(2px);
+}
+
+/* ── Overlay anchoring ────────────────────────────────────────────────
+ * Dialogs are teleported to <body>, outside the app grid. MainLayout
+ * publishes the measured header bottom as --app-header-bottom so every
+ * modal opens just below the title-bar rule instead of covering it. */
+:root {
+  --app-header-bottom: 96px;
+}
+
+.rayload-main-window .n-modal-scroll-content {
+  box-sizing: border-box;
+  align-items: flex-start !important;
+  padding-top: calc(var(--app-header-bottom, 96px) + 10px);
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+}
+
+.rayload-main-window .n-modal {
+  align-self: flex-start !important;
+  margin: 0 auto !important;
+  max-height: calc(100dvh - var(--app-header-bottom, 96px) - env(safe-area-inset-bottom, 0px) - 24px) !important;
+}
+
+/* Text toasts and notifications also start below the title bar so they never
+ * cover the page header. */
+.rayload-main-window .n-message-container--top,
+.rayload-main-window .n-message-container--top-left,
+.rayload-main-window .n-message-container--top-right {
+  top: calc(var(--app-header-bottom, 96px) + 8px) !important;
+}
+
+.rayload-main-window .n-notification-container--top,
+.rayload-main-window .n-notification-container--top-left,
+.rayload-main-window .n-notification-container--top-right {
+  top: calc(var(--app-header-bottom, 96px) + 8px) !important;
+}
+
+/* ── Secondary confirmation dialogs ────────────────────────────────── */
+.n-modal.n-dialog {
+  border-radius: 20px;
+  padding: 20px 20px 16px;
+  border: 1px solid color-mix(in srgb, var(--m3-outline-variant) 72%, transparent);
+  box-shadow:
+    0 18px 48px -14px var(--m3-shadow),
+    0 4px 14px -4px color-mix(in srgb, var(--m3-shadow) 70%, transparent);
+}
+
+.n-modal.n-dialog .n-dialog__title {
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+}
+
+.n-modal.n-dialog .n-dialog__content {
+  margin-top: 8px;
+  color: var(--m3-on-surface-variant);
+  font-size: var(--font-size-sm);
+  line-height: 1.55;
+}
+
+.n-modal.n-dialog .n-dialog__action {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.n-modal.n-dialog .n-dialog__action > *:not(:last-child) {
+  margin-right: 0;
+}
+
+.n-modal.n-dialog .n-button {
+  min-width: 76px;
+  height: 36px;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+}
+
+/* ── Dropdown and select option menus ──────────────────────────────── */
+.n-dropdown-menu {
+  padding: 5px 0 !important;
+  border: 1px solid color-mix(in srgb, var(--m3-outline-variant) 80%, transparent);
+  border-radius: 14px !important;
+  background: var(--m3-surface-container-high) !important;
+  box-shadow:
+    0 14px 36px -10px var(--m3-shadow),
+    0 2px 8px -2px color-mix(in srgb, var(--m3-shadow) 70%, transparent) !important;
+}
+
+.n-dropdown-option-body {
+  height: 38px !important;
+  line-height: 38px !important;
+  font-size: var(--font-size-sm) !important;
+}
+
+.n-dropdown-option-body::before {
+  left: 6px !important;
+  right: 6px !important;
+  border-radius: 9px !important;
+}
+
+.n-dropdown-option-body__prefix {
+  width: 36px !important;
+}
+
+.n-base-select-menu {
+  padding: 5px 0;
+  border: 1px solid color-mix(in srgb, var(--m3-outline-variant) 80%, transparent);
+  border-radius: 14px !important;
+  box-shadow:
+    0 14px 36px -10px var(--m3-shadow),
+    0 2px 8px -2px color-mix(in srgb, var(--m3-shadow) 70%, transparent);
+}
+
+.n-base-select-option {
+  margin: 1px 6px;
+  border-radius: 9px;
 }

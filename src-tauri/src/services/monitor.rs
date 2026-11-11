@@ -512,12 +512,6 @@ pub async fn process_lifecycle_task(
         log::warn!("task_lifecycle: failed to emit {event_name}: {error}");
     }
     send_task_notification(app, event_name, &payload, &runtime_config).await;
-    if matches!(
-        event_name,
-        events::TASK_COMPLETE | events::P2P_DOWNLOAD_COMPLETE
-    ) {
-        super::post_download::run(&runtime_config, &payload);
-    }
     forget_if_unkept(app, event_name, &payload.gid).await;
     Ok(())
 }

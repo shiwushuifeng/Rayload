@@ -83,6 +83,13 @@ if (!manifest.includes('android:windowSoftInputMode=')) {
   )
 }
 
+if (!manifest.includes('android:screenOrientation=')) {
+  manifest = manifest.replace(
+    /(<activity\b[^>]*android:name="\.MainActivity")/,
+    '$1\n            android:screenOrientation="sensor"',
+  )
+}
+
 manifest = manifest.replace(/\n\s*android:extractNativeLibs="[^"]*"/g, '')
 
 if (!manifest.includes('EngineForegroundService')) {

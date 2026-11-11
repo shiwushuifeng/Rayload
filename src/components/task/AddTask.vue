@@ -1089,7 +1089,7 @@ defineExpose({ dismiss: () => handleClose(), reset, prepared: () => opening })
                         <BtFileSelector
                           v-model:selected-indices="selectedFileIndices"
                           :files="selectedTorrentFiles"
-                          :max-height="200"
+                          :max-height="180"
                         />
                       </div>
                     </Transition>
@@ -1099,9 +1099,9 @@ defineExpose({ dismiss: () => handleClose(), reset, prepared: () => opening })
 
               <!-- Upload zone: shown when no torrents loaded -->
               <div v-if="fileItems.length === 0" class="torrent-upload-zone" @click="chooseTorrentFile">
-                <NIcon :size="36" :depth="3"><CloudUploadOutline /></NIcon>
+                <NIcon :size="28" :depth="3"><CloudUploadOutline /></NIcon>
                 <span class="torrent-upload-text">
-                  {{ t('task.select-torrent') || 'Drag torrent here or click to select' }}
+                  {{ t('task.select-torrent') || 'Click to choose a local .torrent file' }}
                 </span>
               </div>
             </div>
@@ -1110,7 +1110,7 @@ defineExpose({ dismiss: () => handleClose(), reset, prepared: () => opening })
 
         <!-- ── Download settings: always visible ──────────────── -->
         <div class="download-settings" data-reveal="2">
-          <NFormItem :label="t('task.task-out') + ':'">
+          <NFormItem v-if="activeTab !== ADD_TASK_TYPE.TORRENT" :label="t('task.task-out') + ':'">
             <NInputGroup>
               <NInput v-model:value="filename" :placeholder="t('task.task-out-tips')" :autofocus="false">
                 <template v-if="singleSize !== null || sizingSingle" #suffix>
@@ -1307,8 +1307,9 @@ defineExpose({ dismiss: () => handleClose(), reset, prepared: () => opening })
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  min-height: 138px;
+  gap: 8px;
+  min-height: 88px;
+  padding: 12px;
   border: 1px dashed var(--m3-drop-zone-border);
   border-radius: var(--radius-md);
   cursor: pointer;

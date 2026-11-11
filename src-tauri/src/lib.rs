@@ -620,7 +620,7 @@ static SHUTDOWN_STARTED: std::sync::atomic::AtomicBool = std::sync::atomic::Atom
 static SHUTDOWN_DONE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 /// Stops the engine and the services that outlive it, once.
-async fn shut_down(app: &tauri::AppHandle) {
+pub(crate) async fn shut_down(app: &tauri::AppHandle) {
     log::info!("app:exit — stopping engine and runtime services");
     if let Some(supervisor) = app.try_state::<engine::supervisor::EngineSupervisor>() {
         let clear_completed = read_pref_bool(app, "clearCompletedOnExit", false);

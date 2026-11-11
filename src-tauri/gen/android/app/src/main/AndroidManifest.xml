@@ -26,6 +26,7 @@
             android:launchMode="singleTask"
             android:label="@string/main_activity_title"
             android:name=".MainActivity"
+            android:screenOrientation="sensor"
             android:windowSoftInputMode="adjustResize"
             android:exported="true">
             <intent-filter>
@@ -58,6 +59,7 @@
                 <data android:scheme="rayload" />
             </intent-filter>
             <!-- DEEP LINK PLUGIN. AUTO-GENERATED. DO NOT REMOVE. -->
+            
             <!-- DEEP LINK PLUGIN. AUTO-GENERATED. DO NOT REMOVE. -->
             <!-- tauri-file-associations. AUTO-GENERATED. DO NOT REMOVE. -->
             <intent-filter>
@@ -69,7 +71,7 @@
                 <data android:mimeType="application/x-bittorrent" />
                 <data android:pathPattern=".*\\.torrent" />
             </intent-filter>
-
+            
             <!-- tauri-file-associations. AUTO-GENERATED. DO NOT REMOVE. -->
         </activity>
 
@@ -77,7 +79,7 @@
             android:name=".LauncherPurple"
             android:enabled="false"
             android:exported="true"
-            android:icon="@mipmap/ic_launcher"
+            android:icon="@mipmap/ic_launcher_purple"
             android:label="@string/app_name"
             android:targetActivity=".MainActivity">
             <intent-filter>

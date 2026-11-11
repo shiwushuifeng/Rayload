@@ -566,10 +566,6 @@ export interface AppConfig {
   dnsOverHttps: string
   /** Verify TLS certificates of download servers. */
   checkCertificate: boolean
-  /** Program run on every finished download, e.g. a virus scanner. Empty runs nothing. */
-  postDownloadProgram: string
-  /** Its arguments; `{file}`, `{dir}` and `{name}` name the download. Empty passes `"{file}"`. */
-  postDownloadArguments: string
   /** Clicking a completion notification reveals the file in its folder or opens it. */
   notificationClickAction: 'reveal' | 'open'
   rpcListenPort: number

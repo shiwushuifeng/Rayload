@@ -22,7 +22,16 @@ export default defineConfig(async () => ({
   },
   clearScreen: false,
   build: {
+    minify: 'esbuild',
+    cssMinify: true,
+    reportCompressedSize: false,
+    sourcemap: false,
+    modulePreload: { polyfill: false },
+    esbuild: {
+      drop: ['console', 'debugger'],
+    },
     rollupOptions: {
+      treeshake: 'smallest',
       input: {
         main: resolve(__dirname, 'index.html'),
       },

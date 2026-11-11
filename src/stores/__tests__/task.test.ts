@@ -482,21 +482,20 @@ describe('TaskStore', () => {
     expect(store.currentTaskPageCount()).toBe(1)
   })
 
-  it('writes a reordered visible page back into the full task list before saving manual order', async () => {
+  it('writes a reordered visible prefix back into the full task list before saving manual order', async () => {
     const { usePreferenceStore } = await import('@/stores/preference')
     const preferenceStore = usePreferenceStore()
     const saveSpy = vi.spyOn(preferenceStore, 'updateAndSave').mockResolvedValue(true)
     store.taskList = ['a', 'b', 'c', 'd', 'e'].map((gid) => makeMockTask(gid))
     store.setTaskPageSize(2)
-    store.setTaskPage('progress', 2)
 
-    await store.saveVisiblePageManualOrder(['d', 'c'])
+    await store.saveVisibleTaskOrder(['d', 'c'])
 
-    expect(store.taskList.map((task) => task.gid)).toEqual(['a', 'b', 'd', 'c', 'e'])
+    expect(store.taskList.map((task) => task.gid)).toEqual(['d', 'c', 'a', 'b', 'e'])
     expect(saveSpy).toHaveBeenCalledWith(
       expect.objectContaining({
         taskManualOrder: expect.objectContaining({
-          progress: ['a', 'b', 'd', 'c', 'e'],
+          progress: ['d', 'c', 'a', 'b', 'e'],
         }),
       }),
     )

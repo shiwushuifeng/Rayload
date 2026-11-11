@@ -52,10 +52,6 @@ pub struct RuntimeConfig {
     pub extension_api_port: u16,
     /// Whether local control endpoints may listen on LAN interfaces.
     pub allow_remote_access: bool,
-    /// Program run on every finished download, e.g. a virus scanner.
-    pub post_download_program: String,
-    /// Its arguments; `{file}`, `{dir}` and `{name}` name the download.
-    pub post_download_arguments: String,
     /// What clicking a completion notification does: `reveal` shows the file
     /// in its folder, `open` opens it with its default application.
     pub notification_click_action: String,
@@ -126,8 +122,6 @@ impl Default for RuntimeConfig {
             notify_on_start: true,
             extension_api_port: DEFAULT_EXTENSION_API_PORT,
             allow_remote_access: false,
-            post_download_program: String::new(),
-            post_download_arguments: String::new(),
             notification_click_action: "reveal".into(),
             remove_completed_records: false,
             float_window: super::float_window::Mode::Off,

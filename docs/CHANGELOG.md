@@ -3,6 +3,34 @@
 All notable changes to the independent Rayload Android port are documented in
 this file.
 
+## v1.0.2 - 2026-11-11
+
+### Changed
+
+- Replaced the paged task list with seamless infinite scrolling and split task
+  card metadata from the action row.
+- Rebuilt the floating speedometer around a centered live-status panel with
+  bulk pause/resume, collapsible limits, engine restart, and edge docking.
+- Added the keep-awake dashboard with theme-aware colors, light/dark switching,
+  reduced-motion support, and native screen-on.
+- Added keep-awake to the customizable bottom navigation and localized the
+  foreground notification with pause/resume actions.
+- Simplified the torrent upload dialog, added select-all, and made the file
+  list scroll independently.
+- Removed the unsupported post-download program setting and wired Android
+  shutdown and wake-lock behavior to native APIs.
+- Restored static gold launcher icons and reduced the release APK size with
+  Rust stripping and frontend minification.
+
+### Fixed
+
+- Prevented task card metadata from overlapping the action bar.
+- Fixed dialog and toast placement above the page header, exposed settings
+  scrollbars, and input fill gaps on mobile.
+- Clamped the expanded speedometer capsule inside the viewport after restoring
+  its saved position.
+- Reported the generated BT listen port after randomization.
+
 ## v1.0.1-beta2 - 2026-11-09
 
 ### Changed

@@ -266,7 +266,9 @@ const formFieldsValid = computed(
 )
 
 function onBtPortDice() {
-  form.value.listenPort = randomBtPort()
+  const port = randomBtPort()
+  form.value.listenPort = port
+  message.success(t('preferences.bt-port-randomized', { port }))
 }
 
 function reconcileBlocklistInBackground() {
@@ -863,7 +865,7 @@ onMounted(() => {
   padding: 9px 12px;
   border: 1px solid var(--m3-outline-variant);
   border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--m3-surface-container-low) 72%, transparent);
+  background: var(--m3-surface-container-low);
   transition:
     border-color 180ms ease,
     background-color 180ms ease;

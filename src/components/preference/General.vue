@@ -568,6 +568,9 @@ onMounted(async () => {
         </NFormItem>
         <NFormItem v-if="isAndroid" :label="t('preferences.android-app-icon')">
           <NSelect v-model:value="form.androidAppIcon" :options="androidAppIconOptions" class="pref-control-auto" />
+          <div class="pref-field-hint">
+            <NText depth="3">{{ t('preferences.android-app-icon-restart-hint') }}</NText>
+          </div>
         </NFormItem>
         <NFormItem v-if="!isAndroid">
           <template #label>
@@ -797,5 +800,11 @@ onMounted(async () => {
   width: 14px;
   height: 14px;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+.pref-field-hint {
+  flex-basis: 100%;
+  margin-top: 6px;
+  font-size: var(--font-size-xs);
+  line-height: 1.5;
 }
 </style>

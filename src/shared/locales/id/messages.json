@@ -88,7 +88,6 @@
     "speedometer-download-limit": "Unduh",
     "speedometer-upload-limit": "Unggah",
     "speedometer-apply": "Terapkan",
-    "speedometer-needs-config": "Konfigurasikan batas kecepatan melalui menu klik kanan atau pengaturan (setidaknya satu harus di atas 0)",
     "speedometer-needs-config-settings": "Silakan konfigurasikan batas kecepatan di bawah (setidaknya satu harus di atas 0)",
     "speedometer-enable-limit": "Aktifkan batas kecepatan",
     "speedometer-enter-values": "Silakan masukkan nilai batas",
@@ -104,8 +103,23 @@
     "engine-open-settings": "Buka pengaturan jaringan",
     "generate-random": "Buat nilai acak",
     "choose-folder": "Pilih folder",
-    "choose-file": "Pilih file",
-    "press-back-again": "Tekan kembali lagi untuk keluar"
+    "press-back-again": "Tekan kembali lagi untuk keluar",
+    "speedometer-live-status": "Status langsung",
+    "speedometer-connection-quality": "Kualitas koneksi",
+    "speedometer-quality-idle": "Menganggur",
+    "speedometer-quality-excellent": "Sangat baik",
+    "speedometer-quality-good": "Baik",
+    "speedometer-quality-fair": "Cukup",
+    "speedometer-quality-weak": "Lemah",
+    "speedometer-online": "Daring",
+    "speedometer-offline": "Luring",
+    "speedometer-wifi": "Wi-Fi",
+    "speedometer-cellular": "Jaringan seluler",
+    "keep-awake-toast": "Mode layar tetap menyala diaktifkan. Sebaiknya hubungkan ke daya.",
+    "keep-awake-mode": "Mode layar menyala",
+    "keep-awake-speed-label": "Kecepatan unduh total",
+    "keep-awake-active-tasks": "Unduhan aktif: {count}",
+    "keep-awake-exit-hint": "Ketuk di mana saja untuk keluar"
   },
   "preferences": {
     "general": "Umum",
@@ -602,10 +616,6 @@
     "dns-over-https-hint": "DNS terenkripsi; pilih preset atau masukkan URL resolver",
     "dns-over-https-invalid": "Resolver DNS over HTTPS harus berupa URL https://",
     "dns-over-https-system": "Resolver sistem",
-    "post-download-program": "Jalankan setelah unduhan",
-    "post-download-program-hint": "Mis. pemindai virus. Argumen: {file} (path lengkap), {dir}, {name}",
-    "post-download-program-placeholder": "Tanpa program",
-    "post-download-arguments": "Argumen",
     "site-rules": "Aturan situs",
     "site-rules-hint": "Pengaturan unduhan per situs: koneksi per server untuk situs yang melarang unduhan paralel, dan apakah server proxy dipakai. example.com juga mencakup subdomainnya; * cocok dengan karakter apa pun",
     "site-rule-add": "Tambah aturan",
@@ -667,7 +677,9 @@
     "brand-logo-blue": "Cream & Blue",
     "brand-logo-teal": "Teal & Black",
     "android-app-icon-blue": "Cream & Blue",
-    "android-app-icon-teal": "Teal & Black"
+    "android-app-icon-teal": "Teal & Black",
+    "android-app-icon-restart-hint": "Jika ikon tidak langsung berubah, mulai ulang Rayload atau layar utama.",
+    "bt-port-randomized": "BT listen port randomized to {port}"
   },
   "task": {
     "scope-all": "Semua",
@@ -926,7 +938,7 @@
     "open-folder-success": "Folder dibuka",
     "get-task-name": "Mendapatkan nama tugas...",
     "remaining-prefix": "Tersisa",
-    "select-torrent": "Seret file torrent ke sini atau klik untuk memilih",
+    "select-torrent": "Klik untuk memilih file .torrent lokal",
     "task-detail-title": "Detail tugas",
     "download-start-message": "Mengunduh: {taskName}",
     "download-batch-start-message": "Mengunduh: {taskName} dan {count} tugas lainnya",
@@ -1023,7 +1035,8 @@
     "sha256-calculating": "Calculating SHA-256 for {fileName}…",
     "sha256-copy": "Copy SHA-256",
     "sha256-copied": "SHA-256 copied",
-    "sha256-failed": "Could not calculate the file SHA-256"
+    "sha256-failed": "Could not calculate the file SHA-256",
+    "empty-hint": "Ketuk tombol + di kanan bawah untuk membuat tugas, atau bagikan tautan dari browser ke Rayload."
   },
   "media": {
     "probing": "Memeriksa media",
@@ -1066,7 +1079,8 @@
     "about": "Tentang",
     "settings": "Pengaturan",
     "extensions": "Ekstensi",
-    "trash": "Trash"
+    "trash": "Trash",
+    "keep-awake": "Layar tetap menyala"
   },
   "extension": {
     "description": "Kirim unduhan browser ke Rayload dan temukan media web.",

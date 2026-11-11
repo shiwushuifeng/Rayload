@@ -88,7 +88,6 @@
     "speedometer-download-limit": "Letöltés",
     "speedometer-upload-limit": "Feltöltés",
     "speedometer-apply": "Alkalmaz",
-    "speedometer-needs-config": "Állítson be korlátot a jobb kattintás menüben vagy a beállításokban (legalább egynek 0 felett kell lennie)",
     "speedometer-needs-config-settings": "Kérjük, állítson be korlátot alább (legalább egynek 0 felett kell lennie)",
     "speedometer-enable-limit": "Sebességkorlát engedélyezése",
     "speedometer-enter-values": "Kérem, adja meg a korlát értékeket",
@@ -104,8 +103,23 @@
     "engine-open-settings": "Hálózati beállítások megnyitása",
     "generate-random": "Véletlen érték generálása",
     "choose-folder": "Mappa kiválasztása",
-    "choose-file": "Fájl kiválasztása",
-    "press-back-again": "A kilépéshez nyomja meg újra a vissza gombot"
+    "press-back-again": "A kilépéshez nyomja meg újra a vissza gombot",
+    "speedometer-live-status": "Élő állapot",
+    "speedometer-connection-quality": "Kapcsolat minősége",
+    "speedometer-quality-idle": "Tétlen",
+    "speedometer-quality-excellent": "Kiváló",
+    "speedometer-quality-good": "Jó",
+    "speedometer-quality-fair": "Közepes",
+    "speedometer-quality-weak": "Gyenge",
+    "speedometer-online": "Online",
+    "speedometer-offline": "Offline",
+    "speedometer-wifi": "Wi-Fi",
+    "speedometer-cellular": "Mobilhálózat",
+    "keep-awake-toast": "Az ébren tartás mód bekapcsolva. Ajánlott az áramforrásra csatlakoztatás.",
+    "keep-awake-mode": "Ébren tartás mód",
+    "keep-awake-speed-label": "Teljes letöltési sebesség",
+    "keep-awake-active-tasks": "Aktív letöltések: {count}",
+    "keep-awake-exit-hint": "Koppintson bárhová a kilépéshez"
   },
   "preferences": {
     "general": "Általános",
@@ -602,10 +616,6 @@
     "dns-over-https-hint": "Titkosított DNS; válasszon előbeállítást vagy adjon meg feloldó URL-t",
     "dns-over-https-invalid": "A DNS over HTTPS feloldónak https:// URL-nek kell lennie",
     "dns-over-https-system": "Rendszer feloldója",
-    "post-download-program": "Futtatás letöltés után",
-    "post-download-program-hint": "Pl. víruskereső. Argumentumok: {file} (teljes útvonal), {dir}, {name}",
-    "post-download-program-placeholder": "Nincs program",
-    "post-download-arguments": "Argumentumok",
     "site-rules": "Webhelyszabályok",
     "site-rules-hint": "Webhelyenkénti letöltési beállítások: kiszolgálónkénti kapcsolatok a párhuzamos letöltést tiltó webhelyekhez, és hogy használja-e a proxykiszolgálót. Az example.com az aldomaineket is lefedi; a * bármilyen karakterre illeszkedik",
     "site-rule-add": "Szabály hozzáadása",
@@ -667,7 +677,9 @@
     "brand-logo-blue": "Cream & Blue",
     "brand-logo-teal": "Teal & Black",
     "android-app-icon-blue": "Cream & Blue",
-    "android-app-icon-teal": "Teal & Black"
+    "android-app-icon-teal": "Teal & Black",
+    "android-app-icon-restart-hint": "Ha az ikon nem frissül azonnal, indítsa újra a Rayloadot vagy a kezdőképernyőt.",
+    "bt-port-randomized": "BT listen port randomized to {port}"
   },
   "task": {
     "scope-all": "Összes",
@@ -926,7 +938,7 @@
     "open-folder-success": "Mappa megnyitva",
     "get-task-name": "Feladatnév lekérése...",
     "remaining-prefix": "Hátralévő",
-    "select-torrent": "Húzzon ide egy torrent fájlt vagy kattintson a kiválasztáshoz",
+    "select-torrent": "Kattintson egy helyi .torrent fájl kiválasztásához",
     "task-detail-title": "Feladat részletei",
     "download-start-message": "Letöltés: {taskName}",
     "download-batch-start-message": "Letöltés: {taskName} és {count} további feladat",
@@ -1023,7 +1035,8 @@
     "sha256-calculating": "Calculating SHA-256 for {fileName}…",
     "sha256-copy": "Copy SHA-256",
     "sha256-copied": "SHA-256 copied",
-    "sha256-failed": "Could not calculate the file SHA-256"
+    "sha256-failed": "Could not calculate the file SHA-256",
+    "empty-hint": "Új feladat létrehozásához koppintson a jobb alsó + gombra, vagy osszon meg egy hivatkozást a böngészőjéből a Rayloaddal."
   },
   "media": {
     "probing": "Média vizsgálata",
@@ -1066,7 +1079,8 @@
     "about": "Névjegy",
     "settings": "Beállítások",
     "extensions": "Bővítmények",
-    "trash": "Trash"
+    "trash": "Trash",
+    "keep-awake": "Képernyő bekapcsolva tartása"
   },
   "extension": {
     "description": "Küldje a böngésző letöltéseit a Rayload alkalmazásba, és fedezzen fel médiatartalmakat a weben.",

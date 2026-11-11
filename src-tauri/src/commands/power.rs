@@ -107,7 +107,17 @@ pub(crate) fn do_shutdown_internal(_app: &AppHandle) -> Result<(), AppError> {
 #[cfg(target_os = "android")]
 pub(crate) fn do_shutdown_internal(app: &AppHandle) -> Result<(), AppError> {
     log::info!("power: closing Rayload after downloads completed");
-    app.exit(0);
+    let app = app.clone();
+    tauri::async_runtime::spawn(async move {
+        // Stop aria2 and background services before handing the exit to the
+        // native Android activity, which finishes the task and kills the
+        // process (including any lingering engine child).
+        crate::shut_down(&app).await;
+        if let Err(error) = crate::services::power::shutdown_application() {
+            log::warn!("power: native Android shutdown failed: {error}; falling back to app exit");
+            app.exit(0);
+        }
+    });
     Ok(())
 }
 

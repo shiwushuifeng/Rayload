@@ -358,8 +358,6 @@ export const DEFAULT_APP_CONFIG = {
   siteRules: [],
   dnsOverHttps: '',
   checkCertificate: true,
-  postDownloadProgram: '',
-  postDownloadArguments: '',
   notificationClickAction: 'reveal' as const,
   logLevel: 'info' as const,
   aria2LogLevel: 'info' as const,

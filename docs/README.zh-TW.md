@@ -13,7 +13,7 @@ Rayload 是 Rayburst 的獨立非官方 Android 移植版，專注於 Android �
 
 ## 安裝最新的 ARM64 APK
 
-Download `Rayload-v1.0.1-android17-arm64-release.apk` from
+Download `Rayload-v1.0.2-android17-arm64-release.apk` from
 [GitHub Releases](https://github.com/shiwushuifeng/Rayload/releases).
 
 - Minimum: Android 7.0 / API 24

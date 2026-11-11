@@ -5,6 +5,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 import AppSidebar from '../AppSidebar.vue'
 import PreferenceView from '@/views/PreferenceView.vue'
 import ExtensionPanel from '@/components/extension/ExtensionPanel.vue'
+import { useNavigationVisibility } from '@/composables/useNavigationVisibility'
 
 const preferences = reactive({ config: { sidebarTaskCounts: true } })
 vi.mock('vue-i18n', () => ({ useI18n: () => ({ t: (key: string) => key }) }))
@@ -12,6 +13,9 @@ vi.mock('@/stores/task', () => ({
   useTaskStore: () => ({ taskCounts: { all: 8, progress: 3, failed: 1, completed: 4 } }),
 }))
 vi.mock('@/stores/preference', () => ({ usePreferenceStore: () => preferences }))
+vi.mock('@/stores/app', () => ({
+  useAppStore: () => ({ keepAwakeVisible: false, showKeepAwake: vi.fn(), hideKeepAwake: vi.fn() }),
+}))
 vi.mock('@/composables/useAppMessage', () => ({ useAppMessage: () => ({ error: vi.fn() }) }))
 vi.mock('../SidebarCount.vue', () => ({
   default: { props: ['value'], template: '<span class="count">{{ value }}</span>' },
@@ -82,6 +86,8 @@ describe('unified navigation', () => {
   })
 
   it('preserves navigation and counter instances when compact mode changes', async () => {
+    const { setItemVisible } = useNavigationVisibility()
+    setItemVisible('progress', true)
     const router = await setup('/task/progress')
     const wrapper = mount(AppSidebar, { props: { compact: false }, global: { plugins: [router] } })
     const link = wrapper.get('a[href="/task/progress"]').element
@@ -93,6 +99,7 @@ describe('unified navigation', () => {
     await wrapper.setProps({ compact: false })
     expect(wrapper.get('a[href="/task/progress"]').element).toBe(link)
     wrapper.unmount()
+    setItemVisible('progress', false)
   })
 
   it('keeps settings selected throughout its child routes and opens About', async () => {

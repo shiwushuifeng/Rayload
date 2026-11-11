@@ -259,9 +259,11 @@ function openUrl(url: string) {
 /* ── Glass Container ──────────────────────────────────────────────── */
 .about-glass {
   position: relative;
-  max-width: 440px;
-  min-width: 320px;
-  width: 50vw;
+  width: min(440px, calc(100vw - 32px));
+  min-width: 0;
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 32px 28px 24px;
   text-align: center;
   border-radius: var(--radius-xl);

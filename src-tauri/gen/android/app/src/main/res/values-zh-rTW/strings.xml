@@ -1,0 +1,6 @@
+<resources>
+    <string name="engine_channel_name">下載引擎</string>
+    <string name="engine_channel_description">保持 Rayload 下載在背景執行</string>
+    <string name="engine_running">Rayload 正在背景執行</string>
+    <string name="engine_paused">Rayload 下載已暫停</string>
+</resources>

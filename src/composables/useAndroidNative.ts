@@ -14,6 +14,9 @@ interface RayloadNativeBridge {
   requestNotificationPermission(): void
   batteryOptimizationStatus(): string
   requestBatteryOptimizationExemption(): void
+  setEngineCredentials(port: number, secret: string): void
+  setEnginePaused(paused: boolean): void
+  setKeepScreenOn(enabled: boolean): void
 }
 
 declare global {
@@ -60,6 +63,21 @@ export function requestAndroidNotificationPermission(): void {
 
 export function requestAndroidBatteryOptimizationExemption(): void {
   getRayloadNativeBridge()?.requestBatteryOptimizationExemption()
+}
+
+/** Shares the local aria2 RPC endpoint with the Android foreground service. */
+export function syncAndroidEngineCredentials(port: number, secret: string): void {
+  getRayloadNativeBridge()?.setEngineCredentials(port, secret)
+}
+
+/** Mirrors the global pause state into the foreground notification actions. */
+export function setAndroidEnginePaused(paused: boolean): void {
+  getRayloadNativeBridge()?.setEnginePaused(paused)
+}
+
+/** Keeps the Android window awake while the full-screen download dashboard is open. */
+export function setAndroidKeepScreenOn(enabled: boolean): void {
+  getRayloadNativeBridge()?.setKeepScreenOn(enabled)
 }
 
 export function shareAndroidFile(path: string): boolean {

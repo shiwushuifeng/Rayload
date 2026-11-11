@@ -19,7 +19,7 @@ const props = withDefaults(defineProps<{ status?: string }>(), { status: 'all' }
 const { t } = useI18n()
 const taskStore = useTaskStore()
 const preferenceStore = usePreferenceStore()
-const showEmptyBrand = computed(() => preferenceStore.config.showLogoWhenEmpty && taskStore.isCurrentListEmpty)
+const showEmptyState = computed(() => taskStore.isCurrentListEmpty)
 const dialog = useDialog()
 const message = useAppMessage()
 
@@ -60,7 +60,7 @@ watch(
 <template>
   <div class="task-view">
     <div class="panel-body">
-      <TaskEmptyBrand :show="showEmptyBrand" />
+      <TaskEmptyBrand :show="showEmptyState" :show-logo="preferenceStore.config.showLogoWhenEmpty" />
       <div class="panel-content">
         <TaskList
           @pause="handlePauseTask"

@@ -88,7 +88,6 @@
     "speedometer-download-limit": "Download",
     "speedometer-upload-limit": "Upload",
     "speedometer-apply": "Apply",
-    "speedometer-needs-config": "Configure a speed limit via the context menu or preferences (at least one must be above 0)",
     "speedometer-needs-config-settings": "Please configure a speed limit below (at least one must be above 0)",
     "speedometer-enable-limit": "Enable Speed Limit",
     "speedometer-enter-values": "Please enter limit values",
@@ -104,8 +103,23 @@
     "engine-open-settings": "Open Network Settings",
     "generate-random": "Generate random value",
     "choose-folder": "Choose folder",
-    "choose-file": "Choose file",
-    "press-back-again": "Press back again to exit"
+    "press-back-again": "Press back again to exit",
+    "speedometer-live-status": "Live status",
+    "speedometer-connection-quality": "Link quality",
+    "speedometer-quality-idle": "Idle",
+    "speedometer-quality-excellent": "Excellent",
+    "speedometer-quality-good": "Good",
+    "speedometer-quality-fair": "Fair",
+    "speedometer-quality-weak": "Weak",
+    "speedometer-online": "Online",
+    "speedometer-offline": "Offline",
+    "speedometer-wifi": "Wi-Fi",
+    "speedometer-cellular": "Mobile network",
+    "keep-awake-toast": "Keep-awake mode is on. Connecting to power is recommended.",
+    "keep-awake-mode": "Keep-awake mode",
+    "keep-awake-speed-label": "Total download speed",
+    "keep-awake-active-tasks": "Active downloads: {count}",
+    "keep-awake-exit-hint": "Tap anywhere to exit keep-awake mode"
   },
   "preferences": {
     "general": "General",
@@ -602,10 +616,6 @@
     "dns-over-https-hint": "Encrypted DNS; pick a preset or enter a resolver URL",
     "dns-over-https-invalid": "The DNS over HTTPS resolver must be an https:// URL",
     "dns-over-https-system": "System resolver",
-    "post-download-program": "Run after download",
-    "post-download-program-hint": "E.g. a virus scanner. Arguments: {file} (full path), {dir}, {name}",
-    "post-download-program-placeholder": "No program",
-    "post-download-arguments": "Arguments",
     "site-rules": "Site rules",
     "site-rules-hint": "Per-site connection limits and proxy use; example.com covers its subdomains, * matches anything",
     "site-rule-add": "Add rule",
@@ -667,7 +677,9 @@
     "brand-logo-blue": "Cream & Blue",
     "brand-logo-teal": "Teal & Black",
     "android-app-icon-blue": "Cream & Blue",
-    "android-app-icon-teal": "Teal & Black"
+    "android-app-icon-teal": "Teal & Black",
+    "android-app-icon-restart-hint": "If the icon does not change immediately, restart Rayload or your home screen.",
+    "bt-port-randomized": "BT listen port randomized to {port}"
   },
   "task": {
     "scope-all": "All",
@@ -926,7 +938,7 @@
     "open-folder-success": "Folder opened",
     "get-task-name": "Getting task name...",
     "remaining-prefix": "Remaining",
-    "select-torrent": "Drag torrent file here, or click to select",
+    "select-torrent": "Click to choose a local .torrent file",
     "task-detail-title": "Task Details",
     "download-start-message": "Downloading: {taskName}",
     "download-batch-start-message": "Downloading: {taskName} and {count} other task(s)",
@@ -1023,7 +1035,8 @@
     "sha256-calculating": "Calculating SHA-256 for {fileName}…",
     "sha256-copy": "Copy SHA-256",
     "sha256-copied": "SHA-256 copied",
-    "sha256-failed": "Could not calculate the file SHA-256"
+    "sha256-failed": "Could not calculate the file SHA-256",
+    "empty-hint": "Tap the + button at the bottom right to create a task, or share a link from your browser to Rayload."
   },
   "media": {
     "probing": "Inspecting media",
@@ -1066,7 +1079,8 @@
     "about": "About",
     "settings": "Settings",
     "extensions": "Extensions",
-    "trash": "Trash"
+    "trash": "Trash",
+    "keep-awake": "Keep Awake"
   },
   "extension": {
     "description": "Send browser downloads to Rayload and discover web media.",

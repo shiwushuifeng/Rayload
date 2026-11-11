@@ -53,6 +53,12 @@ function navigate(name: string) {
   .preference-tabs {
     padding-inline: 8px;
     overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .preference-tabs::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
   }
   .preference-tabs :deep(.n-tabs-nav-scroll-content) {
     min-width: max-content;

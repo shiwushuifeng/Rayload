@@ -35,7 +35,7 @@ Android не поддерживает настольные расширения.
 [GitHub Releases](https://github.com/shiwushuifeng/Rayload/releases):
 
 ```text
-Rayload-v1.0.1-android17-arm64-release.apk
+Rayload-v1.0.2-android17-arm64-release.apk
 ```
 
 При первом запуске выберите язык интерфейса и завершите настройку Android:
