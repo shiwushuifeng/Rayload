@@ -4,6 +4,11 @@
 
 # Rayload
 
+> 🚀 致力于打造 Android 平台最纯粹、极速、可定制的开源下载器。无广告，无遥测，由极客打造，为极客服务。
+>
+> 🚀 Building the purest, fastest and most customizable open-source downloader
+> for Android. No ads, no telemetry — built by geeks, for geeks.
+
 **A fast, private Android downloader for HTTP, BitTorrent, Magnet and ED2K.**
 
 Built on Aria2 Next with a mobile-first interface, background downloads,
@@ -16,7 +21,8 @@ share-to-download, a floating speed dashboard and a keep-awake mode.
 <img src="https://img.shields.io/github/stars/shiwushuifeng/Rayload?style=flat-square" alt="GitHub stars" />
 
 [**Download APK**](https://github.com/shiwushuifeng/Rayload/releases/latest) ·
-[Features](#features) · [Screenshots](#screenshots) · [Build](#build-from-source) · [简体中文](#简体中文)
+[Features](#features) · [Screenshots](#screenshots) · [Roadmap](ROADMAP.md) ·
+[Build](#build-from-source) · [简体中文](#简体中文)
 
 </div>
 
@@ -54,6 +60,25 @@ share-to-download, a floating speed dashboard and a keep-awake mode.
 - **Made to fit your workflow.** Infinite task list, full/compact cards, speed
   limits, scheduled limits, file selection, task trash, themes and a
   customizable bottom navigation.
+
+## Vision
+
+Rayload aims to be the most focused, fastest and most customizable open-source
+downloader on Android. We are building a downloader that stays private by
+default, runs every protocol through one reliable engine, feels native on a
+phone, and grows through themes and plugins without losing its simplicity. See
+the [roadmap](ROADMAP.md) for what comes next.
+
+## v1.0.2 Highlights
+
+- Rebuilt the task list around an infinite, two-row card layout with full and
+  compact density modes.
+- Added the keep-awake dashboard and an edge-docked speedometer with live
+  statistics, bulk controls and engine restart.
+- Removed desktop-only settings, localized the persistent notification and
+  tightened Android permissions and wake-lock behavior.
+- Refined the icon, dialogs, navigation and theme system while reducing the APK
+  size.
 
 ## Features
 
@@ -101,10 +126,6 @@ share-to-download, a floating speed dashboard and a keep-awake mode.
 Download the latest ARM64 APK from
 [GitHub Releases](https://github.com/shiwushuifeng/Rayload/releases/latest):
 
-```text
-Rayload-v1.0.2-android17-arm64-release.apk
-```
-
 | Item           | Requirement                 |
 | -------------- | --------------------------- |
 | Minimum system | Android 7.0 / API 24        |
@@ -112,12 +133,15 @@ Rayload-v1.0.2-android17-arm64-release.apk
 | Production ABI | `arm64-v8a`                 |
 | Application ID | `com.shiwushuifeng.rayload` |
 
-On first launch, complete the Android setup steps:
+### Quick start
 
-1. Grant all-files access so Rayload can write to the public Downloads folder.
-2. Allow notifications so the foreground download service can report status.
-3. Optionally allow battery-optimization exemption for reliable background
-   transfers.
+1. Download the latest APK from Releases and install it on an ARM64 device.
+2. Grant all-files access and allow notifications so downloads can run in the
+   background.
+3. Tap **+** or share a link from any browser to start your first download.
+
+For reliable long downloads, also allow battery-optimization exemption. The
+default download folder is `/storage/emulated/0/Download/Rayload`.
 
 Release APKs use the independent Rayload signing identity. Debug APKs use the
 Android debug certificate; uninstall the other variant before switching between
@@ -186,6 +210,16 @@ cargo test --manifest-path src-tauri/Cargo.toml --workspace --all-targets
 
 ## Project structure
 
+### Architecture
+
+```text
+Vue 3 + Pinia + Naive UI
+          │ Tauri IPC
+Rust backend + native Android bridge
+          │ JSON-RPC / process control
+      Aria2 Next (arm64-v8a)
+```
+
 ```text
 src/                         Vue frontend
 src-tauri/src/               Rust backend and native services
@@ -194,7 +228,32 @@ src-tauri/locales/           Native JSON translations
 src/shared/locales/          Frontend JSON translations
 scripts/android/             Android Kotlin source templates
 docs/screenshots/            README screenshots
+ROADMAP.md                   Product and engineering roadmap
 ```
+
+## Troubleshooting and FAQ
+
+### The notification has no pause or resume button
+
+Allow notifications for Rayload, disable battery optimization, and reopen the
+app once. Some customized Android ROMs also hide notification actions until the
+foreground service is restarted.
+
+### Downloads stop in the background
+
+Exclude Rayload from battery and deep-sleep restrictions. Keeping the app open,
+or using keep-awake mode while charging, helps on aggressive vendor ROMs.
+
+### My browser cannot connect to the RPC endpoint
+
+Chrome for Android cannot load desktop extensions. Use Firefox for Android or a
+Chromium build that supports extension sideloading, then enter the address and
+RPC secret from **Settings → Advanced**.
+
+### "App not installed" appears when switching builds
+
+Release and debug APKs use different signing identities. Uninstall the existing
+version before installing the other variant.
 
 ## Contributing and support
 
@@ -220,13 +279,26 @@ endorsed by the original author.
 **极速、私密的 Android 下载器：HTTP、BitTorrent、Magnet、ED2K 一个应用全搞定。**
 
 [**下载 APK**](https://github.com/shiwushuifeng/Rayload/releases/latest) ·
-[功能](#功能亮点) · [截图](#截图) · [编译](#从源码编译)
+[功能](#功能亮点) · [截图](#截图) · [路线图](ROADMAP.md) · [编译](#从源码编译)
 
 </div>
 
 Rayload 是 Rayburst 的独立非官方 Android 移植版，仅专注于 Android 平台。
 项目使用 Tauri、Rust、Vue 3 和 Aria2 Next 构建，提供移动端界面、系统分享、
 后台下载、通知、公共下载目录集成以及本地 Aria2 JSON-RPC 服务。
+
+### 项目愿景
+
+打造 Android 平台上最纯粹、极速、可定制的开源下载器。坚持隐私优先，用一个
+引擎处理所有协议，提供原生移动端体验，并通过主题与插件持续扩展。未来计划见
+[路线图](ROADMAP.md)。
+
+### v1.0.2 更新亮点
+
+- 任务列表改为无限滚动，并重构为完整/紧凑两种密度的两行卡片布局。
+- 新增不息屏挂机页，以及带实时统计、批量控制和引擎重启的贴边悬浮球。
+- 移除桌面端无效设置，完成通知栏中文化，并完善 Android 权限与唤醒锁逻辑。
+- 优化图标、弹窗、导航和主题系统，同时压缩安装包体积。
 
 ### 截图
 
@@ -253,10 +325,6 @@ Rayload 是 Rayburst 的独立非官方 Android 移植版，仅专注于 Android
 从 [GitHub Releases](https://github.com/shiwushuifeng/Rayload/releases/latest)
 下载最新 ARM64 APK：
 
-```text
-Rayload-v1.0.2-android17-arm64-release.apk
-```
-
 | 项目     | 要求                        |
 | -------- | --------------------------- |
 | 最低系统 | Android 7.0 / API 24        |
@@ -264,13 +332,14 @@ Rayload-v1.0.2-android17-arm64-release.apk
 | 生产架构 | `arm64-v8a`                 |
 | 应用包名 | `com.shiwushuifeng.rayload` |
 
-首次启动时可以选择界面语言，随后完成 Android 初始化：
+#### 快速开始
 
-1. 授予“所有文件访问权限”，以便写入公共下载目录。
-2. 允许通知，以便前台下载服务显示状态并支持暂停/继续。
-3. 按需授予电池优化豁免，避免后台下载被系统中断。
+1. 从 Releases 下载最新 APK，并安装到 ARM64 设备。
+2. 授予“所有文件访问权限”并允许通知，以便后台下载正常运行。
+3. 点击 **+**，或从任意浏览器分享链接，开始第一个下载任务。
 
-默认下载目录：`/storage/emulated/0/Download/Rayload`。
+长时间下载建议同时授予电池优化豁免。默认下载目录为
+`/storage/emulated/0/Download/Rayload`。
 
 Release APK 使用 Rayload 独立签名，Debug APK 使用 Android 调试证书；两者签名
 不同，切换安装前需要先卸载另一版本。
@@ -315,6 +384,48 @@ npx vue-tsc --noEmit
 cargo test --manifest-path src-tauri/Cargo.toml --workspace --all-targets
 ```
 
+### 项目结构
+
+```text
+Vue 3 + Pinia + Naive UI
+          │ Tauri IPC
+Rust 后端 + Android 原生桥接
+          │ JSON-RPC / 进程控制
+      Aria2 Next (arm64-v8a)
+```
+
+```text
+src/                         Vue 前端
+src-tauri/src/               Rust 后端与原生服务
+src-tauri/gen/android/       定制 Android Studio 工程
+src-tauri/locales/           原生 JSON 翻译
+src/shared/locales/          前端 JSON 翻译
+scripts/android/             Android Kotlin 源模板
+docs/screenshots/            README 截图
+ROADMAP.md                   产品与工程路线图
+```
+
+### 常见问题
+
+#### 通知栏没有暂停/继续按钮
+
+请允许 Rayload 发送通知、关闭电池优化，并重新打开一次应用。部分定制
+Android 系统还会在前台服务重启前隐藏通知操作按钮。
+
+#### 后台下载会中断
+
+请将 Rayload 排除在电池优化和深度睡眠限制之外。在限制较激进的部分系统上，
+保持应用打开或充电时使用不息屏模式会更稳定。
+
+#### 浏览器无法连接 RPC
+
+Chrome for Android 不支持桌面扩展。请使用 Firefox Android 或支持扩展侧载的
+Chromium 构建，并填写**设置 → 高级**中的地址与 RPC Secret。
+
+#### 切换安装包时提示“应用未安装”
+
+Release 与 Debug APK 使用不同的签名证书。安装另一个版本前，请先卸载当前版本。
+
 ### 参与与支持
 
 - 遇到问题请提交 Issue，并附上版本号、设备型号与复现步骤。
@@ -327,3 +438,15 @@ Rayload 基于 **AnInsomniacy** 创建的
 [Rayburst](https://github.com/AnInsomniacy/rayburst)，并遵循原项目的
 [MIT License](LICENSE)。Rayload 由独立维护者发布，不是 Rayburst 官方版本，
 也不代表原作者背书。
+
+---
+
+<div align="center">
+
+**⭐ If Rayload saves you time, give it a star — it helps more Android users find it.**
+
+**⭐ 如果 Rayload 对你有帮助，请点一个 Star，让更多 Android 用户发现它。**
+
+👉 [View the full roadmap](./ROADMAP.md) · [查看我们的完整开发路线图与未来目标 (Roadmap)](./ROADMAP.md)
+
+</div>

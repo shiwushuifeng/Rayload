@@ -6,6 +6,9 @@ import { join, resolve } from 'node:path'
 
 const root = resolve(import.meta.dirname, '..')
 const catalog = JSON.parse(readFileSync(join(root, 'src/shared/locales/catalog.json'), 'utf8'))
+const readmeCopy = JSON.parse(
+  readFileSync(join(root, 'scripts/readme-translations.json'), 'utf8'),
+)
 const forceQuickGuides = process.argv.includes('--force')
 const startMarker = '<!-- language-selector:start -->'
 const endMarker = '<!-- language-selector:end -->'
@@ -202,17 +205,28 @@ function addSelector(content, code) {
 
 function quickGuide(code) {
   const text = translations[code]
+  const copy = readmeCopy[code]
   if (!text) throw new Error(`Missing README translation metadata for ${code}`)
+  if (!copy) throw new Error(`Missing README copy for ${code}`)
   return `# ${text.title}
 
 ${selectorFor(code)}
 
+> ${copy.vision}
+
 ${text.summary}
+
+## v1.0.2 Highlights
+
+${copy.highlights.map((item) => `- ${item}`).join('\n')}
 
 ## ${text.install}
 
-Download \`Rayload-v1.0.2-android17-arm64-release.apk\` from
-[GitHub Releases](https://github.com/shiwushuifeng/Rayload/releases).
+${copy.download} [GitHub Releases](https://github.com/shiwushuifeng/Rayload/releases/latest)
+
+### Quick start
+
+${copy.quickStart.map((item, index) => `${index + 1}. ${item}`).join('\n')}
 
 - Minimum: Android 7.0 / API 24
 - Target: Android 17 / API 37
@@ -235,11 +249,21 @@ Download \`Rayload-v1.0.2-android17-arm64-release.apk\` from
 Full build and browser integration instructions are available in the
 [English README](../README.md).
 
+## Troubleshooting and FAQ
+
+${copy.faq.map((item) => `### ${item.q}\n\n${item.a}`).join('\n\n')}
+
+## Roadmap
+
+[View the full roadmap](../ROADMAP.md) — ${copy.roadmap}.
+
 ## License
 
 Rayload is based on [Rayburst](https://github.com/AnInsomniacy/rayburst) by
 **AnInsomniacy** and follows the [MIT License](LICENSE). It is an independent,
 unofficial port.
+
+> ⭐ ${copy.star}
 `
 }
 

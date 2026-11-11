@@ -9,12 +9,26 @@
 </details>
 <!-- language-selector:end -->
 
+> A legletisztultabb, leggyorsabb és legtestreszabhatóbb nyílt forráskódú Android-letöltőt építjük. Reklám nélkül, telemetria nélkül — geekektől geekeknek.
+
 A Rayload a Rayburst független, nem hivatalos Android-portja mobil felülettel, rendszerszintű megosztással, háttérletöltésekkel és helyi Aria2 JSON-RPC-vel.
+
+## v1.0.2 Highlights
+
+- A feladatlista végtelen görgetéssel és kétsoros kártyákkal, teljes és kompakt nézetben készült újra.
+- Új ébren tartó irányítópult és szélre rögzíthető sebességjelző élő statisztikával, tömeges műveletekkel és motor-újraindítással.
+- Az asztali beállítások eltávolítva, az értesítés lokalizálva, az Android-engedélyek és a wake lock viselkedése javítva.
+- Finomított ikon, párbeszédek, navigáció és témák, kisebb APK-mérettel.
 
 ## A legújabb ARM64 APK telepítése
 
-Download `Rayload-v1.0.2-android17-arm64-release.apk` from
-[GitHub Releases](https://github.com/shiwushuifeng/Rayload/releases).
+Töltsd le a legújabb ARM64 APK-t erről az oldalról: [GitHub Releases](https://github.com/shiwushuifeng/Rayload/releases/latest)
+
+### Quick start
+
+1. Töltsd le a legújabb APK-t a Releases oldalról, és telepítsd ARM64-es eszközre.
+2. Engedélyezd az összes fájl hozzáférését és az értesítéseket a háttérletöltésekhez.
+3. Koppints a **+** gombra, vagy ossz meg egy hivatkozást böngészőből az első letöltéshez.
 
 - Minimum: Android 7.0 / API 24
 - Target: Android 17 / API 37
@@ -22,23 +36,47 @@ Download `Rayload-v1.0.2-android17-arm64-release.apk` from
 
 ## Software requirements
 
-| Software            | Required version                    |
-| ------------------- | ----------------------------------- |
-| Node.js             | 22 or newer                         |
-| pnpm                | `11.5.2`                            |
-| Rust                | stable with `aarch64-linux-android` |
-| Java                | JDK 21                              |
-| Android SDK         | Platform 37                         |
-| Android Build Tools | 37.0.0                              |
-| Android NDK         | `29.0.14206865`                     |
-| Git                 | current stable                      |
-| GitHub CLI          | optional, only for releases         |
+| Software | Required version |
+| -------- | ---------------- |
+| Node.js | 22 or newer |
+| pnpm | `11.5.2` |
+| Rust | stable with `aarch64-linux-android` |
+| Java | JDK 21 |
+| Android SDK | Platform 37 |
+| Android Build Tools | 37.0.0 |
+| Android NDK | `29.0.14206865` |
+| Git | current stable |
+| GitHub CLI | optional, only for releases |
 
 Full build and browser integration instructions are available in the
 [English README](../README.md).
+
+## Troubleshooting and FAQ
+
+### Az értesítésen nincs szüneteltetés/folytatás gomb
+
+Engedélyezd az értesítéseket, kapcsold ki az akkumulátor-optimalizálást, majd nyisd újra az alkalmazást. Egyes egyedi ROM-ok az előtér-szolgáltatás újraindításáig elrejtik a műveleteket.
+
+### A letöltések leállnak a háttérben
+
+Zárd ki a Rayloadot az akkumulátor- és mélyalvás-korlátozásokból. Agresszív ROM-okon segít, ha nyitva hagyod az appot, vagy töltés közben ébren tartó módot használsz.
+
+### A böngésző nem csatlakozik az RPC-hez
+
+Az Androidos Chrome nem tölt be asztali kiegészítőket. Használj Firefoxot Androidra vagy kézi kiegészítő-telepítést támogató Chromiumot, és add meg a címet és az RPC Secretet a **Beállítások → Speciális** alatt.
+
+### Buildváltáskor „Az alkalmazás nincs telepítve” jelenik meg
+
+A Release és Debug APK aláírása eltér. A másik változat telepítése előtt távolítsd el a jelenlegit.
+
+## Roadmap
+
+[View the full roadmap](../ROADMAP.md) — termék- és mérnöki ütemterv.
 
 ## License
 
 Rayload is based on [Rayburst](https://github.com/AnInsomniacy/rayburst) by
 **AnInsomniacy** and follows the [MIT License](LICENSE). It is an independent,
 unofficial port.
+
+> ⭐ Ha a Rayload időt spórol neked, adj egy csillagot, hogy több Android-felhasználó megtalálja.

@@ -9,12 +9,26 @@
 </details>
 <!-- language-selector:end -->
 
+> Stiamo creando il downloader open source per Android più pulito, veloce e personalizzabile. Senza pubblicità, senza telemetria — creato da geek per geek.
+
 Rayload è un port Android indipendente e non ufficiale di Rayburst con interfaccia mobile, condivisione di sistema, download in background e Aria2 JSON-RPC locale.
+
+## v1.0.2 Highlights
+
+- Elenco attività ricostruito con scorrimento infinito e schede a due righe in modalità completa e compatta.
+- Aggiunti la dashboard schermo-sempre-acceso e il misuratore flottante ancorato al bordo, con statistiche, azioni multiple e riavvio del motore.
+- Rimosse le impostazioni solo desktop, notifica localizzata e migliore integrazione di permessi Android e wake lock.
+- Icona, finestre di dialogo, navigazione e temi rifiniti, con APK più leggero.
 
 ## Installa l'APK ARM64 più recente
 
-Download `Rayload-v1.0.2-android17-arm64-release.apk` from
-[GitHub Releases](https://github.com/shiwushuifeng/Rayload/releases).
+Scarica l'APK ARM64 più recente da questa pagina: [GitHub Releases](https://github.com/shiwushuifeng/Rayload/releases/latest)
+
+### Quick start
+
+1. Scarica l'APK più recente da Releases e installalo su un dispositivo ARM64.
+2. Consenti l'accesso a tutti i file e le notifiche per i download in background.
+3. Tocca **+** o condividi un link da qualsiasi browser per iniziare il primo download.
 
 - Minimum: Android 7.0 / API 24
 - Target: Android 17 / API 37
@@ -22,23 +36,47 @@ Download `Rayload-v1.0.2-android17-arm64-release.apk` from
 
 ## Software requirements
 
-| Software            | Required version                    |
-| ------------------- | ----------------------------------- |
-| Node.js             | 22 or newer                         |
-| pnpm                | `11.5.2`                            |
-| Rust                | stable with `aarch64-linux-android` |
-| Java                | JDK 21                              |
-| Android SDK         | Platform 37                         |
-| Android Build Tools | 37.0.0                              |
-| Android NDK         | `29.0.14206865`                     |
-| Git                 | current stable                      |
-| GitHub CLI          | optional, only for releases         |
+| Software | Required version |
+| -------- | ---------------- |
+| Node.js | 22 or newer |
+| pnpm | `11.5.2` |
+| Rust | stable with `aarch64-linux-android` |
+| Java | JDK 21 |
+| Android SDK | Platform 37 |
+| Android Build Tools | 37.0.0 |
+| Android NDK | `29.0.14206865` |
+| Git | current stable |
+| GitHub CLI | optional, only for releases |
 
 Full build and browser integration instructions are available in the
 [English README](../README.md).
+
+## Troubleshooting and FAQ
+
+### La notifica non ha i pulsanti pausa/riprendi
+
+Consenti le notifiche, disattiva l'ottimizzazione della batteria e riapri l'app. Alcune ROM Android personalizzate nascondono le azioni finché il servizio in primo piano non viene riavviato.
+
+### I download si fermano in background
+
+Escludi Rayload dalle restrizioni su batteria e sospensione profonda. Sulle ROM aggressive aiuta tenere l'app aperta o usare la modalità schermo acceso durante la ricarica.
+
+### Il browser non si connette a RPC
+
+Chrome per Android non carica estensioni desktop. Usa Firefox per Android o un Chromium che supporti l'installazione manuale delle estensioni, poi inserisci indirizzo e RPC Secret da **Impostazioni → Avanzate**.
+
+### Appare «App non installata» cambiando build
+
+Gli APK Release e Debug usano firme diverse. Disinstalla la versione attuale prima di installare l'altra variante.
+
+## Roadmap
+
+[View the full roadmap](../ROADMAP.md) — roadmap di prodotto e ingegneria.
 
 ## License
 
 Rayload is based on [Rayburst](https://github.com/AnInsomniacy/rayburst) by
 **AnInsomniacy** and follows the [MIT License](LICENSE). It is an independent,
 unofficial port.
+
+> ⭐ Se Rayload ti fa risparmiare tempo, lascia una stella: aiuterà altri utenti Android a scoprirlo.

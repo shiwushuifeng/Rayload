@@ -13,6 +13,20 @@ Rayload 是 Rayburst 的独立非官方 Android 移植版，仅专注于 Android
 项目使用 Tauri、Rust、Vue 3 和 Aria2 Next 构建，提供移动端界面、系统分享、
 后台下载、通知、公共下载目录集成以及本地 Aria2 JSON-RPC 服务。
 
+## 项目愿景
+
+> 🚀 致力于打造 Android 平台最纯粹、极速、可定制的开源下载器。无广告，无遥测，由极客打造，为极客服务。
+
+坚持隐私优先，用一个引擎处理所有协议，提供原生移动端体验，并通过主题与插件
+持续扩展。未来计划见[路线图](../ROADMAP.md)。
+
+## v1.0.2 更新亮点
+
+- 任务列表改为无限滚动，并重构为完整/紧凑两种密度的两行卡片布局。
+- 新增不息屏挂机页，以及带实时统计、批量控制和引擎重启的贴边悬浮球。
+- 移除桌面端无效设置，完成通知栏中文化，并完善 Android 权限与唤醒锁逻辑。
+- 优化图标、弹窗、导航和主题系统，同时压缩安装包体积。
+
 ## 平台要求
 
 | 项目     | 要求                        |
@@ -30,15 +44,13 @@ Rayload 不支持桌面平台。标准 Google Chrome for Android 不能加载桌
 从 [GitHub Releases](https://github.com/shiwushuifeng/Rayload/releases)
 下载最新 ARM64 APK：
 
-```text
-Rayload-v1.0.2-android17-arm64-release.apk
-```
+### 快速开始
 
-首次启动时可以选择界面语言，随后完成 Android 初始化：
+1. 从 Releases 下载最新 APK，并安装到 ARM64 设备。
+2. 授予“所有文件访问权限”并允许通知，以便后台下载正常运行。
+3. 点击 **+**，或从任意浏览器分享链接，开始第一个下载任务。
 
-1. 授予“所有文件访问权限”，以便写入公共下载目录。
-2. 允许通知，以便前台下载服务显示状态。
-3. 按需授予电池优化豁免，避免后台下载被系统中断。
+长时间下载建议同时授予电池优化豁免。
 
 默认下载目录：
 
@@ -132,7 +144,30 @@ src-tauri/gen/android/       定制 Android Studio 工程
 src-tauri/locales/           原生 JSON 翻译
 src/shared/locales/          前端 JSON 翻译
 scripts/android/             Android Kotlin 源模板
+docs/screenshots/            README 截图
+ROADMAP.md                   产品与工程路线图
 ```
+
+## 常见问题
+
+### 通知栏没有暂停/继续按钮
+
+请允许 Rayload 发送通知、关闭电池优化，并重新打开一次应用。部分定制
+Android 系统还会在前台服务重启前隐藏通知操作按钮。
+
+### 后台下载会中断
+
+请将 Rayload 排除在电池优化和深度睡眠限制之外。在限制较激进的部分系统上，
+保持应用打开或充电时使用不息屏模式会更稳定。
+
+### 浏览器无法连接 RPC
+
+Chrome for Android 不支持桌面扩展。请使用 Firefox Android 或支持扩展侧载的
+Chromium 构建，并填写**设置 → 高级**中的地址与 RPC Secret。
+
+### 切换安装包时提示“应用未安装”
+
+Release 与 Debug APK 使用不同的签名证书。安装另一个版本前，请先卸载当前版本。
 
 ## 致谢与许可
 
@@ -140,3 +175,13 @@ Rayload 基于 **AnInsomniacy** 创建的
 [Rayburst](https://github.com/AnInsomniacy/rayburst)，并遵循原项目的
 [MIT License](LICENSE)。Rayload 由独立维护者发布，不是 Rayburst 官方版本，
 也不代表原作者背书。
+
+---
+
+<div align="center">
+
+**⭐ 如果 Rayload 对你有帮助，请点一个 Star，让更多 Android 用户发现它。**
+
+👉 [查看我们的完整开发路线图与未来目标 (Roadmap)](../ROADMAP.md)
+
+</div>

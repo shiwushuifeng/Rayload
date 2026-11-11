@@ -9,12 +9,26 @@
 </details>
 <!-- language-selector:end -->
 
+> Construim cel mai curat, rapid și personalizabil downloader open source pentru Android. Fără reclame, fără telemetrie — creat de geek-i pentru geek-i.
+
 Rayload este un port Android independent și neoficial al Rayburst, cu interfață mobilă, partajare prin sistem, descărcări în fundal și Aria2 JSON-RPC local.
+
+## v1.0.2 Highlights
+
+- Lista de activități a fost reconstruită cu derulare infinită și carduri pe două rânduri în modul complet și compact.
+- Am adăugat panoul cu ecranul pornit și bila de viteză atașată de margine, cu statistici live, acțiuni în masă și repornirea motorului.
+- Am eliminat setările doar pentru desktop, am localizat notificarea și am îmbunătățit permisiunile Android și wake lock.
+- Am rafinat pictograma, dialogurile, navigarea și temele și am redus dimensiunea APK-ului.
 
 ## Instalează cel mai recent APK ARM64
 
-Download `Rayload-v1.0.2-android17-arm64-release.apk` from
-[GitHub Releases](https://github.com/shiwushuifeng/Rayload/releases).
+Descarcă cel mai recent APK ARM64 de pe această pagină: [GitHub Releases](https://github.com/shiwushuifeng/Rayload/releases/latest)
+
+### Quick start
+
+1. Descarcă cel mai recent APK din Releases și instalează-l pe un dispozitiv ARM64.
+2. Permite accesul la toate fișierele și notificările pentru descărcări în fundal.
+3. Apasă **+** sau partajează un link din orice browser pentru prima descărcare.
 
 - Minimum: Android 7.0 / API 24
 - Target: Android 17 / API 37
@@ -22,23 +36,47 @@ Download `Rayload-v1.0.2-android17-arm64-release.apk` from
 
 ## Software requirements
 
-| Software            | Required version                    |
-| ------------------- | ----------------------------------- |
-| Node.js             | 22 or newer                         |
-| pnpm                | `11.5.2`                            |
-| Rust                | stable with `aarch64-linux-android` |
-| Java                | JDK 21                              |
-| Android SDK         | Platform 37                         |
-| Android Build Tools | 37.0.0                              |
-| Android NDK         | `29.0.14206865`                     |
-| Git                 | current stable                      |
-| GitHub CLI          | optional, only for releases         |
+| Software | Required version |
+| -------- | ---------------- |
+| Node.js | 22 or newer |
+| pnpm | `11.5.2` |
+| Rust | stable with `aarch64-linux-android` |
+| Java | JDK 21 |
+| Android SDK | Platform 37 |
+| Android Build Tools | 37.0.0 |
+| Android NDK | `29.0.14206865` |
+| Git | current stable |
+| GitHub CLI | optional, only for releases |
 
 Full build and browser integration instructions are available in the
 [English README](../README.md).
+
+## Troubleshooting and FAQ
+
+### Notificarea nu are butoane de pauză/reluare
+
+Permite notificările, dezactivează optimizarea bateriei și redeschide aplicația. Unele ROM-uri Android personalizate ascund acțiunile până la repornirea serviciului din prim-plan.
+
+### Descărcările se opresc în fundal
+
+Exclude Rayload din restricțiile de baterie și somn profund. Pe ROM-urile agresive ajută să lași aplicația deschisă sau să folosești modul ecran pornit în timpul încărcării.
+
+### Browserul nu se conectează la RPC
+
+Chrome pentru Android nu încarcă extensii desktop. Folosește Firefox pentru Android sau un Chromium care permite instalarea manuală a extensiilor și introdu adresa și RPC Secret din **Setări → Avansat**.
+
+### Apare „Aplicația nu este instalată” la schimbarea build-ului
+
+APK-urile Release și Debug folosesc semnături diferite. Dezinstalează versiunea curentă înainte de a instala cealaltă variantă.
+
+## Roadmap
+
+[View the full roadmap](../ROADMAP.md) — foaie de parcurs pentru produs și inginerie.
 
 ## License
 
 Rayload is based on [Rayburst](https://github.com/AnInsomniacy/rayburst) by
 **AnInsomniacy** and follows the [MIT License](LICENSE). It is an independent,
 unofficial port.
+
+> ⭐ Dacă Rayload îți economisește timp, oferă o stea pentru ca mai mulți utilizatori Android să îl descopere.

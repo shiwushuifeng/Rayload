@@ -9,12 +9,26 @@
 </details>
 <!-- language-selector:end -->
 
+> Kami membangun pengunduh open source untuk Android yang paling bersih, cepat, dan dapat dikustomisasi. Tanpa iklan, tanpa telemetri — dibuat oleh geek, untuk geek.
+
 Rayload adalah port Android independen dan tidak resmi dari Rayburst dengan antarmuka seluler, berbagi sistem, unduhan latar belakang, dan Aria2 JSON-RPC lokal.
+
+## v1.0.2 Highlights
+
+- Daftar tugas dibangun ulang dengan gulir tanpa akhir dan kartu dua baris dalam mode penuh dan ringkas.
+- Dasbor layar tetap menyala dan bola kecepatan yang menempel di tepi ditambahkan, lengkap dengan statistik langsung, aksi massal, dan mulai ulang mesin.
+- Pengaturan khusus desktop dihapus, notifikasi dilokalkan, serta izin Android dan perilaku wake lock diperbaiki.
+- Ikon, dialog, navigasi, dan tema disempurnakan, dengan ukuran APK lebih kecil.
 
 ## Instal APK ARM64 terbaru
 
-Download `Rayload-v1.0.2-android17-arm64-release.apk` from
-[GitHub Releases](https://github.com/shiwushuifeng/Rayload/releases).
+Unduh APK ARM64 terbaru dari halaman ini: [GitHub Releases](https://github.com/shiwushuifeng/Rayload/releases/latest)
+
+### Quick start
+
+1. Unduh APK terbaru dari Releases dan pasang di perangkat ARM64.
+2. Beri akses ke semua file dan izinkan notifikasi agar unduhan berjalan di latar belakang.
+3. Ketuk **+** atau bagikan tautan dari browser untuk memulai unduhan pertama.
 
 - Minimum: Android 7.0 / API 24
 - Target: Android 17 / API 37
@@ -22,23 +36,47 @@ Download `Rayload-v1.0.2-android17-arm64-release.apk` from
 
 ## Software requirements
 
-| Software            | Required version                    |
-| ------------------- | ----------------------------------- |
-| Node.js             | 22 or newer                         |
-| pnpm                | `11.5.2`                            |
-| Rust                | stable with `aarch64-linux-android` |
-| Java                | JDK 21                              |
-| Android SDK         | Platform 37                         |
-| Android Build Tools | 37.0.0                              |
-| Android NDK         | `29.0.14206865`                     |
-| Git                 | current stable                      |
-| GitHub CLI          | optional, only for releases         |
+| Software | Required version |
+| -------- | ---------------- |
+| Node.js | 22 or newer |
+| pnpm | `11.5.2` |
+| Rust | stable with `aarch64-linux-android` |
+| Java | JDK 21 |
+| Android SDK | Platform 37 |
+| Android Build Tools | 37.0.0 |
+| Android NDK | `29.0.14206865` |
+| Git | current stable |
+| GitHub CLI | optional, only for releases |
 
 Full build and browser integration instructions are available in the
 [English README](../README.md).
+
+## Troubleshooting and FAQ
+
+### Notifikasi tidak memiliki tombol jeda/lanjutkan
+
+Izinkan notifikasi, nonaktifkan optimasi baterai, lalu buka ulang aplikasi. Beberapa ROM Android kustom menyembunyikan aksi notifikasi hingga layanan foreground dimulai ulang.
+
+### Unduhan berhenti di latar belakang
+
+Kecualikan Rayload dari pembatasan baterai dan tidur nyenyak. Pada ROM agresif, biarkan aplikasi terbuka atau gunakan mode layar tetap menyala saat mengisi daya.
+
+### Browser tidak dapat terhubung ke RPC
+
+Chrome untuk Android tidak memuat ekstensi desktop. Gunakan Firefox untuk Android atau Chromium yang mendukung sideload ekstensi, lalu masukkan alamat dan RPC Secret dari **Setelan → Lanjutan**.
+
+### Muncul “Aplikasi tidak terpasang” saat berganti build
+
+APK Release dan Debug memakai tanda tangan berbeda. Copot pemasangan versi saat ini sebelum memasang varian lainnya.
+
+## Roadmap
+
+[View the full roadmap](../ROADMAP.md) — peta jalan produk dan teknik.
 
 ## License
 
 Rayload is based on [Rayburst](https://github.com/AnInsomniacy/rayburst) by
 **AnInsomniacy** and follows the [MIT License](LICENSE). It is an independent,
 unofficial port.
+
+> ⭐ Jika Rayload menghemat waktu Anda, beri bintang agar lebih banyak pengguna Android menemukannya.

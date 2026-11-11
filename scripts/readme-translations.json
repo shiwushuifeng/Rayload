@@ -1,0 +1,554 @@
+{
+  "zh-TW": {
+    "vision": "致力打造 Android 平台上最純粹、極速、可自訂的開源下載器。無廣告、無遙測，由極客打造，為極客服務。",
+    "highlights": [
+      "任務列表改為無限捲動，並重構為完整與精簡兩種密度的兩行卡片。",
+      "新增不息屏掛機頁，以及具即時統計、批量控制與引擎重啟的貼邊懸浮球。",
+      "移除桌面端無效設定、完成通知中文化，並改善 Android 權限與喚醒鎖。",
+      "最佳化圖示、對話框、導覽與主題系統，同時縮小 APK 體積。"
+    ],
+    "quickStart": [
+      "從 Releases 下載最新 APK 並安裝到 ARM64 裝置。",
+      "授予所有檔案存取權限並允許通知，讓背景下載正常運作。",
+      "點擊 **+**，或從瀏覽器分享連結，開始第一個下載。"
+    ],
+    "download": "從下列頁面下載最新的 ARM64 APK：",
+    "faq": [
+      { "q": "通知列沒有暫停或繼續按鈕", "a": "請允許通知、關閉電池最佳化並重新開啟應用程式。部分客製化 Android 系統會在前景服務重新啟動前隱藏通知操作。" },
+      { "q": "背景下載會中斷", "a": "請將 Rayload 排除在電池與深度睡眠限制之外。在限制較嚴格的系統上，保持應用程式開啟或充電時使用不息屏模式會更穩定。" },
+      { "q": "瀏覽器無法連線到 RPC", "a": "Android 版 Chrome 不支援桌面擴充功能。請使用 Firefox for Android 或支援側載擴充功能的 Chromium，並在**設定 → 進階**中填入位址與 RPC Secret。" },
+      { "q": "切換安裝包時顯示「應用程式未安裝」", "a": "Release 與 Debug APK 使用不同的簽章。安裝另一個版本前，請先解除安裝目前版本。" }
+    ],
+    "roadmap": "產品與工程開發藍圖",
+    "star": "如果 Rayload 節省了你的時間，請給我們一個 Star，讓更多 Android 使用者發現它。"
+  },
+  "ja": {
+    "vision": "Android で最も純粋で高速、自由にカスタマイズできるオープンソースダウンローダーを目指しています。広告なし、テレメトリなし。ギークがギークのために作っています。",
+    "highlights": [
+      "タスク一覧を無限スクロールに変更し、標準とコンパクトの 2 種類の密度を持つ 2 行カードへ刷新しました。",
+      "常時点灯ダッシュボードと、リアルタイム統計・一括操作・エンジン再起動を備えた画面端のスピードボールを追加しました。",
+      "デスクトップ専用設定を削除し、通知を日本語化。Android の権限とウェイクロック処理も改善しました。",
+      "アイコン、ダイアログ、ナビゲーション、テーマを磨き上げ、APK サイズも削減しました。"
+    ],
+    "quickStart": [
+      "Releases から最新 APK をダウンロードし、ARM64 端末にインストールします。",
+      "すべてのファイルへのアクセスと通知を許可し、バックグラウンドダウンロードを有効にします。",
+      "**+** をタップするか、ブラウザからリンクを共有して最初のダウンロードを開始します。"
+    ],
+    "download": "次のページから最新の ARM64 APK をダウンロードできます：",
+    "faq": [
+      { "q": "通知に一時停止・再開ボタンがない", "a": "通知を許可し、バッテリー最適化を無効にしてアプリを一度再起動してください。一部のカスタム ROM では、フォアグラウンドサービス再起動まで通知操作が隠れます。" },
+      { "q": "バックグラウンドでダウンロードが止まる", "a": "Rayload をバッテリー最適化と深いスリープの制限から除外してください。制限の厳しい ROM では、アプリを開いたままにするか、充電中に常時点灯モードを使うと安定します。" },
+      { "q": "ブラウザから RPC に接続できない", "a": "Android 版 Chrome はデスクトップ拡張機能に対応していません。Firefox for Android または拡張機能のサイドロードに対応した Chromium を使い、**設定 → 詳細** のアドレスと RPC Secret を入力してください。" },
+      { "q": "ビルドを切り替えると「アプリがインストールされていません」と表示される", "a": "Release APK と Debug APK は署名が異なります。別のビルドをインストールする前に、現在のバージョンをアンインストールしてください。" }
+    ],
+    "roadmap": "製品とエンジニアリングのロードマップ",
+    "star": "Rayload が役に立ったら Star をお願いします。より多くの Android ユーザーに届きます。"
+  },
+  "ko": {
+    "vision": "Android에서 가장 순수하고 빠르며 자유롭게 꾸밀 수 있는 오픈 소스 다운로더를 만들고 있습니다. 광고 없음, 텔레메트리 없음. 기크가 기크를 위해 만듭니다.",
+    "highlights": [
+      "작업 목록을 무한 스크롤과 전체/간결 두 가지 밀도의 두 줄 카드로 재구성했습니다.",
+      "화면 켜짐 대시보드와 실시간 통계, 일괄 제어, 엔진 재시작을 갖춘 가장자리 속도 볼을 추가했습니다.",
+      "데스크톱 전용 설정을 제거하고 알림을 현지화했으며 Android 권한과 웨이크록 동작을 개선했습니다.",
+      "아이콘, 대화상자, 탐색, 테마를 다듬고 APK 크기를 줄였습니다."
+    ],
+    "quickStart": [
+      "Releases에서 최신 APK를 내려받아 ARM64 기기에 설치합니다.",
+      "모든 파일 접근과 알림을 허용해 백그라운드 다운로드를 활성화합니다.",
+      "**+**를 누르거나 브라우저에서 링크를 공유해 첫 다운로드를 시작합니다."
+    ],
+    "download": "다음 페이지에서 최신 ARM64 APK를 내려받으세요:",
+    "faq": [
+      { "q": "알림에 일시정지/재개 버튼이 없습니다", "a": "알림을 허용하고 배터리 최적화를 끈 뒤 앱을 다시 여세요. 일부 커스텀 ROM은 포그라운드 서비스가 다시 시작되기 전까지 알림 작업을 숨깁니다." },
+      { "q": "백그라운드 다운로드가 중단됩니다", "a": "Rayload를 배터리 및 딥 슬립 제한에서 제외하세요. 제한이 강한 ROM에서는 앱을 열어 두거나 충전 중 화면 켜짐 모드를 사용하면 안정적입니다." },
+      { "q": "브라우저에서 RPC에 연결할 수 없습니다", "a": "Android용 Chrome은 데스크톱 확장 프로그램을 지원하지 않습니다. Firefox for Android 또는 확장 프로그램 사이드로드를 지원하는 Chromium을 사용하고 **설정 → 고급**의 주소와 RPC Secret을 입력하세요." },
+      { "q": "빌드를 바꾸면 '앱이 설치되지 않음'이 표시됩니다", "a": "Release와 Debug APK는 서명이 다릅니다. 다른 빌드를 설치하기 전에 현재 버전을 제거하세요." }
+    ],
+    "roadmap": "제품 및 엔지니어링 로드맵",
+    "star": "Rayload가 도움이 되었다면 Star를 눌러 더 많은 Android 사용자가 발견할 수 있게 해 주세요."
+  },
+  "fr": {
+    "vision": "Nous créons le téléchargeur open source pour Android le plus épuré, le plus rapide et le plus personnalisable. Sans publicité, sans télémétrie — conçu par des geeks, pour des geeks.",
+    "highlights": [
+      "Liste des tâches reconstruite avec défilement infini et cartes à deux lignes, en modes complet et compact.",
+      "Ajout du tableau de bord anti-veille et du compteur flottant ancré au bord, avec statistiques, actions groupées et redémarrage du moteur.",
+      "Suppression des réglages réservés au bureau, notification localisée et intégration Android plus robuste.",
+      "Icône, boîtes de dialogue, navigation et thèmes affinés, avec une taille d'APK réduite."
+    ],
+    "quickStart": [
+      "Téléchargez le dernier APK depuis Releases et installez-le sur un appareil ARM64.",
+      "Autorisez l'accès à tous les fichiers et les notifications pour les téléchargements en arrière-plan.",
+      "Touchez **+** ou partagez un lien depuis un navigateur pour lancer votre premier téléchargement."
+    ],
+    "download": "Téléchargez le dernier APK ARM64 depuis la page suivante :",
+    "faq": [
+      { "q": "La notification n'a pas de bouton pause/reprise", "a": "Autorisez les notifications, désactivez l'optimisation de la batterie et rouvrez l'application. Certaines ROM Android masquent les actions jusqu'au redémarrage du service de premier plan." },
+      { "q": "Les téléchargements s'arrêtent en arrière-plan", "a": "Excluez Rayload des restrictions de batterie et de veille profonde. Sur les ROM agressives, gardez l'application ouverte ou utilisez le mode anti-veille pendant la charge." },
+      { "q": "Mon navigateur ne se connecte pas au RPC", "a": "Chrome pour Android ne charge pas les extensions de bureau. Utilisez Firefox pour Android ou un Chromium acceptant le chargement manuel d'extensions, puis saisissez l'adresse et le secret RPC dans **Paramètres → Avancé**." },
+      { "q": "« Application non installée » lors du changement de build", "a": "Les APK Release et Debug utilisent des signatures différentes. Désinstallez la version actuelle avant d'installer l'autre variante." }
+    ],
+    "roadmap": "feuille de route produit et technique",
+    "star": "Si Rayload vous fait gagner du temps, ajoutez une étoile pour aider davantage d'utilisateurs Android à le découvrir."
+  },
+  "de": {
+    "vision": "Wir entwickeln den klarsten, schnellsten und anpassbarsten Open-Source-Downloader für Android. Keine Werbung, keine Telemetrie — von Geeks für Geeks.",
+    "highlights": [
+      "Aufgabenliste mit Endlos-Scrollen und zweizeiligen Karten in voller und kompakter Dichte neu aufgebaut.",
+      "Bildschirm-an-Dashboard und randseitiger Geschwindigkeitsball mit Live-Statistik, Sammelaktionen und Engine-Neustart ergänzt.",
+      "Desktop-only-Einstellungen entfernt, Benachrichtigung lokalisiert und Android-Berechtigungen sowie Wake-Lock-Verhalten verbessert.",
+      "Symbol, Dialoge, Navigation und Themes überarbeitet und die APK-Größe reduziert."
+    ],
+    "quickStart": [
+      "Lade die neueste APK von Releases herunter und installiere sie auf einem ARM64-Gerät.",
+      "Erlaube Dateizugriff und Benachrichtigungen, damit Downloads im Hintergrund laufen.",
+      "Tippe auf **+** oder teile einen Link aus einem Browser, um den ersten Download zu starten."
+    ],
+    "download": "Lade die neueste ARM64-APK von dieser Seite herunter:",
+    "faq": [
+      { "q": "Die Benachrichtigung hat keine Pause-/Fortsetzen-Schaltfläche", "a": "Erlaube Benachrichtigungen, deaktiviere die Akku-Optimierung und öffne die App erneut. Manche Android-ROMs blenden Aktionen bis zum Neustart des Vordergrunddienstes aus." },
+      { "q": "Downloads stoppen im Hintergrund", "a": "Nimm Rayload von Akku- und Tiefschlaf-Beschränkungen aus. Bei aggressiven ROMs hilft es, die App geöffnet zu lassen oder während des Ladens den Bildschirm-an-Modus zu verwenden." },
+      { "q": "Mein Browser verbindet sich nicht mit RPC", "a": "Chrome für Android lädt keine Desktop-Erweiterungen. Nutze Firefox für Android oder ein Chromium mit manueller Erweiterungsinstallation und gib Adresse sowie RPC Secret unter **Einstellungen → Erweitert** ein." },
+      { "q": "Beim Wechsel der Build-Variante erscheint „App nicht installiert“", "a": "Release- und Debug-APKs haben unterschiedliche Signaturen. Deinstalliere die aktuelle Version, bevor du die andere Variante installierst." }
+    ],
+    "roadmap": "Produkt- und Engineering-Roadmap",
+    "star": "Wenn Rayload dir Zeit spart, gib dem Projekt einen Stern — so finden mehr Android-Nutzer dazu."
+  },
+  "es": {
+    "vision": "Creamos el descargador de código abierto para Android más limpio, rápido y personalizable. Sin anuncios, sin telemetría: hecho por geeks para geeks.",
+    "highlights": [
+      "Lista de tareas reconstruida con desplazamiento infinito y tarjetas de dos filas en modos completo y compacto.",
+      "Nuevo panel de pantalla siempre activa y medidor flotante anclado al borde con estadísticas, acciones masivas y reinicio del motor.",
+      "Eliminados los ajustes exclusivos de escritorio, notificación localizada y mejor integración de permisos y wake lock de Android.",
+      "Icono, diálogos, navegación y temas refinados, con menor tamaño del APK."
+    ],
+    "quickStart": [
+      "Descarga el APK más reciente desde Releases e instálalo en un dispositivo ARM64.",
+      "Concede acceso a todos los archivos y permite notificaciones para descargar en segundo plano.",
+      "Toca **+** o comparte un enlace desde cualquier navegador para iniciar la primera descarga."
+    ],
+    "download": "Descarga el APK ARM64 más reciente desde esta página:",
+    "faq": [
+      { "q": "La notificación no tiene botones de pausa o reanudación", "a": "Permite las notificaciones, desactiva la optimización de batería y vuelve a abrir la aplicación. Algunas ROM personalizadas ocultan las acciones hasta reiniciar el servicio en primer plano." },
+      { "q": "Las descargas se detienen en segundo plano", "a": "Excluye Rayload de las restricciones de batería y sueño profundo. En ROM agresivas, mantener la app abierta o usar el modo de pantalla activa mientras cargas ayuda." },
+      { "q": "Mi navegador no conecta con RPC", "a": "Chrome para Android no admite extensiones de escritorio. Usa Firefox para Android o un Chromium que permita instalar extensiones manualmente e introduce la dirección y el secreto RPC en **Ajustes → Avanzado**." },
+      { "q": "Aparece «Aplicación no instalada» al cambiar de compilación", "a": "Los APK Release y Debug usan firmas distintas. Desinstala la versión actual antes de instalar la otra variante." }
+    ],
+    "roadmap": "hoja de ruta de producto e ingeniería",
+    "star": "Si Rayload te ahorra tiempo, dale una estrella para que más usuarios de Android lo descubran."
+  },
+  "pt-BR": {
+    "vision": "Estamos criando o baixador open source para Android mais limpo, rápido e personalizável. Sem anúncios, sem telemetria — feito por geeks, para geeks.",
+    "highlights": [
+      "Lista de tarefas reconstruída com rolagem infinita e cartões de duas linhas nos modos completo e compacto.",
+      "Novo painel de tela sempre ativa e medidor flutuante fixado na borda, com estatísticas, ações em massa e reinício do motor.",
+      "Configurações exclusivas de desktop removidas, notificação localizada e integração de permissões e wake lock aprimorada.",
+      "Ícone, diálogos, navegação e temas refinados, com APK menor."
+    ],
+    "quickStart": [
+      "Baixe o APK mais recente em Releases e instale em um dispositivo ARM64.",
+      "Conceda acesso a todos os arquivos e permita notificações para baixar em segundo plano.",
+      "Toque em **+** ou compartilhe um link de qualquer navegador para iniciar o primeiro download."
+    ],
+    "download": "Baixe o APK ARM64 mais recente nesta página:",
+    "faq": [
+      { "q": "A notificação não tem botões de pausar ou continuar", "a": "Permita notificações, desative a otimização de bateria e reabra o aplicativo. Algumas ROMs personalizadas ocultam as ações até o serviço em primeiro plano reiniciar." },
+      { "q": "Os downloads param em segundo plano", "a": "Exclua o Rayload das restrições de bateria e suspensão profunda. Em ROMs agressivas, manter o app aberto ou usar o modo de tela sempre ativa durante o carregamento ajuda." },
+      { "q": "Meu navegador não conecta ao RPC", "a": "O Chrome para Android não carrega extensões de desktop. Use Firefox para Android ou um Chromium com instalação manual de extensões e informe o endereço e o segredo RPC em **Configurações → Avançado**." },
+      { "q": "Aparece “Aplicativo não instalado” ao trocar de build", "a": "APKs Release e Debug usam assinaturas diferentes. Desinstale a versão atual antes de instalar a outra variante." }
+    ],
+    "roadmap": "roteiro de produto e engenharia",
+    "star": "Se o Rayload economiza seu tempo, deixe uma estrela para mais usuários Android descobrirem o projeto."
+  },
+  "tr": {
+    "vision": "Android için en sade, en hızlı ve en kişiselleştirilebilir açık kaynak indirme yöneticisini geliştiriyoruz. Reklam yok, telemetri yok — geekler tarafından geekler için.",
+    "highlights": [
+      "Görev listesi sonsuz kaydırma ve tam/kompakt yoğunlukta iki satırlı kartlarla yeniden oluşturuldu.",
+      "Ekranı açık tutan gösterge paneli ve canlı istatistik, toplu işlemler ve motor yeniden başlatma içeren kenara yapışık hız balonu eklendi.",
+      "Masaüstüne özel ayarlar kaldırıldı, bildirim yerelleştirildi ve Android izinleri ile wake lock davranışı iyileştirildi.",
+      "Simge, iletişim kutuları, gezinme ve temalar geliştirildi; APK boyutu küçültüldü."
+    ],
+    "quickStart": [
+      "Releases sayfasından en son APK'yı indirip ARM64 bir cihaza kurun.",
+      "Arka plan indirmeleri için tüm dosyalara erişim ve bildirim izinlerini verin.",
+      "İlk indirmeyi başlatmak için **+** simgesine dokunun veya bir tarayıcıdan bağlantı paylaşın."
+    ],
+    "download": "En son ARM64 APK'yı şu sayfadan indirin:",
+    "faq": [
+      { "q": "Bildirimde duraklat/devam et düğmesi yok", "a": "Bildirimlere izin verin, pil optimizasyonunu kapatın ve uygulamayı yeniden açın. Bazı özel Android ROM'ları, ön plan hizmeti yeniden başlayana kadar bildirim eylemlerini gizler." },
+      { "q": "İndirmeler arka planda duruyor", "a": "Rayload'u pil ve derin uyku kısıtlamalarından hariç tutun. Agresif ROM'larda uygulamayı açık tutmak veya şarj sırasında ekran açık modunu kullanmak yardımcı olur." },
+      { "q": "Tarayıcım RPC'ye bağlanamıyor", "a": "Android için Chrome masaüstü uzantılarını yüklemez. Android için Firefox veya uzantıları elle yükleyebilen bir Chromium kullanın; adresi ve RPC Secret değerini **Ayarlar → Gelişmiş** bölümüne girin." },
+      { "q": "Derleme değiştirirken “Uygulama yüklenmedi” hatası çıkıyor", "a": "Release ve Debug APK'ları farklı imzalara sahiptir. Diğer sürümü yüklemeden önce mevcut sürümü kaldırın." }
+    ],
+    "roadmap": "ürün ve mühendislik yol haritası",
+    "star": "Rayload size zaman kazandırıyorsa bir yıldız verin; daha fazla Android kullanıcısı projeyi keşfetsin."
+  },
+  "ar": {
+    "vision": "نصنع مدير التنزيل مفتوح المصدر الأنقى والأسرع والأكثر قابلية للتخصيص على Android. بلا إعلانات، بلا تتبّع — من المبرمجين للمبرمجين.",
+    "highlights": [
+      "أُعيد بناء قائمة المهام بتمرير لا نهائي وبطاقات من سطرين بوضعي العرض الكامل والمضغوط.",
+      "أُضيفت لوحة إبقاء الشاشة مضاءة وكرّة سرعة ملتصقة بالحافة مع إحصاءات حية وتحكم جماعي وإعادة تشغيل المحرك.",
+      "أُزيلت إعدادات سطح المكتب، وعُرّبت الإشعارات، وحُسّنت أذونات Android وسلوك Wake Lock.",
+      "حُسّنت الأيقونة والنوافذ والتنقل والسمات، مع تقليل حجم APK."
+    ],
+    "quickStart": [
+      "نزّل أحدث APK من Releases وثبّته على جهاز ARM64.",
+      "امنح الوصول إلى كل الملفات واسمح بالإشعارات لتعمل التنزيلات في الخلفية.",
+      "اضغط **+** أو شارك رابطًا من أي متصفح لبدء أول تنزيل."
+    ],
+    "download": "نزّل أحدث APK لمعمارية ARM64 من هذه الصفحة:",
+    "faq": [
+      { "q": "لا تظهر أزرار الإيقاف المؤقت أو المتابعة في الإشعار", "a": "اسمح بالإشعارات، وأوقف تحسين البطارية، ثم أعد فتح التطبيق. بعض إصدارات Android المخصصة تخفي إجراءات الإشعار حتى تُعاد خدمة الواجهة الأمامية." },
+      { "q": "تتوقف التنزيلات في الخلفية", "a": "استثنِ Rayload من قيود البطارية والنوم العميق. على الأنظمة الصارمة، يساعد إبقاء التطبيق مفتوحًا أو استخدام وضع إبقاء الشاشة مضاءة أثناء الشحن." },
+      { "q": "لا يتصل المتصفح بخدمة RPC", "a": "لا يدعم Chrome لنظام Android إضافات سطح المكتب. استخدم Firefox لنظام Android أو نسخة Chromium تدعم تثبيت الإضافات يدويًا، وأدخل العنوان وRPC Secret من **الإعدادات ← متقدم**." },
+      { "q": "تظهر رسالة «لم يتم تثبيت التطبيق» عند تبديل الإصدار", "a": "تستخدم نسختا Release وDebug توقيعين مختلفين. أزل الإصدار الحالي قبل تثبيت النسخة الأخرى." }
+    ],
+    "roadmap": "خارطة طريق المنتج والهندسة",
+    "star": "إذا وفّر Rayload وقتك، أضف نجمة ليساعده المزيد من مستخدمي Android على اكتشافه."
+  },
+  "bg": {
+    "vision": "Създаваме най-чистия, най-бързия и най-настройваемия отворен Android мениджър за изтегляния. Без реклами, без телеметрия — от гийкове за гийкове.",
+    "highlights": [
+      "Списъкът със задачи е преработен с безкрайно превъртане и двуредови карти в пълен и компактен режим.",
+      "Добавени са екран за поддържане на дисплея включен и скоростна топка, закрепена към ръба, със статистика, групови действия и рестарт на двигателя.",
+      "Премахнати са настройките само за компютър, локализирано е уведомлението и са подобрени разрешенията на Android и wake lock.",
+      "Подобрени са иконата, диалозите, навигацията и темите, а размерът на APK е намален."
+    ],
+    "quickStart": [
+      "Изтеглете най-новия APK от Releases и го инсталирайте на ARM64 устройство.",
+      "Разрешете достъп до всички файлове и уведомления, за да работят фоновите изтегляния.",
+      "Докоснете **+** или споделете връзка от браузър, за да започнете първото изтегляне."
+    ],
+    "download": "Изтеглете най-новия ARM64 APK от тази страница:",
+    "faq": [
+      { "q": "В уведомлението няма бутони за пауза и продължаване", "a": "Разрешете уведомления, изключете оптимизацията на батерията и отворете приложението отново. Някои персонализирани Android ROM-ове скриват действията до рестартиране на foreground услугата." },
+      { "q": "Изтеглянията спират във фонов режим", "a": "Изключете Rayload от ограниченията за батерия и дълбок сън. При агресивни ROM-ове помага приложението да остане отворено или да се използва режим със включен екран по време на зареждане." },
+      { "q": "Браузърът не се свързва с RPC", "a": "Chrome за Android не зарежда разширения за компютър. Използвайте Firefox за Android или Chromium с ръчно инсталиране на разширения и въведете адреса и RPC Secret от **Настройки → Разширени**." },
+      { "q": "При смяна на билда се показва „Приложението не е инсталирано“", "a": "Release и Debug APK използват различни подписи. Деинсталирайте текущата версия, преди да инсталирате другия вариант." }
+    ],
+    "roadmap": "пътна карта за продукта и инженерството",
+    "star": "Ако Rayload ви спестява време, дайте звезда, за да го открият повече Android потребители."
+  },
+  "ca": {
+    "vision": "Creem el gestor de baixades de codi obert per a Android més net, ràpid i personalitzable. Sense anuncis ni telemetria: fet per geeks, per a geeks.",
+    "highlights": [
+      "Llista de tasques reconstruïda amb desplaçament infinit i targetes de dues files en modes complet i compacte.",
+      "Nou tauler de pantalla sempre activa i indicador flotant ancorat a la vora amb estadístiques, accions massives i reinici del motor.",
+      "Eliminats els ajustos exclusius d'escriptori, notificació localitzada i millor integració de permisos i wake lock d'Android.",
+      "Icona, diàlegs, navegació i temes refinats, amb una mida d'APK més petita."
+    ],
+    "quickStart": [
+      "Baixa l'APK més recent de Releases i instal·la'l en un dispositiu ARM64.",
+      "Concedeix accés a tots els fitxers i permet notificacions per baixar en segon pla.",
+      "Toca **+** o comparteix un enllaç des de qualsevol navegador per iniciar la primera baixada."
+    ],
+    "download": "Baixa l'APK ARM64 més recent des d'aquesta pàgina:",
+    "faq": [
+      { "q": "La notificació no té botons de pausa o represa", "a": "Permet les notificacions, desactiva l'optimització de bateria i torna a obrir l'aplicació. Algunes ROM personalitzades amaguen les accions fins que es reinicia el servei en primer pla." },
+      { "q": "Les baixades s'aturen en segon pla", "a": "Exclou Rayload de les restriccions de bateria i son profund. En ROM agressives, mantenir l'aplicació oberta o usar el mode de pantalla activa mentre carregues ajuda." },
+      { "q": "El navegador no connecta amb RPC", "a": "Chrome per a Android no admet extensions d'escriptori. Usa Firefox per a Android o un Chromium que permeti instal·lar extensions manualment i introdueix l'adreça i el secret RPC a **Configuració → Avançat**." },
+      { "q": "Apareix «Aplicació no instal·lada» en canviar de compilació", "a": "Els APK Release i Debug fan servir signatures diferents. Desinstal·la la versió actual abans d'instal·lar l'altra variant." }
+    ],
+    "roadmap": "full de ruta de producte i enginyeria",
+    "star": "Si Rayload et fa estalviar temps, dona-li una estrella perquè més usuaris d'Android el descobreixin."
+  },
+  "el": {
+    "vision": "Δημιουργούμε τον πιο καθαρό, γρήγορο και προσαρμόσιμο open-source downloader για Android. Χωρίς διαφημίσεις, χωρίς telemetry — από geeks για geeks.",
+    "highlights": [
+      "Η λίστα εργασιών ξαναχτίστηκε με ατελείωτο κύλισμα και διγραμμικές κάρτες σε πλήρη και συμπαγή προβολή.",
+      "Προστέθηκαν πίνακας διατήρησης οθόνης και αιωρούμενη μπάλα ταχύτητας στην άκρη με ζωντανά στατιστικά, μαζικές ενέργειες και επανεκκίνηση μηχανής.",
+      "Αφαιρέθηκαν ρυθμίσεις μόνο για υπολογιστή, μεταφράστηκε η ειδοποίηση και βελτιώθηκαν τα δικαιώματα Android και το wake lock.",
+      "Βελτιώθηκαν εικονίδιο, διάλογοι, πλοήγηση και θέματα, με μικρότερο μέγεθος APK."
+    ],
+    "quickStart": [
+      "Κατέβασε το τελευταίο APK από τα Releases και εγκατέστησέ το σε συσκευή ARM64.",
+      "Δώσε πρόσβαση σε όλα τα αρχεία και επίτρεψε ειδοποιήσεις για λήψεις στο παρασκήνιο.",
+      "Πάτησε **+** ή μοιράσου έναν σύνδεσμο από οποιονδήποτε browser για την πρώτη λήψη."
+    ],
+    "download": "Κατέβασε το τελευταίο ARM64 APK από αυτή τη σελίδα:",
+    "faq": [
+      { "q": "Η ειδοποίηση δεν έχει κουμπιά παύσης/συνέχισης", "a": "Επίτρεψε τις ειδοποιήσεις, απενεργοποίησε τη βελτιστοποίηση μπαταρίας και άνοιξε ξανά την εφαρμογή. Ορισμένες προσαρμοσμένες ROM κρύβουν τις ενέργειες μέχρι να επανεκκινηθεί η υπηρεσία foreground." },
+      { "q": "Οι λήψεις σταματούν στο παρασκήνιο", "a": "Εξαίρεσε το Rayload από περιορισμούς μπαταρίας και βαθύ ύπνου. Σε αυστηρές ROM βοηθά να μένει η εφαρμογή ανοιχτή ή να χρησιμοποιείς τη λειτουργία διατήρησης οθόνης κατά τη φόρτιση." },
+      { "q": "Ο browser δεν συνδέεται με το RPC", "a": "Το Chrome για Android δεν φορτώνει επεκτάσεις υπολογιστή. Χρησιμοποίησε Firefox για Android ή Chromium με χειροκίνητη εγκατάσταση επεκτάσεων και βάλε διεύθυνση και RPC Secret από **Ρυθμίσεις → Για προχωρημένους**." },
+      { "q": "Εμφανίζεται «Η εφαρμογή δεν εγκαταστάθηκε» κατά την αλλαγή build", "a": "Τα Release και Debug APK έχουν διαφορετικές υπογραφές. Απεγκατέστησε την τρέχουσα έκδοση πριν εγκαταστήσεις την άλλη." }
+    ],
+    "roadmap": "οδικός χάρτης προϊόντος και μηχανικής",
+    "star": "Αν το Rayload σου εξοικονομεί χρόνο, δώσε ένα αστέρι ώστε να το ανακαλύψουν περισσότεροι χρήστες Android."
+  },
+  "fa": {
+    "vision": "در حال ساختن پاک‌ترین، سریع‌ترین و قابل‌شخصی‌سازی‌ترین دانلودر متن‌باز Android هستیم. بدون تبلیغ، بدون تله‌متری — ساخته‌شده توسط گیمرها برای گیمرها.",
+    "highlights": [
+      "فهرست وظایف با اسکرول بی‌نهایت و کارت‌های دوخطی در حالت کامل و فشرده بازسازی شد.",
+      "داشبورد روشن ماندن صفحه و توپ سرعت چسبیده به لبه با آمار زنده، کنترل گروهی و راه‌اندازی مجدد موتور اضافه شد.",
+      "تنظیمات مخصوص دسکتاپ حذف شد، اعلان بومی‌سازی شد و مجوزهای Android و رفتار wake lock بهبود یافت.",
+      "آیکون، دیالوگ‌ها، ناوبری و تم‌ها بهینه شدند و حجم APK کاهش یافت."
+    ],
+    "quickStart": [
+      "آخرین APK را از Releases دانلود و روی دستگاه ARM64 نصب کنید.",
+      "برای دانلود در پس‌زمینه دسترسی به همه فایل‌ها و اعلان‌ها را بدهید.",
+      "برای شروع اولین دانلود **+** را بزنید یا پیوندی را از مرورگر به اشتراک بگذارید."
+    ],
+    "download": "آخرین APK مخصوص ARM64 را از این صفحه دانلود کنید:",
+    "faq": [
+      { "q": "اعلان دکمه توقف یا ادامه ندارد", "a": "اعلان‌ها را مجاز کنید، بهینه‌سازی باتری را خاموش کنید و برنامه را دوباره باز کنید. برخی ROMهای سفارشی تا راه‌اندازی مجدد سرویس پیش‌زمینه، اقدام‌های اعلان را پنهان می‌کنند." },
+      { "q": "دانلودها در پس‌زمینه متوقف می‌شوند", "a": "Rayload را از محدودیت باتری و خواب عمیق خارج کنید. در ROMهای سخت‌گیر، باز نگه‌داشتن برنامه یا استفاده از حالت روشن ماندن صفحه هنگام شارژ کمک می‌کند." },
+      { "q": "مرورگر به RPC متصل نمی‌شود", "a": "Chrome برای Android افزونه‌های دسکتاپ را بارگذاری نمی‌کند. از Firefox برای Android یا Chromium با نصب دستی افزونه استفاده کنید و نشانی و RPC Secret را در **تنظیمات → پیشرفته** وارد کنید." },
+      { "q": "هنگام تغییر بیلد پیام «برنامه نصب نشد» نمایش داده می‌شود", "a": "APKهای Release و Debug امضای متفاوت دارند. پیش از نصب نسخه دیگر، نسخه فعلی را حذف کنید." }
+    ],
+    "roadmap": "نقشه راه محصول و مهندسی",
+    "star": "اگر Rayload در وقت شما صرفه‌جویی می‌کند، یک ستاره بدهید تا کاربران بیشتری آن را پیدا کنند."
+  },
+  "hu": {
+    "vision": "A legletisztultabb, leggyorsabb és legtestreszabhatóbb nyílt forráskódú Android-letöltőt építjük. Reklám nélkül, telemetria nélkül — geekektől geekeknek.",
+    "highlights": [
+      "A feladatlista végtelen görgetéssel és kétsoros kártyákkal, teljes és kompakt nézetben készült újra.",
+      "Új ébren tartó irányítópult és szélre rögzíthető sebességjelző élő statisztikával, tömeges műveletekkel és motor-újraindítással.",
+      "Az asztali beállítások eltávolítva, az értesítés lokalizálva, az Android-engedélyek és a wake lock viselkedése javítva.",
+      "Finomított ikon, párbeszédek, navigáció és témák, kisebb APK-mérettel."
+    ],
+    "quickStart": [
+      "Töltsd le a legújabb APK-t a Releases oldalról, és telepítsd ARM64-es eszközre.",
+      "Engedélyezd az összes fájl hozzáférését és az értesítéseket a háttérletöltésekhez.",
+      "Koppints a **+** gombra, vagy ossz meg egy hivatkozást böngészőből az első letöltéshez."
+    ],
+    "download": "Töltsd le a legújabb ARM64 APK-t erről az oldalról:",
+    "faq": [
+      { "q": "Az értesítésen nincs szüneteltetés/folytatás gomb", "a": "Engedélyezd az értesítéseket, kapcsold ki az akkumulátor-optimalizálást, majd nyisd újra az alkalmazást. Egyes egyedi ROM-ok az előtér-szolgáltatás újraindításáig elrejtik a műveleteket." },
+      { "q": "A letöltések leállnak a háttérben", "a": "Zárd ki a Rayloadot az akkumulátor- és mélyalvás-korlátozásokból. Agresszív ROM-okon segít, ha nyitva hagyod az appot, vagy töltés közben ébren tartó módot használsz." },
+      { "q": "A böngésző nem csatlakozik az RPC-hez", "a": "Az Androidos Chrome nem tölt be asztali kiegészítőket. Használj Firefoxot Androidra vagy kézi kiegészítő-telepítést támogató Chromiumot, és add meg a címet és az RPC Secretet a **Beállítások → Speciális** alatt." },
+      { "q": "Buildváltáskor „Az alkalmazás nincs telepítve” jelenik meg", "a": "A Release és Debug APK aláírása eltér. A másik változat telepítése előtt távolítsd el a jelenlegit." }
+    ],
+    "roadmap": "termék- és mérnöki ütemterv",
+    "star": "Ha a Rayload időt spórol neked, adj egy csillagot, hogy több Android-felhasználó megtalálja."
+  },
+  "hi": {
+    "vision": "हम Android के लिए सबसे साफ़, सबसे तेज़ और सबसे अनुकूलन योग्य ओपन-सोर्स डाउनलोडर बना रहे हैं। कोई विज्ञापन नहीं, कोई टेलीमेट्री नहीं — गीक्स द्वारा, गीक्स के लिए।",
+    "highlights": [
+      "टास्क सूची को अनंत स्क्रॉल और पूर्ण व कॉम्पैक्ट घनत्व वाले दो-पंक्ति कार्ड के साथ फिर से बनाया गया।",
+      "स्क्रीन-ऑन डैशबोर्ड और किनारे पर टिकने वाला स्पीड बॉल जोड़ा गया, जिसमें लाइव आँकड़े, बल्क नियंत्रण और इंजन रीस्टार्ट शामिल हैं।",
+      "डेस्कटॉप-केवल सेटिंग्स हटाई गईं, सूचना का स्थानीयकरण किया गया और Android अनुमतियाँ व wake lock व्यवहार बेहतर किया गया।",
+      "आइकन, डायलॉग, नेविगेशन और थीम को निखारा गया और APK का आकार घटाया गया।"
+    ],
+    "quickStart": [
+      "Releases से नवीनतम APK डाउनलोड करें और ARM64 डिवाइस पर इंस्टॉल करें।",
+      "बैकग्राउंड डाउनलोड के लिए सभी फ़ाइलों तक पहुँच और सूचनाओं की अनुमति दें।",
+      "पहला डाउनलोड शुरू करने के लिए **+** दबाएँ या किसी ब्राउज़र से लिंक साझा करें।"
+    ],
+    "download": "इस पेज से नवीनतम ARM64 APK डाउनलोड करें:",
+    "faq": [
+      { "q": "सूचना में पॉज़/रिज़्यूम बटन नहीं है", "a": "सूचनाओं की अनुमति दें, बैटरी ऑप्टिमाइज़ेशन बंद करें और ऐप को फिर से खोलें। कुछ कस्टम Android ROM फोरग्राउंड सेवा फिर शुरू होने तक सूचना क्रियाएँ छिपा देते हैं।" },
+      { "q": "बैकग्राउंड में डाउनलोड रुक जाते हैं", "a": "Rayload को बैटरी और डीप-स्लीप प्रतिबंधों से बाहर रखें। आक्रामक ROM पर ऐप खुला रखना या चार्जिंग के दौरान स्क्रीन-ऑन मोड उपयोग करना मदद करता है।" },
+      { "q": "मेरा ब्राउज़र RPC से कनेक्ट नहीं होता", "a": "Android के लिए Chrome डेस्कटॉप एक्सटेंशन नहीं लोड करता। Firefox for Android या एक्सटेंशन साइडलोड करने वाला Chromium उपयोग करें और **सेटिंग्स → उन्नत** में पता व RPC Secret डालें।" },
+      { "q": "बिल्ड बदलते समय “ऐप इंस्टॉल नहीं हुआ” दिखता है", "a": "Release और Debug APK के हस्ताक्षर अलग होते हैं। दूसरा संस्करण इंस्टॉल करने से पहले मौजूदा संस्करण को अनइंस्टॉल करें।" }
+    ],
+    "roadmap": "उत्पाद और इंजीनियरिंग रोडमैप",
+    "star": "अगर Rayload आपका समय बचाता है, तो स्टार दें ताकि और Android उपयोगकर्ता इसे खोज सकें।"
+  },
+  "id": {
+    "vision": "Kami membangun pengunduh open source untuk Android yang paling bersih, cepat, dan dapat dikustomisasi. Tanpa iklan, tanpa telemetri — dibuat oleh geek, untuk geek.",
+    "highlights": [
+      "Daftar tugas dibangun ulang dengan gulir tanpa akhir dan kartu dua baris dalam mode penuh dan ringkas.",
+      "Dasbor layar tetap menyala dan bola kecepatan yang menempel di tepi ditambahkan, lengkap dengan statistik langsung, aksi massal, dan mulai ulang mesin.",
+      "Pengaturan khusus desktop dihapus, notifikasi dilokalkan, serta izin Android dan perilaku wake lock diperbaiki.",
+      "Ikon, dialog, navigasi, dan tema disempurnakan, dengan ukuran APK lebih kecil."
+    ],
+    "quickStart": [
+      "Unduh APK terbaru dari Releases dan pasang di perangkat ARM64.",
+      "Beri akses ke semua file dan izinkan notifikasi agar unduhan berjalan di latar belakang.",
+      "Ketuk **+** atau bagikan tautan dari browser untuk memulai unduhan pertama."
+    ],
+    "download": "Unduh APK ARM64 terbaru dari halaman ini:",
+    "faq": [
+      { "q": "Notifikasi tidak memiliki tombol jeda/lanjutkan", "a": "Izinkan notifikasi, nonaktifkan optimasi baterai, lalu buka ulang aplikasi. Beberapa ROM Android kustom menyembunyikan aksi notifikasi hingga layanan foreground dimulai ulang." },
+      { "q": "Unduhan berhenti di latar belakang", "a": "Kecualikan Rayload dari pembatasan baterai dan tidur nyenyak. Pada ROM agresif, biarkan aplikasi terbuka atau gunakan mode layar tetap menyala saat mengisi daya." },
+      { "q": "Browser tidak dapat terhubung ke RPC", "a": "Chrome untuk Android tidak memuat ekstensi desktop. Gunakan Firefox untuk Android atau Chromium yang mendukung sideload ekstensi, lalu masukkan alamat dan RPC Secret dari **Setelan → Lanjutan**." },
+      { "q": "Muncul “Aplikasi tidak terpasang” saat berganti build", "a": "APK Release dan Debug memakai tanda tangan berbeda. Copot pemasangan versi saat ini sebelum memasang varian lainnya." }
+    ],
+    "roadmap": "peta jalan produk dan teknik",
+    "star": "Jika Rayload menghemat waktu Anda, beri bintang agar lebih banyak pengguna Android menemukannya."
+  },
+  "it": {
+    "vision": "Stiamo creando il downloader open source per Android più pulito, veloce e personalizzabile. Senza pubblicità, senza telemetria — creato da geek per geek.",
+    "highlights": [
+      "Elenco attività ricostruito con scorrimento infinito e schede a due righe in modalità completa e compatta.",
+      "Aggiunti la dashboard schermo-sempre-acceso e il misuratore flottante ancorato al bordo, con statistiche, azioni multiple e riavvio del motore.",
+      "Rimosse le impostazioni solo desktop, notifica localizzata e migliore integrazione di permessi Android e wake lock.",
+      "Icona, finestre di dialogo, navigazione e temi rifiniti, con APK più leggero."
+    ],
+    "quickStart": [
+      "Scarica l'APK più recente da Releases e installalo su un dispositivo ARM64.",
+      "Consenti l'accesso a tutti i file e le notifiche per i download in background.",
+      "Tocca **+** o condividi un link da qualsiasi browser per iniziare il primo download."
+    ],
+    "download": "Scarica l'APK ARM64 più recente da questa pagina:",
+    "faq": [
+      { "q": "La notifica non ha i pulsanti pausa/riprendi", "a": "Consenti le notifiche, disattiva l'ottimizzazione della batteria e riapri l'app. Alcune ROM Android personalizzate nascondono le azioni finché il servizio in primo piano non viene riavviato." },
+      { "q": "I download si fermano in background", "a": "Escludi Rayload dalle restrizioni su batteria e sospensione profonda. Sulle ROM aggressive aiuta tenere l'app aperta o usare la modalità schermo acceso durante la ricarica." },
+      { "q": "Il browser non si connette a RPC", "a": "Chrome per Android non carica estensioni desktop. Usa Firefox per Android o un Chromium che supporti l'installazione manuale delle estensioni, poi inserisci indirizzo e RPC Secret da **Impostazioni → Avanzate**." },
+      { "q": "Appare «App non installata» cambiando build", "a": "Gli APK Release e Debug usano firme diverse. Disinstalla la versione attuale prima di installare l'altra variante." }
+    ],
+    "roadmap": "roadmap di prodotto e ingegneria",
+    "star": "Se Rayload ti fa risparmiare tempo, lascia una stella: aiuterà altri utenti Android a scoprirlo."
+  },
+  "nb": {
+    "vision": "Vi bygger den reneste, raskeste og mest tilpassbare åpen kildekode-nedlasteren for Android. Ingen annonser, ingen telemetri — laget av nerder, for nerder.",
+    "highlights": [
+      "Oppgavelisten er bygget på nytt med uendelig rulling og tolinjers kort i full og kompakt visning.",
+      "Dashbord for skjerm på og hastighetsball festet til kanten er lagt til, med sanntidsstatistikk, masshandlinger og motoromstart.",
+      "Innstillinger kun for skrivebord er fjernet, varsler er lokalisert, og Android-tillatelser og wake lock er forbedret.",
+      "Ikon, dialoger, navigasjon og temaer er finpusset, og APK-størrelsen er redusert."
+    ],
+    "quickStart": [
+      "Last ned nyeste APK fra Releases og installer den på en ARM64-enhet.",
+      "Gi tilgang til alle filer og tillat varsler slik at nedlastinger kan kjøre i bakgrunnen.",
+      "Trykk **+** eller del en lenke fra en nettleser for å starte den første nedlastingen."
+    ],
+    "download": "Last ned nyeste ARM64-APK fra denne siden:",
+    "faq": [
+      { "q": "Varselet har ingen pause-/fortsett-knapper", "a": "Tillat varsler, slå av batterioptimalisering og åpne appen på nytt. Enkelte tilpassede Android-ROM-er skjuler handlinger til forgrunnstjenesten startes på nytt." },
+      { "q": "Nedlastinger stopper i bakgrunnen", "a": "Utelukk Rayload fra batteri- og dyp søvn-begrensninger. På aggressive ROM-er hjelper det å ha appen åpen eller bruke skjerm-på-modus mens du lader." },
+      { "q": "Nettleseren kobler ikke til RPC", "a": "Chrome for Android laster ikke skrivebordsutvidelser. Bruk Firefox for Android eller en Chromium-versjon som støtter manuell utvidelsesinstallasjon, og skriv inn adresse og RPC Secret fra **Innstillinger → Avansert**." },
+      { "q": "«Appen er ikke installert» vises når jeg bytter build", "a": "Release- og Debug-APK-er har forskjellige signaturer. Avinstaller gjeldende versjon før du installerer den andre varianten." }
+    ],
+    "roadmap": "produkt- og utviklingsveikart",
+    "star": "Hvis Rayload sparer deg tid, gi prosjektet en stjerne så flere Android-brukere finner det."
+  },
+  "nl": {
+    "vision": "We bouwen de schoonste, snelste en meest aanpasbare open-source downloader voor Android. Geen advertenties, geen telemetrie — gemaakt door geeks, voor geeks.",
+    "highlights": [
+      "Takenlijst opnieuw opgebouwd met oneindig scrollen en tweeregelige kaarten in volledige en compacte modus.",
+      "Scherm-aan-dashboard en aan de rand vastklikkende snelheidsball toegevoegd, met live statistieken, bulkacties en engine-herstart.",
+      "Alleen-desktopinstellingen verwijderd, melding gelokaliseerd en Android-machtigingen en wake lock verbeterd.",
+      "Pictogram, dialogen, navigatie en thema's verfijnd, met een kleinere APK."
+    ],
+    "quickStart": [
+      "Download de nieuwste APK via Releases en installeer deze op een ARM64-apparaat.",
+      "Geef toegang tot alle bestanden en sta meldingen toe voor downloads op de achtergrond.",
+      "Tik op **+** of deel een link vanuit een browser om je eerste download te starten."
+    ],
+    "download": "Download de nieuwste ARM64-APK via deze pagina:",
+    "faq": [
+      { "q": "De melding heeft geen pauze-/hervatknoppen", "a": "Sta meldingen toe, schakel batterijoptimalisatie uit en open de app opnieuw. Sommige aangepaste Android-ROM's verbergen acties tot de voorgrondservice opnieuw start." },
+      { "q": "Downloads stoppen op de achtergrond", "a": "Sluit Rayload uit van batterij- en diepslaapbeperkingen. Op agressieve ROM's helpt het om de app open te houden of scherm-aan-modus te gebruiken tijdens het opladen." },
+      { "q": "Mijn browser kan geen verbinding maken met RPC", "a": "Chrome voor Android laadt geen desktopplug-ins. Gebruik Firefox voor Android of een Chromium-build die handmatige plug-ininstallatie ondersteunt, en vul het adres en RPC Secret in via **Instellingen → Geavanceerd**." },
+      { "q": "Bij het wisselen van build verschijnt ‘App niet geïnstalleerd’", "a": "Release- en Debug-APK's hebben verschillende handtekeningen. Verwijder de huidige versie voordat je de andere variant installeert." }
+    ],
+    "roadmap": "product- en engineeringroadmap",
+    "star": "Als Rayload je tijd bespaart, geef het een ster zodat meer Android-gebruikers het ontdekken."
+  },
+  "pl": {
+    "vision": "Tworzymy najczystszy, najszybszy i najbardziej konfigurowalny otwartoźródłowy menedżer pobierania na Androida. Bez reklam, bez telemetrii — od geeków dla geeków.",
+    "highlights": [
+      "Lista zadań została przebudowana z nieskończonym przewijaniem i dwuwierszowymi kartami w trybie pełnym i kompaktowym.",
+      "Dodano pulpit utrzymywania ekranu i przypiętą do krawędzi kulę prędkości z bieżącymi statystykami, akcjami zbiorczymi i restartem silnika.",
+      "Usunięto ustawienia tylko dla komputerów, przetłumaczono powiadomienie i poprawiono uprawnienia Androida oraz działanie wake lock.",
+      "Dopracowano ikonę, okna dialogowe, nawigację i motywy oraz zmniejszono rozmiar APK."
+    ],
+    "quickStart": [
+      "Pobierz najnowszy APK z Releases i zainstaluj go na urządzeniu ARM64.",
+      "Zezwól na dostęp do wszystkich plików i powiadomienia, aby pobieranie działało w tle.",
+      "Dotknij **+** lub udostępnij link z przeglądarki, aby rozpocząć pierwsze pobieranie."
+    ],
+    "download": "Pobierz najnowszy APK ARM64 z tej strony:",
+    "faq": [
+      { "q": "Powiadomienie nie ma przycisków pauzy/wznowienia", "a": "Zezwól na powiadomienia, wyłącz optymalizację baterii i otwórz aplikację ponownie. Niektóre zmodyfikowane ROM-y Androida ukrywają akcje do czasu ponownego uruchomienia usługi pierwszoplanowej." },
+      { "q": "Pobieranie zatrzymuje się w tle", "a": "Wyklucz Rayload z ograniczeń baterii i głębokiego uśpienia. W agresywnych ROM-ach pomaga pozostawienie aplikacji otwartej lub tryb stałego ekranu podczas ładowania." },
+      { "q": "Przeglądarka nie łączy się z RPC", "a": "Chrome na Androida nie obsługuje rozszerzeń desktopowych. Użyj Firefoksa na Androida lub Chromium z ręczną instalacją rozszerzeń i wpisz adres oraz RPC Secret w **Ustawienia → Zaawansowane**." },
+      { "q": "Przy zmianie kompilacji pojawia się „Aplikacja nie została zainstalowana”", "a": "APK Release i Debug mają różne podpisy. Przed instalacją drugiego wariantu odinstaluj bieżącą wersję." }
+    ],
+    "roadmap": "mapa drogowa produktu i inżynierii",
+    "star": "Jeśli Rayload oszczędza Twój czas, zostaw gwiazdkę, aby więcej użytkowników Androida go odkryło."
+  },
+  "ro": {
+    "vision": "Construim cel mai curat, rapid și personalizabil downloader open source pentru Android. Fără reclame, fără telemetrie — creat de geek-i pentru geek-i.",
+    "highlights": [
+      "Lista de activități a fost reconstruită cu derulare infinită și carduri pe două rânduri în modul complet și compact.",
+      "Am adăugat panoul cu ecranul pornit și bila de viteză atașată de margine, cu statistici live, acțiuni în masă și repornirea motorului.",
+      "Am eliminat setările doar pentru desktop, am localizat notificarea și am îmbunătățit permisiunile Android și wake lock.",
+      "Am rafinat pictograma, dialogurile, navigarea și temele și am redus dimensiunea APK-ului."
+    ],
+    "quickStart": [
+      "Descarcă cel mai recent APK din Releases și instalează-l pe un dispozitiv ARM64.",
+      "Permite accesul la toate fișierele și notificările pentru descărcări în fundal.",
+      "Apasă **+** sau partajează un link din orice browser pentru prima descărcare."
+    ],
+    "download": "Descarcă cel mai recent APK ARM64 de pe această pagină:",
+    "faq": [
+      { "q": "Notificarea nu are butoane de pauză/reluare", "a": "Permite notificările, dezactivează optimizarea bateriei și redeschide aplicația. Unele ROM-uri Android personalizate ascund acțiunile până la repornirea serviciului din prim-plan." },
+      { "q": "Descărcările se opresc în fundal", "a": "Exclude Rayload din restricțiile de baterie și somn profund. Pe ROM-urile agresive ajută să lași aplicația deschisă sau să folosești modul ecran pornit în timpul încărcării." },
+      { "q": "Browserul nu se conectează la RPC", "a": "Chrome pentru Android nu încarcă extensii desktop. Folosește Firefox pentru Android sau un Chromium care permite instalarea manuală a extensiilor și introdu adresa și RPC Secret din **Setări → Avansat**." },
+      { "q": "Apare „Aplicația nu este instalată” la schimbarea build-ului", "a": "APK-urile Release și Debug folosesc semnături diferite. Dezinstalează versiunea curentă înainte de a instala cealaltă variantă." }
+    ],
+    "roadmap": "foaie de parcurs pentru produs și inginerie",
+    "star": "Dacă Rayload îți economisește timp, oferă o stea pentru ca mai mulți utilizatori Android să îl descopere."
+  },
+  "th": {
+    "vision": "เรากำลังสร้างตัวดาวน์โหลดโอเพนซอร์สสำหรับ Android ที่เรียบง่ายที่สุด เร็วที่สุด และปรับแต่งได้มากที่สุด ไม่มีโฆษณา ไม่มี telemetry — สร้างโดย geeks เพื่อ geeks",
+    "highlights": [
+      "สร้างรายการงานใหม่ด้วยการเลื่อนแบบไม่สิ้นสุดและการ์ดสองแถวในโหมดเต็มและกะทัดรัด",
+      "เพิ่มแดชบอร์ดคงหน้าจอเปิดและลูกบอลความเร็วที่เกาะขอบ พร้อมสถิติสด การควบคุมแบบกลุ่ม และการรีสตาร์ทเอนจิน",
+      "ลบการตั้งค่าสำหรับเดสก์ท็อป แปลภาษา notification และปรับปรุงสิทธิ์ Android กับการทำงานของ wake lock",
+      "ปรับไอคอน ไดอะล็อก การนำทาง และธีม พร้อมลดขนาด APK"
+    ],
+    "quickStart": [
+      "ดาวน์โหลด APK ล่าสุดจาก Releases และติดตั้งบนอุปกรณ์ ARM64",
+      "อนุญาตการเข้าถึงไฟล์ทั้งหมดและ notification เพื่อให้ดาวน์โหลดเบื้องหลังทำงาน",
+      "แตะ **+** หรือแชร์ลิงก์จากเบราว์เซอร์เพื่อเริ่มดาวน์โหลดครั้งแรก"
+    ],
+    "download": "ดาวน์โหลด APK ARM64 ล่าสุดได้จากหน้านี้:",
+    "faq": [
+      { "q": "Notification ไม่มีปุ่มหยุด/ทำต่อ", "a": "อนุญาต notification ปิดการปรับแต่งแบตเตอรี่ แล้วเปิดแอปใหม่ ROM Android ที่ปรับแต่งบางรุ่นจะซ่อนปุ่มจนกว่าบริการ foreground จะเริ่มใหม่" },
+      { "q": "การดาวน์โหลดหยุดเมื่ออยู่เบื้องหลัง", "a": "ยกเว้น Rayload จากการจำกัดแบตเตอรี่และการหลับลึก บน ROM ที่จำกัดเข้มงวด การเปิดแอปค้างไว้หรือใช้โหมดคงหน้าจอเปิดขณะชาร์จจะช่วยได้" },
+      { "q": "เบราว์เซอร์เชื่อมต่อ RPC ไม่ได้", "a": "Chrome สำหรับ Android ไม่รองรับส่วนขยายเดสก์ท็อป ใช้ Firefox สำหรับ Android หรือ Chromium ที่ติดตั้งส่วนขยายด้วยตนเองได้ แล้วกรอกที่อยู่และ RPC Secret ใน **การตั้งค่า → ขั้นสูง**" },
+      { "q": "ขึ้นว่า “ไม่ได้ติดตั้งแอป” เมื่อสลับบิลด์", "a": "APK แบบ Release และ Debug มีลายเซ็นต่างกัน ถอนการติดตั้งเวอร์ชันปัจจุบันก่อนติดตั้งอีกเวอร์ชัน" }
+    ],
+    "roadmap": "แผนงานผลิตภัณฑ์และวิศวกรรม",
+    "star": "ถ้า Rayload ช่วยประหยัดเวลา ให้กด Star เพื่อให้ผู้ใช้ Android ค้นพบมากขึ้น"
+  },
+  "uk": {
+    "vision": "Створюємо найчистіший, найшвидший і найгнучкіший open-source завантажувач для Android. Без реклами, без телеметрії — від гіків для гіків.",
+    "highlights": [
+      "Список завдань перебудовано з нескінченним прокручуванням і дворядковими картками в повному та компактному режимах.",
+      "Додано панель підтримання екрана увімкненим і швидкісну кулю, прикріплену до краю, зі статистикою, груповими діями та перезапуском рушія.",
+      "Вилучено налаштування лише для комп'ютера, локалізовано сповіщення та покращено дозволи Android і wake lock.",
+      "Удосконалено іконку, діалоги, навігацію й теми та зменшено розмір APK."
+    ],
+    "quickStart": [
+      "Завантажте найновіший APK зі сторінки Releases і встановіть його на пристрій ARM64.",
+      "Надайте доступ до всіх файлів і дозвольте сповіщення для фонових завантажень.",
+      "Натисніть **+** або поділіться посиланням із браузера, щоб почати перше завантаження."
+    ],
+    "download": "Завантажте найновіший ARM64 APK із цієї сторінки:",
+    "faq": [
+      { "q": "У сповіщенні немає кнопок паузи/продовження", "a": "Дозвольте сповіщення, вимкніть оптимізацію батареї та перезапустіть застосунок. Деякі кастомні Android ROM приховують дії до перезапуску foreground-сервісу." },
+      { "q": "Завантаження зупиняються у фоні", "a": "Виключіть Rayload з обмежень батареї та глибокого сну. На агресивних ROM допомагає залишити застосунок відкритим або використовувати режим постійного екрана під час заряджання." },
+      { "q": "Браузер не підключається до RPC", "a": "Chrome для Android не підтримує настільні розширення. Використовуйте Firefox для Android або Chromium з ручним встановленням розширень і введіть адресу та RPC Secret у **Налаштування → Додатково**." },
+      { "q": "Під час зміни збірки з'являється «Застосунок не встановлено»", "a": "APK Release і Debug мають різні підписи. Видаліть поточну версію перед встановленням іншого варіанта." }
+    ],
+    "roadmap": "дорожня карта продукту та інженерії",
+    "star": "Якщо Rayload економить ваш час, поставте зірку, щоб більше користувачів Android дізналися про нього."
+  },
+  "vi": {
+    "vision": "Chúng tôi đang xây dựng trình tải xuống mã nguồn mở gọn gàng, nhanh nhất và dễ tùy biến nhất cho Android. Không quảng cáo, không telemetry — do geek tạo ra, dành cho geek.",
+    "highlights": [
+      "Danh sách tác vụ được xây dựng lại với cuộn vô hạn và thẻ hai hàng ở chế độ đầy đủ và thu gọn.",
+      "Thêm bảng điều khiển giữ màn hình sáng và bong bóng tốc độ gắn cạnh, cùng thống kê trực tiếp, thao tác hàng loạt và khởi động lại engine.",
+      "Loại bỏ cài đặt chỉ dành cho desktop, bản địa hóa thông báo và cải thiện quyền Android cùng hành vi wake lock.",
+      "Tinh chỉnh biểu tượng, hộp thoại, điều hướng và giao diện, đồng thời giảm dung lượng APK."
+    ],
+    "quickStart": [
+      "Tải APK mới nhất từ Releases và cài đặt trên thiết bị ARM64.",
+      "Cấp quyền truy cập tất cả tệp và cho phép thông báo để tải xuống chạy nền.",
+      "Nhấn **+** hoặc chia sẻ liên kết từ trình duyệt để bắt đầu tải xuống đầu tiên."
+    ],
+    "download": "Tải APK ARM64 mới nhất từ trang này:",
+    "faq": [
+      { "q": "Thông báo không có nút tạm dừng/tiếp tục", "a": "Hãy cho phép thông báo, tắt tối ưu pin và mở lại ứng dụng. Một số ROM Android tùy biến ẩn thao tác cho đến khi dịch vụ foreground khởi động lại." },
+      { "q": "Tải xuống dừng khi chạy nền", "a": "Loại Rayload khỏi giới hạn pin và ngủ sâu. Trên ROM quản lý mạnh, giữ ứng dụng mở hoặc dùng chế độ giữ màn hình sáng khi sạc sẽ ổn định hơn." },
+      { "q": "Trình duyệt không kết nối được RPC", "a": "Chrome cho Android không tải tiện ích desktop. Dùng Firefox cho Android hoặc Chromium hỗ trợ cài tiện ích thủ công, rồi nhập địa chỉ và RPC Secret trong **Cài đặt → Nâng cao**." },
+      { "q": "Hiện “Ứng dụng chưa được cài đặt” khi đổi bản build", "a": "APK Release và Debug dùng chữ ký khác nhau. Gỡ bản hiện tại trước khi cài biến thể còn lại." }
+    ],
+    "roadmap": "lộ trình sản phẩm và kỹ thuật",
+    "star": "Nếu Rayload giúp bạn tiết kiệm thời gian, hãy tặng một ngôi sao để nhiều người dùng Android biết đến hơn."
+  }
+}
