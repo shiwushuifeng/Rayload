@@ -91,7 +91,8 @@ share-to-download, a floating speed dashboard and a keep-awake mode.
 
 ### Customization
 
-- Light, dark and system appearance with an in-app quick toggle.
+- Light, dark and system appearance; keep-awake mode adds a quick light/dark
+  toggle.
 - Choose the app logo, launcher icon, card density and navigation entries.
 - 27 interface languages with English as the schema fallback.
 
