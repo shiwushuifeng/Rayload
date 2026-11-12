@@ -14,7 +14,7 @@
     "developed-by": "由 {author} 开发",
     "repository": "仓库主页",
     "open-source-acknowledgement-label": "开源致谢",
-    "open-source-acknowledgement": "{label}：感谢 AnInsomniacy 开发的开源项目 Rayburst。Rayload 是基于其进行 Android 平台移植与独立维护的非官方版本，遵循 MIT 开源协议。"
+    "open-source-acknowledgement": "{label}：感谢 AnInsomniacy 开发的开源项目 Rayburst。Rayload 是基于其进行 Android 平台移植与独立维护的非官方版本，遵循 GPL-3.0 开源协议。"
   },
   "app": {
     "task-list": "任务列表",

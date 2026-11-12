@@ -14,7 +14,7 @@
     "developed-by": "Ανάπτυξη από {author}",
     "repository": "Αποθετήριο",
     "open-source-acknowledgement-label": "Ευχαριστίες ανοικτού κώδικα",
-    "open-source-acknowledgement": "{label}: Ευχαριστούμε τον AnInsomniacy για την ανάπτυξη του έργου ανοικτού κώδικα Rayburst. Το Rayload είναι μια ανεπίσημη μεταφορά για Android, με ανεξάρτητη συντήρηση και άδεια MIT."
+    "open-source-acknowledgement": "{label}: Ευχαριστούμε τον AnInsomniacy για την ανάπτυξη του έργου ανοικτού κώδικα Rayburst. Το Rayload είναι μια ανεπίσημη μεταφορά για Android, με ανεξάρτητη συντήρηση και άδεια GPL-3.0."
   },
   "app": {
     "task-list": "Εργασίες",

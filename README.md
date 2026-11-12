@@ -17,11 +17,11 @@ share-to-download, a floating speed dashboard and a keep-awake mode.
 [<img src="https://img.shields.io/github/v/release/shiwushuifeng/Rayload?style=flat-square&label=release" alt="Latest release" />](https://github.com/shiwushuifeng/Rayload/releases/latest)
 <img src="https://img.shields.io/badge/Android-7.0%2B-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Android 7.0+" />
 <img src="https://img.shields.io/badge/ABI-arm64--v8a-4C8BF5?style=flat-square" alt="arm64-v8a" />
-<img src="https://img.shields.io/badge/License-MIT-2EA44F?style=flat-square" alt="MIT License" />
+<img src="https://img.shields.io/badge/License-GPLv3-2EA44F?style=flat-square" alt="GPL-3.0 License" />
 <img src="https://img.shields.io/github/stars/shiwushuifeng/Rayload?style=flat-square" alt="GitHub stars" />
 
 [**Download APK**](https://github.com/shiwushuifeng/Rayload/releases/latest) ·
-[Features](#features) · [Screenshots](#screenshots) · [Roadmap](ROADMAP.md) ·
+[Why Rayload](#why-rayload) · [Screenshots](#screenshots) · [Roadmap](ROADMAP.md) ·
 [Build](#build-from-source) · [简体中文](#简体中文)
 
 </div>
@@ -264,11 +264,17 @@ version before installing the other variant.
 
 ## License and attribution
 
-Rayload is an independent, unofficial Android port based on
+Rayload is distributed under the [GNU General Public License v3.0](LICENSE).
+It is an independent, unofficial Android port based on
 [Rayburst](https://github.com/AnInsomniacy/rayburst), created by
-**AnInsomniacy**, and follows the original project's [MIT License](LICENSE).
-Rayload is independently maintained and is not an official Rayburst release or
-endorsed by the original author.
+**AnInsomniacy** and licensed under the MIT License. Third-party attributions
+and the preserved MIT notice are documented in [NOTICE](NOTICE). Rayload is
+independently maintained and is not an official Rayburst release or endorsed by
+the original author.
+
+## Support
+
+❤️ 喜欢这个项目？欢迎 [赞助与支持 (Sponsor)](./SPONSOR.md)
 
 ---
 
@@ -434,12 +440,20 @@ Release 与 Debug APK 使用不同的签名证书。安装另一个版本前，�
 
 ### 致谢与许可
 
-Rayload 基于 **AnInsomniacy** 创建的
-[Rayburst](https://github.com/AnInsomniacy/rayburst)，并遵循原项目的
-[MIT License](LICENSE)。Rayload 由独立维护者发布，不是 Rayburst 官方版本，
-也不代表原作者背书。
+Rayload 以 [GPL-3.0](./LICENSE) 分发，基于 **AnInsomniacy** 创建的
+[Rayburst](https://github.com/AnInsomniacy/rayburst)（MIT 许可）。三方组件
+版权与保留的 MIT 声明见 [NOTICE](./NOTICE)。Rayload 由独立维护者发布，不是
+Rayburst 官方版本，也不代表原作者背书。
+
+### 支持
+
+❤️ 喜欢这个项目？欢迎 [赞助与支持 (Sponsor)](./SPONSOR.md)
 
 ---
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=shiwushuifeng/Rayload&type=Date)](https://star-history.com/#shiwushuifeng/Rayload&Date)
 
 <div align="center">
 

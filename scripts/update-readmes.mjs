@@ -259,21 +259,44 @@ ${copy.faq.map((item) => `### ${item.q}\n\n${item.a}`).join('\n\n')}
 
 ## License
 
-Rayload is based on [Rayburst](https://github.com/AnInsomniacy/rayburst) by
-**AnInsomniacy** and follows the [MIT License](LICENSE). It is an independent,
-unofficial port.
+Rayload is distributed under the [GPL-3.0 License](../LICENSE). It is based on
+[Rayburst](https://github.com/AnInsomniacy/rayburst) by **AnInsomniacy**, whose
+original work is licensed under the MIT License; see [NOTICE](../NOTICE) for
+third-party attributions. Rayload is an independent, unofficial port.
 
 > ⭐ ${copy.star}
+
+> ❤️ Like this project? [Sponsor Rayload](../SPONSOR.md)
 `
+}
+
+function normalizeContent(content, code) {
+  let result = content
+    .replace(
+      /Rayload is based on \[Rayburst\]\(https:\/\/github\.com\/AnInsomniacy\/rayburst\) by\n\*\*AnInsomniacy\*\* and follows the \[MIT License\]\(LICENSE\)\. It is an independent,\nunofficial port\./gu,
+      'Rayload is distributed under the [GPL-3.0 License](../LICENSE). It is based on\n[Rayburst](https://github.com/AnInsomniacy/rayburst) by **AnInsomniacy**, whose\noriginal work is licensed under the MIT License; see [NOTICE](../NOTICE) for\nthird-party attributions. Rayload is an independent, unofficial port.',
+    )
+    .replace(/\[MIT License\]\(LICENSE\)/gu, '[GPL-3.0 License](../LICENSE)')
+    .replace(/\[лицензии MIT\]\(LICENSE\)/gu, '[лицензии GPL-3.0](../LICENSE)')
+  if (!result.includes('SPONSOR.md')) {
+    const sponsor =
+      code === 'zh-CN'
+        ? '> ❤️ 喜欢这个项目？欢迎 [赞助与支持 (Sponsor)](../SPONSOR.md)'
+        : code === 'zh-TW'
+          ? '> ❤️ 喜歡這個項目？歡迎 [贊助與支持 (Sponsor)](../SPONSOR.md)'
+          : '> ❤️ Like this project? [Sponsor Rayload](../SPONSOR.md)'
+    result = `${result.trimEnd()}\n\n${sponsor}\n`
+  }
+  return result
 }
 
 for (const code of Object.keys(catalog)) {
   const path = join(root, code === 'en-US' ? readmePath(code) : join('docs', readmePath(code)))
   if (!existsSync(path) || (forceQuickGuides && translations[code])) {
-    writeFileSync(path, quickGuide(code), 'utf8')
+    writeFileSync(path, normalizeContent(quickGuide(code), code), 'utf8')
     continue
   }
-  writeFileSync(path, addSelector(readFileSync(path, 'utf8'), code), 'utf8')
+  writeFileSync(path, normalizeContent(addSelector(readFileSync(path, 'utf8'), code), code), 'utf8')
 }
 
 console.log(`Updated ${Object.keys(catalog).length} README language editions`)

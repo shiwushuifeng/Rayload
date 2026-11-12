@@ -75,8 +75,11 @@ Release 與 Debug APK 使用不同的簽章。安裝另一個版本前，請先�
 
 ## License
 
-Rayload is based on [Rayburst](https://github.com/AnInsomniacy/rayburst) by
-**AnInsomniacy** and follows the [MIT License](LICENSE). It is an independent,
-unofficial port.
+Rayload is distributed under the [GPL-3.0 License](../LICENSE). It is based on
+[Rayburst](https://github.com/AnInsomniacy/rayburst) by **AnInsomniacy**, whose
+original work is licensed under the MIT License; see [NOTICE](../NOTICE) for
+third-party attributions. Rayload is an independent, unofficial port.
 
 > ⭐ 如果 Rayload 節省了你的時間，請給我們一個 Star，讓更多 Android 使用者發現它。
+
+> ❤️ 喜歡這個項目？歡迎 [贊助與支持 (Sponsor)](../SPONSOR.md)

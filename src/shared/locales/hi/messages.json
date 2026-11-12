@@ -14,7 +14,7 @@
     "developed-by": "{author} द्वारा विकसित",
     "repository": "रिपॉज़िटरी",
     "open-source-acknowledgement-label": "ओपन-सोर्स आभार",
-    "open-source-acknowledgement": "{label}: ओपन-सोर्स प्रोजेक्ट Rayburst विकसित करने के लिए AnInsomniacy का धन्यवाद। Rayload इसका अनौपचारिक Android पोर्ट है, जिसे स्वतंत्र रूप से बनाए रखा जाता है और MIT लाइसेंस के अंतर्गत जारी किया जाता है।"
+    "open-source-acknowledgement": "{label}: ओपन-सोर्स प्रोजेक्ट Rayburst विकसित करने के लिए AnInsomniacy का धन्यवाद। Rayload इसका अनौपचारिक Android पोर्ट है, जिसे स्वतंत्र रूप से बनाए रखा जाता है और GPL-3.0 लाइसेंस के अंतर्गत जारी किया जाता है।"
   },
   "app": {
     "task-list": "कार्य",

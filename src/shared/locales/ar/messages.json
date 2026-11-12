@@ -14,7 +14,7 @@
     "developed-by": "طوّره {author}",
     "repository": "المستودع",
     "open-source-acknowledgement-label": "شكر للمشروع مفتوح المصدر",
-    "open-source-acknowledgement": "{label}: نشكر AnInsomniacy على تطوير مشروع Rayburst مفتوح المصدر. Rayload نسخة Android غير رسمية منه، تُصان بشكل مستقل وتُصدر بموجب ترخيص MIT مفتوح المصدر."
+    "open-source-acknowledgement": "{label}: نشكر AnInsomniacy على تطوير مشروع Rayburst مفتوح المصدر. Rayload نسخة Android غير رسمية منه، تُصان بشكل مستقل وتُصدر بموجب ترخيص GPL-3.0 مفتوح المصدر."
   },
   "app": {
     "task-list": "المهام",

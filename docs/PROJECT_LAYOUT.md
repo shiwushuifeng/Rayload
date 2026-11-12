@@ -13,6 +13,7 @@ documentation, release assets, branding sources, and local-only material.
 | `public/`         | Static frontend assets                                     |
 | `e2e/`            | End-to-end launcher scripts                                |
 | `docs/`           | README translations, release notes, handoff, project docs  |
+| `docs/assets/`    | Documentation images, including the sponsor QR code        |
 | `assets/branding/`| Original logo, icon, and preview source artwork            |
 | `release/current/`| Current APK and checksum material                          |
 | `release/archive/`| Historical Rayload and Rayburst build artifacts            |
@@ -27,7 +28,12 @@ documentation, release assets, branding sources, and local-only material.
 
 - `README.md` is the default bilingual English/Simplified Chinese entry point.
 - `AGENTS.md` contains repository working rules.
-- `LICENSE` contains the MIT license and attribution.
+- `LICENSE` contains the GPL-3.0 license text and Rayload copyright notice.
+- `NOTICE` contains third-party attributions, including the Rayburst MIT
+  notice and aria2-next's GPL-2.0-or-later notice.
+- `CONTRIBUTING.md` contains contribution, verification, and licensing rules.
+- `SPONSOR.md` is the standalone sponsorship page linked from the README.
+- `ROADMAP.md` tracks product milestones and engineering goals.
 - `package.json`, `pnpm-lock.yaml`, and workspace/config files are required by
   the frontend build and remain at the root.
 

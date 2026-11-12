@@ -14,7 +14,7 @@
     "developed-by": "พัฒนาโดย {author}",
     "repository": "ที่เก็บโค้ด",
     "open-source-acknowledgement-label": "ขอบคุณโอเพนซอร์ส",
-    "open-source-acknowledgement": "{label}: ขอบคุณ AnInsomniacy ที่พัฒนาโครงการโอเพนซอร์ส Rayburst Rayload เป็นพอร์ต Android อย่างไม่เป็นทางการ ดูแลรักษาอย่างอิสระ และเผยแพร่ภายใต้สัญญาอนุญาต MIT"
+    "open-source-acknowledgement": "{label}: ขอบคุณ AnInsomniacy ที่พัฒนาโครงการโอเพนซอร์ส Rayburst Rayload เป็นพอร์ต Android อย่างไม่เป็นทางการ ดูแลรักษาอย่างอิสระ และเผยแพร่ภายใต้สัญญาอนุญาต GPL-3.0"
   },
   "app": {
     "task-list": "งาน",

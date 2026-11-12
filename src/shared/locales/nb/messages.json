@@ -14,7 +14,7 @@
     "developed-by": "Utviklet av {author}",
     "repository": "Lagringssted",
     "open-source-acknowledgement-label": "Tak til åpen kildekode",
-    "open-source-acknowledgement": "{label}: Takk til AnInsomniacy for utviklingen av åpen kildekode-prosjektet Rayburst. Rayload er en uoffisiell Android-port som vedlikeholdes uavhengig og publiseres under MIT-lisensen."
+    "open-source-acknowledgement": "{label}: Takk til AnInsomniacy for utviklingen av åpen kildekode-prosjektet Rayburst. Rayload er en uoffisiell Android-port som vedlikeholdes uavhengig og publiseres under GPL-3.0-lisensen."
   },
   "app": {
     "task-list": "Oppgaver",

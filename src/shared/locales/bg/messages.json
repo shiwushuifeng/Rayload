@@ -14,7 +14,7 @@
     "developed-by": "Разработено от {author}",
     "repository": "Хранилище",
     "open-source-acknowledgement-label": "Благодарност за отворения код",
-    "open-source-acknowledgement": "{label}: Благодарим на AnInsomniacy за разработването на проекта с отворен код Rayburst. Rayload е неофициален Android порт, поддържан независимо и издаден под MIT лиценз."
+    "open-source-acknowledgement": "{label}: Благодарим на AnInsomniacy за разработването на проекта с отворен код Rayburst. Rayload е неофициален Android порт, поддържан независимо и издаден под GPL-3.0 лиценз."
   },
   "app": {
     "task-list": "Задачи",

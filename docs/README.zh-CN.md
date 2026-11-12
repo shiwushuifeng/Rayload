@@ -171,10 +171,10 @@ Release 与 Debug APK 使用不同的签名证书。安装另一个版本前，�
 
 ## 致谢与许可
 
-Rayload 基于 **AnInsomniacy** 创建的
-[Rayburst](https://github.com/AnInsomniacy/rayburst)，并遵循原项目的
-[MIT License](LICENSE)。Rayload 由独立维护者发布，不是 Rayburst 官方版本，
-也不代表原作者背书。
+Rayload 以 [GPL-3.0](../LICENSE) 分发，基于 **AnInsomniacy** 创建的
+[Rayburst](https://github.com/AnInsomniacy/rayburst)（MIT 许可）。三方组件
+版权与保留的 MIT 声明见 [NOTICE](../NOTICE)。Rayload 由独立维护者发布，不是
+Rayburst 官方版本，也不代表原作者背书。
 
 ---
 
@@ -185,3 +185,5 @@ Rayload 基于 **AnInsomniacy** 创建的
 👉 [查看我们的完整开发路线图与未来目标 (Roadmap)](../ROADMAP.md)
 
 </div>
+
+> ❤️ 喜欢这个项目？欢迎 [赞助与支持 (Sponsor)](../SPONSOR.md)

@@ -14,7 +14,7 @@
     "developed-by": "توسعه‌یافته توسط {author}",
     "repository": "مخزن",
     "open-source-acknowledgement-label": "سپاس از پروژه متن‌باز",
-    "open-source-acknowledgement": "{label}: از AnInsomniacy برای توسعه پروژه متن‌باز Rayburst سپاسگزاریم. Rayload یک نسخه غیررسمی Android از آن است که به‌صورت مستقل نگهداری و با مجوز MIT منتشر می‌شود."
+    "open-source-acknowledgement": "{label}: از AnInsomniacy برای توسعه پروژه متن‌باز Rayburst سپاسگزاریم. Rayload یک نسخه غیررسمی Android از آن است که به‌صورت مستقل نگهداری و با مجوز GPL-3.0 منتشر می‌شود."
   },
   "app": {
     "task-list": "وظایف",

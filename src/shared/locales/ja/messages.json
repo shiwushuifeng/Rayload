@@ -14,7 +14,7 @@
     "developed-by": "{author} が開発",
     "repository": "リポジトリ",
     "open-source-acknowledgement-label": "オープンソースへの謝辞",
-    "open-source-acknowledgement": "{label}: オープンソースプロジェクト Rayburst を開発した AnInsomniacy に感謝します。Rayload はその非公式 Android 移植版であり、独立して維持され、MIT ライセンスで公開されています。"
+    "open-source-acknowledgement": "{label}: オープンソースプロジェクト Rayburst を開発した AnInsomniacy に感謝します。Rayload はその非公式 Android 移植版であり、独立して維持され、GPL-3.0 ライセンスで公開されています。"
   },
   "app": {
     "task-list": "タスク一覧",

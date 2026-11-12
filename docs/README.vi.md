@@ -75,8 +75,11 @@ APK Release và Debug dùng chữ ký khác nhau. Gỡ bản hiện tại trư�
 
 ## License
 
-Rayload is based on [Rayburst](https://github.com/AnInsomniacy/rayburst) by
-**AnInsomniacy** and follows the [MIT License](LICENSE). It is an independent,
-unofficial port.
+Rayload is distributed under the [GPL-3.0 License](../LICENSE). It is based on
+[Rayburst](https://github.com/AnInsomniacy/rayburst) by **AnInsomniacy**, whose
+original work is licensed under the MIT License; see [NOTICE](../NOTICE) for
+third-party attributions. Rayload is an independent, unofficial port.
 
 > ⭐ Nếu Rayload giúp bạn tiết kiệm thời gian, hãy tặng một ngôi sao để nhiều người dùng Android biết đến hơn.
+
+> ❤️ Like this project? [Sponsor Rayload](../SPONSOR.md)

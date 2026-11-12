@@ -14,7 +14,7 @@
     "developed-by": "Dikembangkan oleh {author}",
     "repository": "Repositori",
     "open-source-acknowledgement-label": "Ucapan terima kasih open source",
-    "open-source-acknowledgement": "{label}: Terima kasih kepada AnInsomniacy yang mengembangkan proyek open source Rayburst. Rayload adalah port Android tidak resmi, dikelola secara independen, dan dirilis dengan lisensi MIT."
+    "open-source-acknowledgement": "{label}: Terima kasih kepada AnInsomniacy yang mengembangkan proyek open source Rayburst. Rayload adalah port Android tidak resmi, dikelola secara independen, dan dirilis dengan lisensi GPL-3.0."
   },
   "app": {
     "task-list": "Tugas",

@@ -3,6 +3,24 @@
 All notable changes to the independent Rayload Android port are documented in
 this file.
 
+## Unreleased
+
+### Added
+
+- Added a standalone `SPONSOR.md` page, a minimal README sponsor link, and a
+  Star History chart.
+- Added GPL-3.0 licensing, a `NOTICE` file with Rayburst and aria2-next
+  attributions, issue templates, and a contribution guide.
+- Added a tag-driven GitHub Actions workflow that builds the ARM64 APK and
+  publishes it to GitHub Releases.
+
+### Changed
+
+- Converted the sponsor QR image to `docs/assets/sponsor.webp` and removed the
+  original JPEG.
+- Normalized license and sponsor links across all translated README editions.
+- Documented the v0.9.0-beta through v1.0.1 milestones in `ROADMAP.md`.
+
 ## v1.0.2 - 2026-11-11
 
 ### Changed

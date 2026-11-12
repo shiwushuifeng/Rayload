@@ -14,7 +14,7 @@
     "developed-by": "Fejlesztő: {author}",
     "repository": "Adattár",
     "open-source-acknowledgement-label": "Nyílt forráskódú köszönet",
-    "open-source-acknowledgement": "{label}: Köszönjük AnInsomniacynak a Rayburst nyílt forráskódú projekt kidolgozását. A Rayload annak nem hivatalos Android-portja, függetlenül karbantartva és MIT-licenc alatt kiadva."
+    "open-source-acknowledgement": "{label}: Köszönjük AnInsomniacynak a Rayburst nyílt forráskódú projekt kidolgozását. A Rayload annak nem hivatalos Android-portja, függetlenül karbantartva és GPL-3.0-licenc alatt kiadva."
   },
   "app": {
     "task-list": "Feladatok",

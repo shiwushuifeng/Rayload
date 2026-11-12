@@ -75,8 +75,11 @@ Release- und Debug-APKs haben unterschiedliche Signaturen. Deinstalliere die akt
 
 ## License
 
-Rayload is based on [Rayburst](https://github.com/AnInsomniacy/rayburst) by
-**AnInsomniacy** and follows the [MIT License](LICENSE). It is an independent,
-unofficial port.
+Rayload is distributed under the [GPL-3.0 License](../LICENSE). It is based on
+[Rayburst](https://github.com/AnInsomniacy/rayburst) by **AnInsomniacy**, whose
+original work is licensed under the MIT License; see [NOTICE](../NOTICE) for
+third-party attributions. Rayload is an independent, unofficial port.
 
 > ⭐ Wenn Rayload dir Zeit spart, gib dem Projekt einen Stern — so finden mehr Android-Nutzer dazu.
+
+> ❤️ Like this project? [Sponsor Rayload](../SPONSOR.md)

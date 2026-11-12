@@ -14,7 +14,7 @@
     "developed-by": "Geliştiren: {author}",
     "repository": "Depo",
     "open-source-acknowledgement-label": "Açık kaynağa teşekkür",
-    "open-source-acknowledgement": "{label}: Açık kaynak Rayburst projesini geliştirdiği için AnInsomniacy’ye teşekkür ederiz. Rayload, bağımsız olarak sürdürülen ve MIT lisansıyla yayımlanan resmî olmayan bir Android portudur."
+    "open-source-acknowledgement": "{label}: Açık kaynak Rayburst projesini geliştirdiği için AnInsomniacy’ye teşekkür ederiz. Rayload, bağımsız olarak sürdürülen ve GPL-3.0 lisansıyla yayımlanan resmî olmayan bir Android portudur."
   },
   "app": {
     "task-list": "Görevler",

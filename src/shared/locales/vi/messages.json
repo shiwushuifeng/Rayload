@@ -14,7 +14,7 @@
     "developed-by": "Phát triển bởi {author}",
     "repository": "Kho mã",
     "open-source-acknowledgement-label": "Tri ân mã nguồn mở",
-    "open-source-acknowledgement": "{label}: Cảm ơn AnInsomniacy đã phát triển dự án mã nguồn mở Rayburst. Rayload là bản chuyển Android không chính thức, được duy trì độc lập và phát hành theo giấy phép MIT."
+    "open-source-acknowledgement": "{label}: Cảm ơn AnInsomniacy đã phát triển dự án mã nguồn mở Rayburst. Rayload là bản chuyển Android không chính thức, được duy trì độc lập và phát hành theo giấy phép GPL-3.0."
   },
   "app": {
     "task-list": "Tác vụ",

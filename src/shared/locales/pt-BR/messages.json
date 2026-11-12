@@ -14,7 +14,7 @@
     "developed-by": "Desenvolvido por {author}",
     "repository": "Repositório",
     "open-source-acknowledgement-label": "Agradecimento ao código aberto",
-    "open-source-acknowledgement": "{label}: Agradecemos a AnInsomniacy por desenvolver o projeto de código aberto Rayburst. O Rayload é um porte não oficial para Android, mantido de forma independente e publicado sob a licença MIT."
+    "open-source-acknowledgement": "{label}: Agradecemos a AnInsomniacy por desenvolver o projeto de código aberto Rayburst. O Rayload é um porte não oficial para Android, mantido de forma independente e publicado sob a licença GPL-3.0."
   },
   "app": {
     "task-list": "Tarefas",

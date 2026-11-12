@@ -186,10 +186,12 @@ Release и Debug APK подписаны разными сертификатам�
 
 ## Лицензия и авторство
 
-Rayload основан на [Rayburst](https://github.com/AnInsomniacy/rayburst),
-созданном **AnInsomniacy**, и распространяется по оригинальной
-[лицензии MIT](LICENSE). Rayload поддерживается независимо, не является
-официальным выпуском Rayburst и не одобрен первоначальным автором.
+Rayload распространяется по [лицензии GPL-3.0](../LICENSE) и основан на
+[Rayburst](https://github.com/AnInsomniacy/rayburst), созданном
+**AnInsomniacy** (лицензия MIT). Сведения о сторонних компонентах и текст
+лицензии MIT приведены в [NOTICE](../NOTICE). Rayload поддерживается
+независимо, не является официальным выпуском Rayburst и не одобрен
+первоначальным автором.
 
 ---
 
@@ -200,3 +202,5 @@ Rayload основан на [Rayburst](https://github.com/AnInsomniacy/rayburst)
 👉 [Полная дорожная карта проекта](../ROADMAP.md)
 
 </div>
+
+> ❤️ Like this project? [Sponsor Rayload](../SPONSOR.md)

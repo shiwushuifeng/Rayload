@@ -14,7 +14,7 @@
     "developed-by": "Dezvoltat de {author}",
     "repository": "Depozit",
     "open-source-acknowledgement-label": "Mulțumiri pentru open source",
-    "open-source-acknowledgement": "{label}: Mulțumim lui AnInsomniacy pentru dezvoltarea proiectului open source Rayburst. Rayload este un port Android neoficial, întreținut independent și publicat sub licența MIT."
+    "open-source-acknowledgement": "{label}: Mulțumim lui AnInsomniacy pentru dezvoltarea proiectului open source Rayburst. Rayload este un port Android neoficial, întreținut independent și publicat sub licența GPL-3.0."
   },
   "app": {
     "task-list": "Sarcini",

@@ -14,7 +14,7 @@
     "developed-by": "Desarrollado por {author}",
     "repository": "Repositorio",
     "open-source-acknowledgement-label": "Agradecimiento al código abierto",
-    "open-source-acknowledgement": "{label}: Gracias a AnInsomniacy por desarrollar el proyecto de código abierto Rayburst. Rayload es un port no oficial para Android, mantenido de forma independiente y publicado bajo la licencia MIT."
+    "open-source-acknowledgement": "{label}: Gracias a AnInsomniacy por desarrollar el proyecto de código abierto Rayburst. Rayload es un port no oficial para Android, mantenido de forma independiente y publicado bajo la licencia GPL-3.0."
   },
   "app": {
     "task-list": "Tareas",

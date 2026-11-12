@@ -1,0 +1,156 @@
+name: Release
+
+# Required repository secrets for signed releases:
+#   ANDROID_KEYSTORE_BASE64   base64-encoded release keystore (.jks)
+#   ANDROID_KEY_ALIAS         key alias inside the keystore
+#   ANDROID_KEYSTORE_PASSWORD keystore and key password
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  android:
+    name: Build Android APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Cache Rust build artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android platform, build tools, and NDK
+        run: |
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager \
+            "platform-tools" \
+            "platforms;android-37" \
+            "build-tools;37.0.0" \
+            "ndk;29.0.14206865"
+          echo "NDK_HOME=$ANDROID_SDK_ROOT/ndk/29.0.14206865" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/29.0.14206865" >> "$GITHUB_ENV"
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > src-tauri/gen/android/local.properties
+
+      - name: Configure release signing
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "::error::ANDROID_KEYSTORE_BASE64 is not configured. Add the signing secrets before publishing a release."
+            exit 1
+          fi
+          mkdir -p signing
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > signing/release.jks
+          {
+            echo "storeFile=signing/release.jks"
+            echo "keyAlias=$ANDROID_KEY_ALIAS"
+            echo "password=$ANDROID_KEYSTORE_PASSWORD"
+          } > signing/keystore.properties
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply Android project configuration
+        run: pnpm android:prepare
+
+      - name: Build release APK
+        run: pnpm tauri android build --apk --target aarch64
+
+      - name: Collect APK and checksum
+        run: |
+          VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' src-tauri/Cargo.toml | head -1)
+          if [ -z "$VERSION" ]; then
+            echo "Could not read version from src-tauri/Cargo.toml" >&2
+            exit 1
+          fi
+
+          find src-tauri/gen/android/app/build/outputs/apk -type f -name '*.apk' -print
+          mapfile -t APKS < <(find src-tauri/gen/android/app/build/outputs/apk -type f -name '*.apk' | sort)
+
+          APK=""
+          for candidate in "${APKS[@]}"; do
+            case "$candidate" in
+              *universal*release*.apk) APK="$candidate"; break ;;
+            esac
+          done
+          if [ -z "$APK" ]; then
+            for candidate in "${APKS[@]}"; do
+              case "$candidate" in
+                *arm64*release*.apk|*aarch64*release*.apk) APK="$candidate"; break ;;
+              esac
+            done
+          fi
+          if [ -z "$APK" ]; then
+            APK=$(printf '%s\n' "${APKS[@]}" | grep '/release/' | head -1 || true)
+          fi
+          if [ -z "$APK" ]; then
+            echo "No release APK was produced." >&2
+            exit 1
+          fi
+
+          OUTPUT="Rayload-${VERSION}-android-arm64-v8a.apk"
+          cp "$APK" "$OUTPUT"
+          sha256sum "$OUTPUT" > "$OUTPUT.sha256"
+          echo "APK_PATH=$OUTPUT" >> "$GITHUB_ENV"
+          echo "Built $OUTPUT from $APK"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rayload-android-apk
+          path: |
+            ${{ env.APK_PATH }}
+            ${{ env.APK_PATH }}.sha256
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.APK_PATH }}
+            ${{ env.APK_PATH }}.sha256
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          fail_on_unmatched_files: true
