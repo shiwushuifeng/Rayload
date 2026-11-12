@@ -259,10 +259,12 @@ ${copy.faq.map((item) => `### ${item.q}\n\n${item.a}`).join('\n\n')}
 
 ## License
 
-Rayload is distributed under the [GPL-3.0 License](../LICENSE). It is based on
+Rayload is licensed under the [GPL-3.0 License](../LICENSE). It is based on
 [Rayburst](https://github.com/AnInsomniacy/rayburst) by **AnInsomniacy**, whose
-original work is licensed under the MIT License; see [NOTICE](../NOTICE) for
-third-party attributions. Rayload is an independent, unofficial port.
+original work is licensed under the MIT License. The bundled Aria2 Next
+(\`aria2-next\`) engine is licensed under **GPL-2.0-or-later**. See
+[NOTICE](../NOTICE) for all third-party attributions and license notices.
+Rayload is an independent, unofficial port.
 
 > ⭐ ${copy.star}
 
@@ -278,6 +280,10 @@ function normalizeContent(content, code) {
     )
     .replace(/\[MIT License\]\(LICENSE\)/gu, '[GPL-3.0 License](../LICENSE)')
     .replace(/\[лицензии MIT\]\(LICENSE\)/gu, '[лицензии GPL-3.0](../LICENSE)')
+    .replace(
+      /Rayload is distributed under the \[GPL-3\.0 License\]\(\.\.\/LICENSE\)\. It is based on\n\[Rayburst\]\(https:\/\/github\.com\/AnInsomniacy\/rayburst\) by \*\*AnInsomniacy\*\*, whose\noriginal work is licensed under the MIT License; see \[NOTICE\]\(\.\.\/NOTICE\) for\nthird-party attributions\. Rayload is an independent, unofficial port\./gu,
+      'Rayload is licensed under the [GPL-3.0 License](../LICENSE). It is based on\n[Rayburst](https://github.com/AnInsomniacy/rayburst) by **AnInsomniacy**, whose\noriginal work is licensed under the MIT License. The bundled Aria2 Next\n(`aria2-next`) engine is licensed under **GPL-2.0-or-later**. See\n[NOTICE](../NOTICE) for all third-party attributions and license notices.\nRayload is an independent, unofficial port.',
+    )
   if (!result.includes('SPONSOR.md')) {
     const sponsor =
       code === 'zh-CN'

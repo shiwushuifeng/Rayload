@@ -171,10 +171,12 @@ Release 与 Debug APK 使用不同的签名证书。安装另一个版本前，�
 
 ## 致谢与许可
 
-Rayload 以 [GPL-3.0](../LICENSE) 分发，基于 **AnInsomniacy** 创建的
-[Rayburst](https://github.com/AnInsomniacy/rayburst)（MIT 许可）。三方组件
-版权与保留的 MIT 声明见 [NOTICE](../NOTICE)。Rayload 由独立维护者发布，不是
-Rayburst 官方版本，也不代表原作者背书。
+Rayload 以 [GPL-3.0](../LICENSE) 分发，是 **AnInsomniacy** 创建的
+[Rayburst](https://github.com/AnInsomniacy/rayburst)（MIT 许可）的独立非官方
+Android 移植版。内置的 Aria2 Next（`aria2-next`）引擎按 GPL-2.0-or-later
+许可分发。三方组件的版权与许可证声明（包括保留的 Rayburst MIT 全文）见
+[NOTICE](../NOTICE)。Rayload 由独立维护者发布，不是 Rayburst 官方版本，也不代表
+原作者背书。
 
 ---
 

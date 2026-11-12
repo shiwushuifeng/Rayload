@@ -264,11 +264,20 @@ version before installing the other variant.
 
 ## License and attribution
 
-Rayload is distributed under the [GNU General Public License v3.0](LICENSE).
-It is an independent, unofficial Android port based on
+Rayload is licensed under the **GNU General Public License v3.0 only
+(GPL-3.0)**. It is an independent, unofficial Android port based on
 [Rayburst](https://github.com/AnInsomniacy/rayburst), created by
-**AnInsomniacy** and licensed under the MIT License. Third-party attributions
-and the preserved MIT notice are documented in [NOTICE](NOTICE). Rayload is
+**AnInsomniacy** and licensed under the MIT License. The bundled Aria2 Next
+(`aria2-next`) engine is licensed under **GPL-2.0-or-later**.
+
+| Component | License |
+| --------- | ------- |
+| Rayload | GPL-3.0-only |
+| Rayburst | MIT |
+| aria2-next | GPL-2.0-or-later |
+
+Copyright and license notices for all third-party components, including the
+preserved Rayburst MIT text, are documented in [NOTICE](NOTICE). Rayload is
 independently maintained and is not an official Rayburst release or endorsed by
 the original author.
 
@@ -440,10 +449,20 @@ Release 与 Debug APK 使用不同的签名证书。安装另一个版本前，�
 
 ### 致谢与许可
 
-Rayload 以 [GPL-3.0](./LICENSE) 分发，基于 **AnInsomniacy** 创建的
-[Rayburst](https://github.com/AnInsomniacy/rayburst)（MIT 许可）。三方组件
-版权与保留的 MIT 声明见 [NOTICE](./NOTICE)。Rayload 由独立维护者发布，不是
-Rayburst 官方版本，也不代表原作者背书。
+Rayload 以 **GNU General Public License v3.0（GPL-3.0）** 分发，是
+**AnInsomniacy** 创建的 [Rayburst](https://github.com/AnInsomniacy/rayburst)
+（MIT 许可）的独立非官方 Android 移植版。内置的 Aria2 Next（`aria2-next`）
+引擎按 **GPL-2.0-or-later** 许可分发。
+
+| 组件 | 许可证 |
+| ---- | ------ |
+| Rayload | GPL-3.0-only |
+| Rayburst | MIT |
+| aria2-next | GPL-2.0-or-later |
+
+三方组件的版权与许可证声明（包括保留的 Rayburst MIT 全文）见
+[NOTICE](./NOTICE)。Rayload 由独立维护者发布，不是 Rayburst 官方版本，也不代表
+原作者背书。
 
 ### 支持
 

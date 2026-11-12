@@ -75,10 +75,12 @@ Release- en Debug-APK's hebben verschillende handtekeningen. Verwijder de huidig
 
 ## License
 
-Rayload is distributed under the [GPL-3.0 License](../LICENSE). It is based on
+Rayload is licensed under the [GPL-3.0 License](../LICENSE). It is based on
 [Rayburst](https://github.com/AnInsomniacy/rayburst) by **AnInsomniacy**, whose
-original work is licensed under the MIT License; see [NOTICE](../NOTICE) for
-third-party attributions. Rayload is an independent, unofficial port.
+original work is licensed under the MIT License. The bundled Aria2 Next
+(`aria2-next`) engine is licensed under **GPL-2.0-or-later**. See
+[NOTICE](../NOTICE) for all third-party attributions and license notices.
+Rayload is an independent, unofficial port.
 
 > ⭐ Als Rayload je tijd bespaart, geef het een ster zodat meer Android-gebruikers het ontdekken.
 
