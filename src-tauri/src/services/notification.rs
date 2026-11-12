@@ -242,7 +242,7 @@ fn notification_enabled(kind: TaskNotificationKind, config: &RuntimeConfig) -> b
         TaskNotificationKind::Complete | TaskNotificationKind::P2pDownloadComplete => {
             config.notify_on_complete
         }
-        TaskNotificationKind::Error => true,
+        TaskNotificationKind::Error => config.notify_on_error,
     }
 }
 
@@ -271,12 +271,24 @@ pub fn build_task_notification(
     };
     let message = match kind {
         TaskNotificationKind::Start => return None,
-        TaskNotificationKind::Complete => download_complete(&locale, task_name),
+        TaskNotificationKind::Complete => {
+            if config.notification_include_name {
+                download_complete(&locale, task_name)
+            } else {
+                crate::i18n::download_complete_private(&locale)
+            }
+        }
         TaskNotificationKind::P2pDownloadComplete => {
             if event.sharing_kind == Some("ed2k") {
-                ed2k_complete(&locale, task_name)
-            } else {
+                if config.notification_include_name {
+                    ed2k_complete(&locale, task_name)
+                } else {
+                    crate::i18n::ed2k_complete_private(&locale)
+                }
+            } else if config.notification_include_name {
                 bt_complete(&locale, task_name)
+            } else {
+                crate::i18n::bt_complete_private(&locale)
             }
         }
         TaskNotificationKind::Error => {
@@ -826,6 +838,21 @@ mod tests {
         config.notify_on_complete = false;
         assert!(build_task_notification(events::TASK_COMPLETE, &event(), &config).is_none());
         assert!(build_task_notification(events::TASK_ERROR, &event(), &config).is_some());
+    }
+
+    #[test]
+    fn skips_errors_when_error_notifications_are_disabled() {
+        let mut config = cfg();
+        config.notify_on_error = false;
+        assert!(build_task_notification(events::TASK_ERROR, &event(), &config).is_none());
+    }
+
+    #[test]
+    fn hides_task_name_when_requested() {
+        let mut config = cfg();
+        config.notification_include_name = false;
+        let content = build_task_notification(events::TASK_COMPLETE, &event(), &config).unwrap();
+        assert!(!content.body.contains("file.zip"));
     }
 
     #[test]

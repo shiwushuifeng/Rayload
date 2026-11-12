@@ -73,6 +73,9 @@ src-tauri/gen/android/app/src/main/jniLibs/
 # Local Android/Rust/JDK toolchains
 .toolchains/
 
+# Local x86_64 emulator-only engine symlink
+src-tauri/binaries/aria2-next-x86_64-linux-android
+
 # Local release assets and archived builds (published as GitHub Release assets)
 release/
 upload/

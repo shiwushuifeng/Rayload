@@ -24,6 +24,7 @@ import { usePreferenceStore } from '@/stores/preference'
 import { changeGlobalOption, isEngineReady } from '@/api/aria2'
 import { bytesToSize } from '@shared/utils'
 import { NIcon, NInputNumber, NSelect, NButton, NSwitch, NText, NCollapseTransition } from 'naive-ui'
+import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import {
   SpeedometerOutline,
   ArrowUpOutline,
@@ -73,8 +74,7 @@ const isScheduleActive = computed(() => !!preferenceStore.config.speedScheduleEn
 const shutdownWhenComplete = computed(() => !!preferenceStore.config.shutdownWhenComplete)
 /** Clock badge only when schedule is actually effective (both switches ON). */
 const isScheduleEffective = computed(() => isLimited.value && isScheduleActive.value)
-const downloadSpeed = computed(() => bytesToSize(String(stat.value.downloadSpeed)))
-const uploadSpeed = computed(() => bytesToSize(String(stat.value.uploadSpeed)))
+const formatSpeed = (value: number) => bytesToSize(Math.max(0, Math.round(value)))
 
 const networkConnection =
   typeof navigator === 'undefined'
@@ -121,14 +121,15 @@ const connectionQuality = computed<{
 
 // ── Draggable floating dock ─────────────────────────────────────────
 
-const DOCK_POSITION_KEY = 'rayload-speedometer-position'
+const DOCK_POSITION_KEY = 'rayload-speedometer-position-v2'
 const DOCK_EDGE_GAP = 8
 const DOCK_SNAP_THRESHOLD = 28
 const COLLAPSED_CAPSULE_WIDTH = 100
+const DEFAULT_DOCK_Y_RATIO = 0.8
 const dockRef = ref<HTMLElement | null>(null)
 const dockPosition = ref<{ x: number; y: number } | null>(null)
 const viewportWidth = ref(typeof window === 'undefined' ? 0 : window.innerWidth)
-const isDockCollapsed = ref(false)
+const isDockCollapsed = ref(true)
 const dockSide = ref<'left' | 'right'>('left')
 const isSnapping = ref(false)
 let snapTimer: ReturnType<typeof setTimeout> | null = null
@@ -157,10 +158,14 @@ let interactionReadyAt = 0
 const dockStyle = computed(() => {
   if (isDockCollapsed.value) {
     const maxY = Math.max(DOCK_EDGE_GAP, window.innerHeight - 46 - DOCK_EDGE_GAP)
-    const y = Math.min(Math.max(DOCK_EDGE_GAP, dockPosition.value?.y ?? DOCK_EDGE_GAP), maxY)
+    const y = Math.min(
+      Math.max(DOCK_EDGE_GAP, dockPosition.value?.y ?? Math.round(window.innerHeight * DEFAULT_DOCK_Y_RATIO)),
+      maxY,
+    )
     return {
       left: dockSide.value === 'left' ? '0px' : `calc(100vw - ${COLLAPSED_CAPSULE_WIDTH}px)`,
       top: `${y}px`,
+      right: 'auto',
       bottom: 'auto',
     }
   }
@@ -174,6 +179,7 @@ const dockStyle = computed(() => {
   return {
     left: `${Math.min(Math.max(DOCK_EDGE_GAP, dockPosition.value.x), maxX)}px`,
     top: `${Math.min(Math.max(DOCK_EDGE_GAP, dockPosition.value.y), maxY)}px`,
+    right: 'auto',
     bottom: 'auto',
   }
 })
@@ -649,7 +655,7 @@ function handleRestartEngine() {
           <div class="speed-row upload">
             <div class="speed-text">
               <NIcon :size="10" class="speed-arrow"><ArrowUpOutline /></NIcon>
-              <em>{{ uploadSpeed }}/s</em>
+              <em><AnimatedNumber :value="stat.uploadSpeed" :formatter="formatSpeed" />/s</em>
             </div>
             <div class="limit-zone">
               <span class="limit-sep">┊</span>
@@ -662,7 +668,7 @@ function handleRestartEngine() {
           <div class="speed-row download">
             <div class="speed-text">
               <NIcon :size="10" class="speed-arrow"><ArrowDownOutline /></NIcon>
-              <span class="speed-value">{{ downloadSpeed }}</span>
+              <span class="speed-value"><AnimatedNumber :value="stat.downloadSpeed" :formatter="formatSpeed" /></span>
               <span class="speed-unit">/s</span>
             </div>
             <div class="limit-zone">
@@ -678,7 +684,9 @@ function handleRestartEngine() {
       <Transition name="chip-swap">
         <div v-if="isDockCollapsed" class="collapsed-chip" aria-hidden="true">
           <NIcon :size="11" class="collapsed-arrow"><ArrowDownOutline /></NIcon>
-          <span class="collapsed-value">{{ downloadSpeed }}<em>/s</em></span>
+          <span class="collapsed-value"
+            ><AnimatedNumber :value="stat.downloadSpeed" :formatter="formatSpeed" /><em>/s</em></span
+          >
         </div>
       </Transition>
     </div>
@@ -716,11 +724,15 @@ function handleRestartEngine() {
             <div class="speed-hero">
               <div class="hero-block">
                 <span class="hero-label">{{ t('task.task-download-speed') }}</span>
-                <strong class="hero-value">{{ downloadSpeed }}<em>/s</em></strong>
+                <strong class="hero-value"
+                  ><AnimatedNumber :value="stat.downloadSpeed" :formatter="formatSpeed" /><em>/s</em></strong
+                >
               </div>
               <div class="hero-block hero-block--secondary">
                 <span class="hero-label">{{ t('task.task-upload-speed') }}</span>
-                <span class="hero-value-secondary">{{ uploadSpeed }}<em>/s</em></span>
+                <span class="hero-value-secondary"
+                  ><AnimatedNumber :value="stat.uploadSpeed" :formatter="formatSpeed" /><em>/s</em></span
+                >
               </div>
             </div>
 
@@ -904,8 +916,8 @@ function handleRestartEngine() {
 <style scoped>
 .speedometer-dock {
   position: fixed;
-  left: 16px;
-  right: auto;
+  left: auto;
+  right: 16px;
   bottom: calc(env(safe-area-inset-bottom, 0px) + 96px);
   z-index: 25;
   pointer-events: none;

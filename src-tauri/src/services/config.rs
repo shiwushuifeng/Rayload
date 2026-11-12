@@ -48,6 +48,10 @@ pub struct RuntimeConfig {
     pub notify_on_complete: bool,
     /// Whether newly started downloads should trigger native system notifications.
     pub notify_on_start: bool,
+    /// Whether failed downloads should trigger native system notifications.
+    pub notify_on_error: bool,
+    /// Whether completion notifications include the task name.
+    pub notification_include_name: bool,
     /// Port for the embedded HTTP API (browser extension communication).
     pub extension_api_port: u16,
     /// Whether local control endpoints may listen on LAN interfaces.
@@ -120,6 +124,8 @@ impl Default for RuntimeConfig {
             task_notification: true,
             notify_on_complete: true,
             notify_on_start: true,
+            notify_on_error: true,
+            notification_include_name: true,
             extension_api_port: DEFAULT_EXTENSION_API_PORT,
             allow_remote_access: false,
             notification_click_action: "reveal".into(),

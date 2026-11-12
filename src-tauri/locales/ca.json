@@ -16,5 +16,6 @@
   "notification.selection-body": "%{task_name}",
   "notification.browser-kept-title": "La baixada continua al navegador",
   "notification.browser-kept-body": "Rayload no ha pogut connectar amb %{host}.",
-  "notification.browser-kept-proxy-body": "Rayload no ha pogut connectar amb %{host}. Si el navegador fa servir un proxy, activeu el proxy a la configuració de xarxa de Rayload."
+  "notification.browser-kept-proxy-body": "Rayload no ha pogut connectar amb %{host}. Si el navegador fa servir un proxy, activeu el proxy a la configuració de xarxa de Rayload.",
+  "notification.private-body": "Saved to your download folder"
 }

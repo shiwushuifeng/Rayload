@@ -1,7 +1,16 @@
 /** Persisted visibility for destinations in the compact bottom navigation. */
 import { computed, reactive } from 'vue'
 
-export const NAVIGATION_ITEM_KEYS = ['all', 'progress', 'failed', 'completed', 'keep-awake', 'trash', 'about'] as const
+export const NAVIGATION_ITEM_KEYS = [
+  'all',
+  'progress',
+  'failed',
+  'completed',
+  'keep-awake',
+  'statistics',
+  'trash',
+  'about',
+] as const
 
 export type NavigationItemKey = (typeof NAVIGATION_ITEM_KEYS)[number]
 export type NavigationVisibility = Record<NavigationItemKey, boolean>
@@ -16,6 +25,7 @@ function createDefaults(): NavigationVisibility {
     failed: false,
     completed: false,
     'keep-awake': true,
+    statistics: false,
     trash: true,
     about: true,
   }

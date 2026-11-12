@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { useBrandLogo } from '@/composables/useBrandLogo'
+import EmptyIllustration from '@/components/common/EmptyIllustration.vue'
 
 withDefaults(defineProps<{ show: boolean; showLogo?: boolean }>(), { showLogo: true })
 const { t } = useI18n()
@@ -10,7 +11,10 @@ const { brandLogo } = useBrandLogo()
 <template>
   <Transition name="empty-brand">
     <div v-if="show" class="empty-brand">
-      <img v-if="showLogo" class="empty-brand-mark" :src="brandLogo" alt="" draggable="false" />
+      <div class="empty-brand-art-wrap">
+        <EmptyIllustration variant="tasks" class="empty-brand-art" />
+        <img v-if="showLogo" class="empty-brand-mark" :src="brandLogo" alt="" draggable="false" />
+      </div>
       <p class="empty-brand-hint">{{ t('task.empty-hint') }}</p>
     </div>
   </Transition>
@@ -32,18 +36,32 @@ const { brandLogo } = useBrandLogo()
   pointer-events: none;
   user-select: none;
 }
+.empty-brand-art-wrap {
+  position: relative;
+  width: min(clamp(190px, 42cqw, 300px), 86cqw, 58cqh);
+}
+.empty-brand-art {
+  width: 100%;
+  filter: drop-shadow(0 18px 34px color-mix(in srgb, var(--m3-primary) 18%, transparent));
+}
 .empty-brand-mark {
-  width: min(clamp(180px, 36cqw, 280px), 80cqw, 80cqh);
+  position: absolute;
+  right: 2%;
+  bottom: 6%;
+  width: clamp(40px, 11cqw, 58px);
   aspect-ratio: 1;
   object-fit: contain;
-  opacity: 0.64;
-  filter: drop-shadow(0 16px 30px color-mix(in srgb, var(--m3-primary) 24%, transparent));
+  padding: 7px;
+  background: color-mix(in srgb, var(--m3-surface-container-lowest) 86%, transparent);
+  border: 1px solid color-mix(in srgb, var(--m3-primary) 18%, var(--m3-outline-variant));
+  border-radius: 50%;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--m3-primary) 18%, transparent);
 }
 .empty-brand-hint {
   width: min(320px, 82cqw);
   margin: 0;
   color: var(--m3-on-surface-variant);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   line-height: 1.6;
   text-align: center;
   text-wrap: balance;

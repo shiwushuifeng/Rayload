@@ -21,6 +21,7 @@ import {
   createBatchItem,
   mergeRawUriLines,
   normalizeUriLines,
+  parseAria2Input,
   extractDecodedFilename,
   extractMagnetDisplayName,
   invalidInputOut,
@@ -77,16 +78,24 @@ import {
   NEllipsis,
   NSpin,
   NText,
+  NAlert,
   useDialog,
 } from 'naive-ui'
 import { useAppMessage } from '@/composables/useAppMessage'
 import type { BatchItem, BatchItemKind, BtFileSelectionItem, UserAgentProfile } from '@shared/types'
-import { FolderOpenOutline, CloudUploadOutline, LinkOutline } from '@vicons/ionicons5'
+import {
+  FolderOpenOutline,
+  CloudUploadOutline,
+  LinkOutline,
+  ClipboardOutline,
+  CloseCircleOutline,
+} from '@vicons/ionicons5'
 import { vMotionAutoAnimate } from '@/directives/motionAutoAnimate'
 import { defaultMediaOptions, mediaOutputHint } from '@shared/utils/media'
 import AdvancedOptions from './addtask/AdvancedOptions.vue'
 import DirectoryPopover from '@/components/common/DirectoryPopover.vue'
 import BtFileSelector from '@/components/task/BtFileSelector.vue'
+import FriendlyErrorNotice from '@/components/common/FriendlyErrorNotice.vue'
 
 const props = defineProps<{ show: boolean }>()
 const emit = defineEmits<{ close: []; submitted: [] }>()
@@ -134,6 +143,7 @@ function activateTab(value: string): void {
 }
 const showAdvanced = ref(false)
 const submitting = ref(false)
+const submitError = ref<{ raw: string; url: string } | null>(null)
 const selectedBatchIndex = ref(0)
 const userAgentManuallyEdited = ref(false)
 const defaultTaskProxyMode = () => getDefaultTaskProxyMode(preferenceStore.config.proxy)
@@ -189,6 +199,36 @@ const firstRegularUri = computed(
       .map((uri) => uri.trim())
       .find((uri) => uri && !isMagnetUri(uri)) ?? '',
 )
+const uriTaskCount = computed(() => normalizeUriLines(form.value.uris).length)
+
+async function pasteUrisFromClipboard() {
+  if (submitting.value) return
+  try {
+    const { readText } = await import('@tauri-apps/plugin-clipboard-manager')
+    const text = ((await readText()) || '').trim()
+    if (!text) {
+      message.info(t('task.clipboard-empty'))
+      return
+    }
+    const merged = mergeRawUriLines(form.value.uris, [text])
+    if (merged === form.value.uris.trim()) {
+      message.info(t('task.paste-no-new'))
+      return
+    }
+    form.value.uris = merged
+    const count = normalizeUriLines(text).length
+    message.success(t('task.paste-success', { count }))
+  } catch (error) {
+    logger.warn('AddTask.paste', getErrorMessage(error))
+    message.error(t('task.paste-failed'))
+  }
+}
+
+function clearUriInput() {
+  if (submitting.value) return
+  form.value.uris = ''
+  form.value.uriRequestContexts = {}
+}
 /** The form with the preference defaults a submission fills in. */
 function requestForm(): AddTaskForm {
   return {
@@ -786,9 +826,17 @@ function reset() {
   userAgentManuallyEdited.value = false
   submitting.value = false
   selectedBatchIndex.value = 0
+  submitError.value = null
 }
 
 type DuplicateChoice = 'skip' | 'add' | 'cancel'
+
+interface DuplicateSkipResult {
+  /** URIs that must not be submitted. */
+  skip: Set<string>
+  /** Number of duplicate entries filtered before creation. */
+  count: number
+}
 
 function askDuplicateChoice(duplicates: DuplicateTask[]): Promise<DuplicateChoice> {
   const shown = duplicates.slice(0, 5).map((task) => task.name)
@@ -806,6 +854,10 @@ function askDuplicateChoice(duplicates: DuplicateTask[]): Promise<DuplicateChoic
       contentStyle: { whiteSpace: 'pre-line', wordBreak: 'break-all' },
       positiveText: t('task.duplicate-skip'),
       negativeText: t('task.duplicate-add-anyway'),
+      // The add-task window is a full-screen modal on Android (z-index 9999);
+      // this keeps the confirmation above it and above engine banners.
+      zIndex: 12000,
+      autoFocus: false,
       onPositiveClick: () => settle('skip'),
       onNegativeClick: () => settle('add'),
       onClose: () => settle('cancel'),
@@ -815,26 +867,51 @@ function askDuplicateChoice(duplicates: DuplicateTask[]): Promise<DuplicateChoic
   })
 }
 
-/** URIs the user chose not to download again, or null to stay in the dialog. */
-async function duplicatesToSkip(): Promise<Set<string> | null> {
-  const uris = normalizeUriLines(form.value.uris).filter((uri) => !isMagnetUri(uri))
-  if (uris.length === 0) return new Set()
+/** Counts repeated URI/option entries in the editable input. */
+function duplicateInputCount(): number {
+  const seen = new Set<string>()
+  let duplicates = 0
+  for (const entry of parseAria2Input(form.value.uris).entries) {
+    const optionKey = JSON.stringify(entry.options)
+    for (const uri of entry.uris) {
+      const key = `${uri}\u0000${optionKey}`
+      if (seen.has(key)) duplicates++
+      else seen.add(key)
+    }
+  }
+  return duplicates
+}
+
+/**
+ * Filters duplicate sources before anything is created. Existing tasks and
+ * repeated lines in the same paste are both skipped; torrrent batch items are
+ * handled by the engine's own duplicate-add response.
+ */
+async function duplicatesToSkip(): Promise<DuplicateSkipResult | null> {
+  const uris = normalizeUriLines(form.value.uris)
+  const inputDuplicates = duplicateInputCount()
+  if (uris.length === 0) return { skip: new Set(), count: inputDuplicates }
   let duplicates: DuplicateTask[]
   try {
     duplicates = await findDuplicateTasks(uris)
   } catch (error) {
     logger.warn('AddTask.duplicates', getErrorMessage(error))
-    return new Set()
+    return { skip: new Set(), count: inputDuplicates }
   }
-  if (duplicates.length === 0) return new Set()
+  if (duplicates.length === 0) return { skip: new Set(), count: inputDuplicates }
   const choice = await askDuplicateChoice(duplicates)
   if (choice === 'cancel') return null
-  return new Set(choice === 'skip' ? duplicates.map((task) => task.uri) : [])
+  const shouldSkip = choice === 'skip'
+  return {
+    skip: new Set(shouldSkip ? duplicates.map((task) => task.uri) : []),
+    count: inputDuplicates + (shouldSkip ? duplicates.length : 0),
+  }
 }
 
 async function handleSubmit() {
   if (submitting.value || !canSubmit.value) return
   submitting.value = true
+  submitError.value = null
 
   try {
     // Validate custom proxy before building options
@@ -862,11 +939,12 @@ async function handleSubmit() {
       return
     }
 
-    const skipped = await duplicatesToSkip()
-    if (!skipped) {
+    const duplicateResult = await duplicatesToSkip()
+    if (!duplicateResult) {
       submitting.value = false
       return
     }
+    const skipped = duplicateResult.skip
 
     // When dir field is empty (user left it blank for auto-classification),
     // fall back to the global default dir so aria2 always has a valid path.
@@ -892,6 +970,12 @@ async function handleSubmit() {
 
     const failedCount = batch.value.filter((i) => i.status === 'failed').length + manualResult.magnetFailures.length
     if (failedCount > 0) {
+      const failedItem = batch.value.find((item) => item.status === 'failed' && item.error)
+      const magnetFailure = manualResult.magnetFailures[0]
+      submitError.value = {
+        raw: failedItem?.error || magnetFailure?.error || t('task.error-friendly-unknown'),
+        url: failedItem?.source || magnetFailure?.uri || '',
+      }
       message.warning(`${failedCount} ${t('task.failed') || 'failed'}`, { closable: true })
     } else {
       // ── Collect task names before the window closes and clears the form ──
@@ -925,7 +1009,14 @@ async function handleSubmit() {
         }
       }
 
-      if (skipped.size > 0) message.info(t('task.duplicate-skipped', { count: skipped.size }))
+      if (duplicateResult.count > 0) {
+        dialog.info({
+          title: t('task.duplicate-skipped-title'),
+          content: t('task.duplicate-skipped-message', { count: duplicateResult.count }),
+          positiveText: t('app.close'),
+          zIndex: 12000,
+        })
+      }
       const effectiveDir = effectiveForm.dir.trim()
       if (dirUserModified.value && preferenceStore.config.rememberSaveLocation) {
         preferenceStore.updatePreference({ lastSaveLocation: effectiveDir })
@@ -959,6 +1050,7 @@ async function handleSubmit() {
     } else if (category === 'duplicate') {
       message.warning(errMsg, { closable: true })
     } else {
+      submitError.value = { raw: errMsg, url: firstRegularUri.value || form.value.uris.trim().split(/\r?\n/)[0] || '' }
       message.error(errMsg, { closable: true })
     }
   } finally {
@@ -1011,13 +1103,32 @@ defineExpose({ dismiss: () => handleClose(), reset, prepared: () => opening })
             </template>
             <div class="tab-pane-content">
               <NFormItem :show-label="false" style="margin-bottom: 0">
-                <NInput
-                  v-model:value="form.uris"
-                  class="uri-input"
-                  type="textarea"
-                  :rows="5"
-                  :placeholder="t('task.uri-task-tips') || 'One URL per line'"
-                />
+                <div class="uri-input-shell">
+                  <NInput
+                    v-model:value="form.uris"
+                    class="uri-input"
+                    type="textarea"
+                    :rows="5"
+                    :placeholder="t('task.uri-task-tips') || 'One URL per line'"
+                  />
+                  <div class="uri-input-toolbar">
+                    <NButton size="small" quaternary :disabled="submitting" @click="pasteUrisFromClipboard">
+                      <template #icon>
+                        <NIcon><ClipboardOutline /></NIcon>
+                      </template>
+                      {{ t('task.paste') }}
+                    </NButton>
+                    <NButton size="small" quaternary :disabled="submitting || !form.uris" @click="clearUriInput">
+                      <template #icon>
+                        <NIcon><CloseCircleOutline /></NIcon>
+                      </template>
+                      {{ t('task.clear') }}
+                    </NButton>
+                    <span v-if="uriTaskCount" class="uri-task-count">
+                      {{ t('task.uri-task-count', { count: uriTaskCount }) }}
+                    </span>
+                  </div>
+                </div>
               </NFormItem>
             </div>
           </NTabPane>
@@ -1152,7 +1263,10 @@ defineExpose({ dismiss: () => handleClose(), reset, prepared: () => opening })
                   </Transition>
                 </div>
               </div>
-              <div v-if="space.text.value" class="space-hint" :class="{ 'space-hint--short': space.short.value }">
+              <NAlert v-if="space.short.value" class="space-alert" type="error" :show-icon="true">
+                {{ space.text.value }}
+              </NAlert>
+              <div v-else-if="space.text.value" class="space-hint">
                 {{ space.text.value }}
               </div>
             </div>
@@ -1207,6 +1321,13 @@ defineExpose({ dismiss: () => handleClose(), reset, prepared: () => opening })
           </AdvancedOptions>
         </div>
       </NForm>
+      <FriendlyErrorNotice
+        v-if="submitError"
+        class="add-task-error"
+        :raw="submitError.raw"
+        :url="submitError.url"
+        source="add-task"
+      />
       <template #footer>
         <NSpace justify="end" data-reveal="3">
           <NButton @click="() => handleClose()">{{ t('app.cancel') }}</NButton>
@@ -1246,6 +1367,31 @@ defineExpose({ dismiss: () => handleClose(), reset, prepared: () => opening })
 
 .add-task-tabs :deep(.n-tabs-nav) {
   overflow: visible;
+}
+
+.uri-input-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.uri-input-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+}
+
+.uri-input-toolbar :deep(.n-button) {
+  min-height: 44px;
+}
+
+.uri-task-count {
+  margin-left: auto;
+  color: var(--m3-on-surface-variant);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
 }
 
 .add-task-tab {
@@ -1353,6 +1499,26 @@ defineExpose({ dismiss: () => handleClose(), reset, prepared: () => opening })
   gap: 8px;
 }
 
+/* ── Phone layout: labels above fields give inputs the full width ── */
+@media (max-width: 560px) {
+  .add-task-card .n-form-item {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .add-task-card .n-form-item-label {
+    width: auto !important;
+    padding-bottom: 4px;
+    text-align: left;
+  }
+  .add-task-card .n-form-item-blank {
+    width: 100%;
+  }
+  .add-task-card .n-form-item-label__text {
+    white-space: normal;
+  }
+}
+
 /* ── Content crossfade (file detail switching) ────────────────────── */
 .content-fade-enter-active {
   transition: opacity 0.2s cubic-bezier(0.2, 0, 0, 1);
@@ -1388,6 +1554,12 @@ defineExpose({ dismiss: () => handleClose(), reset, prepared: () => opening })
 }
 .space-hint--short {
   color: var(--m3-warning);
+}
+.space-alert {
+  margin-top: 8px;
+}
+.add-task-error {
+  margin-top: 12px;
 }
 .category-hint-enter-active {
   transition:

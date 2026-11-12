@@ -110,8 +110,9 @@ function toggleAppearance() {
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  background: #050505;
   background:
-    radial-gradient(circle at 50% 36%, color-mix(in srgb, var(--m3-primary) 16%, transparent) 0%, transparent 46%),
+    radial-gradient(circle at 50% 36%, rgba(139, 92, 246, 0.16) 0%, transparent 46%),
     radial-gradient(circle at 50% 50%, #0b0b0c 0%, #050505 62%, #000 100%);
 }
 
@@ -122,7 +123,7 @@ function toggleAppearance() {
   width: min(72vw, 360px);
   aspect-ratio: 1;
   border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--m3-primary) 26%, transparent), transparent 68%);
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.26), transparent 68%);
   transform: translate(-50%, -50%);
   filter: blur(18px);
   opacity: 0.7;
@@ -155,22 +156,23 @@ function toggleAppearance() {
 
 .keep-awake__theme:hover {
   color: var(--m3-primary);
-  border-color: color-mix(in srgb, var(--m3-primary) 42%, transparent);
+  border-color: rgba(139, 92, 246, 0.42);
   background: rgb(255 255 255 / 0.1);
 }
 
 /* Light appearance mirrors the app theme instead of forcing a black screen. */
 .keep-awake.is-light {
   color: var(--m3-on-surface);
+  background: #f6f1f4;
   background:
-    radial-gradient(circle at 50% 36%, color-mix(in srgb, var(--m3-primary) 12%, transparent) 0%, transparent 48%),
+    radial-gradient(circle at 50% 36%, rgba(139, 92, 246, 0.12) 0%, transparent 48%),
     radial-gradient(circle at 50% 50%, #fdfbfa 0%, #f6f1f4 62%, #eee8ed 100%);
 }
 
 .keep-awake.is-light .keep-awake__theme {
-  border-color: color-mix(in srgb, var(--m3-outline-variant) 80%, transparent);
+  border-color: rgba(0, 0, 0, 0.12);
   color: var(--m3-on-surface-variant);
-  background: color-mix(in srgb, var(--m3-surface-container-high) 72%, transparent);
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .keep-awake.is-light .keep-awake__theme:hover {
@@ -178,7 +180,7 @@ function toggleAppearance() {
 }
 
 .keep-awake.is-light .keep-awake__eyebrow {
-  color: color-mix(in srgb, var(--m3-primary) 78%, var(--m3-on-surface));
+  color: #6d28d9;
 }
 
 .keep-awake.is-light .keep-awake__speed {
@@ -186,16 +188,16 @@ function toggleAppearance() {
 }
 
 .keep-awake.is-light .keep-awake__speed span {
-  color: color-mix(in srgb, var(--m3-primary) 74%, var(--m3-on-surface));
+  color: #7c3aed;
 }
 
 .keep-awake.is-light .keep-awake__label,
 .keep-awake.is-light .keep-awake__hint {
-  color: color-mix(in srgb, var(--m3-on-surface) 52%, transparent);
+  color: rgba(29, 27, 30, 0.52);
 }
 
 .keep-awake.is-light .keep-awake__tasks {
-  color: color-mix(in srgb, var(--m3-primary) 66%, var(--m3-on-surface));
+  color: #7c3aed;
 }
 
 .keep-awake.is-light .keep-awake__halo {
@@ -213,7 +215,7 @@ function toggleAppearance() {
 
 .keep-awake__eyebrow {
   margin: 0 0 28px;
-  color: color-mix(in srgb, var(--m3-primary) 72%, white);
+  color: #c4b5fd;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.22em;
@@ -224,7 +226,7 @@ function toggleAppearance() {
 .keep-awake__logo {
   width: min(42vw, 168px);
   color: var(--m3-primary);
-  filter: drop-shadow(0 0 28px color-mix(in srgb, var(--m3-primary) 58%, transparent));
+  filter: drop-shadow(0 0 28px rgba(139, 92, 246, 0.58));
   transform-origin: center;
   animation: keep-awake-breathe 4.4s ease-in-out infinite;
 }
@@ -252,7 +254,7 @@ function toggleAppearance() {
 }
 
 .keep-awake__speed span {
-  color: color-mix(in srgb, var(--m3-primary) 76%, white);
+  color: #c4b5fd;
   font-size: 20px;
   font-weight: 500;
   opacity: 0.8;
@@ -266,7 +268,7 @@ function toggleAppearance() {
 
 .keep-awake__tasks {
   margin: 10px 0 0;
-  color: color-mix(in srgb, var(--m3-primary) 62%, white);
+  color: #ddd6fe;
   font-size: var(--font-size-sm);
   font-weight: 500;
   font-variant-numeric: tabular-nums;
@@ -293,11 +295,11 @@ function toggleAppearance() {
   0%,
   100% {
     transform: scale(1);
-    filter: drop-shadow(0 0 22px color-mix(in srgb, var(--m3-primary) 42%, transparent));
+    filter: drop-shadow(0 0 22px rgba(139, 92, 246, 0.42));
   }
   50% {
     transform: scale(1.045);
-    filter: drop-shadow(0 0 38px color-mix(in srgb, var(--m3-primary) 66%, transparent));
+    filter: drop-shadow(0 0 38px rgba(139, 92, 246, 0.66));
   }
 }
 

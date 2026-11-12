@@ -19,8 +19,10 @@ import {
   getTaskSharingKind,
 } from '@shared/utils'
 import { getErrorMessage } from '@shared/utils/errorMessage'
+import { calculateFileDigests } from '@/api/checksum'
 import { invoke } from '@tauri-apps/api/core'
 import { resolveTaskFilePath, requestFileRecheck } from '@/composables/useTaskPaths'
+import { resolveExistingTaskFile } from '@/composables/useTaskFileTarget'
 import { logger } from '@shared/logger'
 import { openAndroidFile, shareAndroidFile } from '@/composables/useAndroidNative'
 import { usePlatform } from '@/composables/usePlatform'
@@ -285,25 +287,6 @@ export function useTaskActions(deps: TaskActionsDeps) {
     message.info(t('task.android-file-open-fallback'))
   }
 
-  async function resolveExistingTaskFile(task: Aria2Task): Promise<string | null> {
-    const candidates = [
-      resolveTaskFilePath(task),
-      ...(task.files ?? []).map((file) => file.path?.trim() || null),
-      await resolveOpenTarget(task),
-    ].filter((path): path is string => Boolean(path))
-
-    for (const path of new Set(candidates)) {
-      try {
-        if (!(await invoke<boolean>('check_path_exists', { path }))) continue
-        if (await invoke<boolean>('check_path_is_dir', { path })) continue
-        return path
-      } catch (error) {
-        logger.debug('TaskView.openAndroidFile.candidate', error)
-      }
-    }
-    return null
-  }
-
   async function handleVerifyChecksum(task: Aria2Task) {
     if (task.status !== 'complete' && task.status !== 'removed' && !checkTaskIsSharing(task)) return
 
@@ -323,44 +306,57 @@ export function useTaskActions(deps: TaskActionsDeps) {
     const fileName = target.split(/[\\/]/).pop() || target
     const pending = message.progress(t('task.sha256-calculating', { fileName }))
     try {
-      const digest = await invoke<string>('sha256_file', { path: target })
+      const digests = await calculateFileDigests(target)
       pending.destroy()
+      const rows: Array<[string, string]> = [
+        ['MD5', digests.md5],
+        ['SHA-1', digests.sha1],
+        ['SHA-256', digests.sha256],
+        ['SHA-512', digests.sha512],
+      ]
       dialog.info({
-        title: t('task.sha256'),
+        title: t('task.checksum-title'),
         content: () =>
-          h('div', { class: 'technical-text-wrap', style: 'display:grid;gap:12px' }, [
+          h('div', { class: 'technical-text-wrap', style: 'display:grid;gap:14px' }, [
             h('p', { style: 'margin:0;color:var(--m3-on-surface-variant)' }, fileName),
-            h(
-              'code',
-              {
-                style:
-                  'display:block;overflow-wrap:anywhere;user-select:text;font-family:var(--font-family-mono);line-height:1.6',
-              },
-              digest,
-            ),
-            h(
-              NButton,
-              {
-                size: 'small',
-                style: 'justify-self:start',
-                onClick: async () => {
-                  try {
-                    await writeAppClipboardText(digest)
-                    message.success(t('task.sha256-copied'))
-                  } catch (error) {
-                    logger.warn('TaskView.verifyChecksum.copy', getErrorMessage(error))
-                  }
-                },
-              },
-              { default: () => t('task.sha256-copy') },
+            ...rows.map(([label, value]) =>
+              h('div', { style: 'display:grid;gap:4px' }, [
+                h('strong', { style: 'font-size:var(--font-size-sm)' }, label),
+                h(
+                  'code',
+                  {
+                    style:
+                      'display:block;overflow-wrap:anywhere;user-select:text;font-family:var(--font-family-mono);line-height:1.6',
+                  },
+                  value,
+                ),
+                h(
+                  NButton,
+                  {
+                    size: 'tiny',
+                    style: 'justify-self:start',
+                    onClick: async () => {
+                      try {
+                        await writeAppClipboardText(value)
+                        message.success(t('task.checksum-copied', { algorithm: label }))
+                      } catch (error) {
+                        logger.warn('TaskView.verifyChecksum.copy', getErrorMessage(error))
+                        message.error(t('task.checksum-copy-failed'))
+                      }
+                    },
+                  },
+                  { default: () => t('task.checksum-copy', { algorithm: label }) },
+                ),
+              ]),
             ),
           ]),
         positiveText: t('app.close'),
+        zIndex: 12000,
       })
     } catch (error) {
       pending.destroy()
       logger.warn('TaskView.verifyChecksum', getErrorMessage(error))
-      message.error(t('task.sha256-failed'))
+      message.error(t('task.checksum-failed'))
     }
   }
 

@@ -184,6 +184,7 @@ describe('TaskItem', () => {
         bittorrent: { state: 'seeding', info: { name: 'archive.zip' } },
       },
     })
+    await vi.advanceTimersByTimeAsync(600)
 
     expect(wrapper.get('.task-compact-item').element).toBe(surface)
     expect(wrapper.get('.compact-percent').element).toBe(percent)

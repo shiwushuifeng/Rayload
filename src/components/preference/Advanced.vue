@@ -51,6 +51,7 @@ import {
 } from '@vicons/ionicons5'
 import { logger } from '@shared/logger'
 import PreferenceActionRegistration from './PreferenceActionRegistration.vue'
+import ConfigTransfer from './ConfigTransfer.vue'
 import PreferenceHintLabel from './PreferenceHintLabel.vue'
 
 const engineStore = useEngineStore()
@@ -64,6 +65,7 @@ const { constraint, configFieldProps, areConfigFieldsValid } = usePreferenceNume
 const dialog = useDialog()
 const { isLinux, isAndroid } = usePlatform()
 const { openExtensionPanel } = useExtensionPanel()
+const showConfigTransfer = ref(false)
 
 import { diffConfig, checkIsNeedRestart } from '@shared/utils/config'
 import { writeAppClipboardText } from '@shared/utils'
@@ -679,11 +681,19 @@ onMounted(async () => {
                 </template>
                 {{ t('preferences.import-settings') }}
               </NButton>
+              <NButton @click="showConfigTransfer = true">
+                <template #icon>
+                  <NIcon><CopyOutline /></NIcon>
+                </template>
+                {{ t('preferences.config-transfer-button') }}
+              </NButton>
             </NSpace>
           </div>
         </NFormItem>
       </NForm>
     </div>
+
+    <ConfigTransfer :show="showConfigTransfer" @close="showConfigTransfer = false" />
 
     <!-- Database records viewer modal -->
     <NModal v-model:show="showDbBrowse" :mask-closable="true" transform-origin="center">

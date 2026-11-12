@@ -18,6 +18,8 @@ import { isEngineReady } from '@/api/aria2'
 import { detectKind, createBatchItem } from '@shared/utils/batchHelpers'
 import { createExternalInputTraceId, summarizeExternalInputBatch } from '@shared/utils/externalInputDiagnostics'
 import { getErrorMessage } from '@shared/utils/errorMessage'
+import { writeAppClipboardText } from '@shared/utils'
+import { buildErrorLog, friendlyErrorKind } from '@shared/utils/friendlyError'
 import type { ExternalDownloadInput } from '@shared/types'
 import { handleTaskStart } from '@/composables/useTaskNotifyHandlers'
 import { onUnmounted } from 'vue'
@@ -140,13 +142,22 @@ export function useAppEvents(deps: AppEventsDeps): AppEventsReturn {
 
   function setupExternalInputHandlers() {
     appStore.setExternalInputErrorHandler?.((error) => {
-      message.error(
-        getErrorMessage(error, {
-          fallback: t('task.error-unknown'),
-          labels: { Aria2: t('task.error-aria2-next') },
-        }),
-        { closable: true },
-      )
+      const raw = getErrorMessage(error, {
+        fallback: t('task.error-unknown'),
+        labels: { Aria2: t('task.error-aria2-next') },
+      })
+      const summary = t(`task.error-friendly-${friendlyErrorKind(raw)}`)
+      navDialog.error({
+        title: t('task.error-friendly-title'),
+        content: `${summary}\n\n${raw}`,
+        positiveText: t('task.error-copy-log'),
+        negativeText: t('app.close'),
+        onPositiveClick: () => {
+          void writeAppClipboardText(buildErrorLog(raw, { source: 'external-input' }))
+            .then(() => message.success(t('task.error-log-copied')))
+            .catch(() => message.error(t('task.error-log-copy-failed')))
+        },
+      })
     })
     registerCleanup(() => appStore.setExternalInputErrorHandler?.(null))
 

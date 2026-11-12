@@ -71,7 +71,7 @@ async function openSettings() {
     await invoke('open_default_apps_settings')
   } catch (error) {
     logger.warn('Protocol.settings', String(error))
-    message.error(String(error))
+    message.error(t('task.error-friendly-unknown'))
   }
 }
 async function change(protocol: ProtocolKey) {

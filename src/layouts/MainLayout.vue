@@ -32,7 +32,11 @@ import PreferenceActionBar from '@/components/preference/PreferenceActionBar.vue
 import { providePreferenceActions } from '@/composables/usePreferenceActions'
 import { useNavigationVisibility } from '@/composables/useNavigationVisibility'
 import { useExtensionPanel } from '@/composables/useExtensionPanel'
-import { setAndroidAppIcon, syncAndroidEngineCredentials } from '@/composables/useAndroidNative'
+import {
+  setAndroidAppIcon,
+  syncAndroidEngineCredentials,
+  syncAndroidNotificationMode,
+} from '@/composables/useAndroidNative'
 import TaskActions from '@/components/task/TaskActions.vue'
 import { useTaskDestinations } from '@/components/layout/navigation'
 import Speedometer from '@/components/layout/Speedometer.vue'
@@ -71,6 +75,13 @@ watch(
   },
 )
 
+watch(
+  () => preferenceStore.config.notificationKeepAlive,
+  (keepAlive) => {
+    if (isAndroid.value) syncAndroidNotificationMode(keepAlive)
+  },
+)
+
 declare global {
   interface Window {
     __rayloadHandleBack?: () => boolean
@@ -94,6 +105,10 @@ function handleAndroidBack(): boolean {
   }
   if (showTrash.value) {
     showTrash.value = false
+    return true
+  }
+  if (taskStore.selectionMode) {
+    taskStore.clearChecked()
     return true
   }
   if (appStore.addTaskVisible) {
@@ -162,6 +177,8 @@ watch(
   { immediate: true, flush: 'post' },
 )
 const isTaskPage = computed(() => route.path.startsWith('/task'))
+const isPreferencePage = computed(() => route.matched.some((record) => record.name === 'preference'))
+const isStatisticsPage = computed(() => route.name === 'statistics')
 const preferenceActions = providePreferenceActions()
 const activePreferenceActions = computed(() =>
   preferenceActions.value?.routeName === route.name ? preferenceActions.value : null,
@@ -177,11 +194,17 @@ const compactNavigation = computed(() => isAndroid.value || narrowNavigation.val
 const mobileModalOpen = computed(() => isAndroid.value && appStore.addTaskVisible)
 const taskDestinations = useTaskDestinations()
 const { isItemVisible, visibleItems } = useNavigationVisibility()
-const pageTitle = computed(() =>
-  isTaskPage.value
-    ? (taskDestinations.value.find((item) => item.key === (route.params.status || 'all'))?.label ?? t('task.scope-all'))
-    : t('navigation.settings'),
-)
+const pageTitle = computed(() => {
+  if (isTaskPage.value && taskStore.selectionMode) {
+    return t('task.selected-count', { count: taskStore.checkedGids.length })
+  }
+  if (isTaskPage.value)
+    return (
+      taskDestinations.value.find((item) => item.key === (route.params.status || 'all'))?.label ?? t('task.scope-all')
+    )
+  if (isStatisticsPage.value) return t('navigation.statistics')
+  return t('navigation.settings')
+})
 const showAbout = ref(false)
 const showTrash = ref(false)
 const { extensionPanelVisible: showExtensions, closeExtensionPanel } = useExtensionPanel()
@@ -582,6 +605,7 @@ onMounted(async () => {
   if (isAndroid.value) {
     setAndroidAppIcon(preferenceStore.config.androidAppIcon)
     syncAndroidEngineCredentials(preferenceStore.config.rpcListenPort, preferenceStore.config.rpcSecret)
+    syncAndroidNotificationMode(preferenceStore.config.notificationKeepAlive)
     window.__rayloadHandleBack = handleAndroidBack
     window.addEventListener('rayload-back-home', onAndroidBackHome)
   }
@@ -947,7 +971,12 @@ onUnmounted(() => {
       @show-about="openAbout"
       @show-trash="showTrash = true"
     />
-    <header class="page-header" data-tauri-drag-region :inert="mobileModalOpen">
+    <header
+      class="page-header"
+      :class="{ 'page-header--selecting': isTaskPage && taskStore.selectionMode }"
+      data-tauri-drag-region
+      :inert="mobileModalOpen"
+    >
       <div class="page-title-slot" data-tauri-drag-region>
         <Transition name="page-title" mode="out-in">
           <h1 :key="pageTitle" data-tauri-drag-region>{{ pageTitle }}</h1>
@@ -965,7 +994,7 @@ onUnmounted(() => {
     <main class="content" :inert="mobileModalOpen">
       <router-view v-slot="{ Component, route: viewRoute }">
         <Transition name="fade" mode="out-in" appear>
-          <component :is="Component" :key="isTaskPage ? viewRoute.path : 'preferences'" />
+          <component :is="Component" :key="viewRoute.path" />
         </Transition>
       </router-view>
     </main>
@@ -977,7 +1006,7 @@ onUnmounted(() => {
       @close="requestClose"
       @maximize-toggled="onMaximizeToggled"
     />
-    <footer v-if="!isTaskPage" class="content-footer" :inert="mobileModalOpen">
+    <footer v-if="isPreferencePage" class="content-footer" :inert="mobileModalOpen">
       <div id="preference-actions">
         <PreferenceActionBar
           :is-dirty="activePreferenceActions?.isDirty ?? false"
@@ -987,7 +1016,7 @@ onUnmounted(() => {
         />
       </div>
     </footer>
-    <Speedometer />
+    <Speedometer v-if="preferenceStore.config.showSpeedometer && !isPreferencePage && route.name !== 'statistics'" />
     <KeepAwakeOverlay />
     <AboutPanel :show="showAbout" @close="showAbout = false" />
     <AndroidPermissionWelcome />
@@ -1143,6 +1172,20 @@ onUnmounted(() => {
   padding-bottom: 12px;
   align-items: flex-end;
   border-bottom: 2px solid var(--panel-border);
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  transition:
+    background-color 240ms var(--task-motion-ease),
+    border-color 240ms var(--task-motion-ease),
+    color 240ms var(--task-motion-ease),
+    margin-inline 240ms var(--task-motion-ease),
+    padding-inline 240ms var(--task-motion-ease);
+}
+.page-header--selecting {
+  margin-inline: calc(var(--content-gutter) - 12px);
+  padding-inline: 12px;
+  color: var(--m3-on-primary-container);
+  background: color-mix(in srgb, var(--m3-primary-container) 62%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--m3-primary) 40%, transparent);
 }
 .page-title-slot {
   flex: 1;
@@ -1329,6 +1372,7 @@ onUnmounted(() => {
   width: 100%;
   min-width: 0;
 }
+
 #container.compact-navigation .engine-banner {
   top: env(safe-area-inset-top, 0px);
 }

@@ -38,6 +38,7 @@ import {
   ServerOutline,
   SettingsOutline,
   SearchOutline,
+  ShieldCheckmarkOutline,
 } from '@vicons/ionicons5'
 import { useTaskDetailOptions } from '@/composables/useTaskDetailOptions'
 import { replaceTaskUri } from '@/api/aria2'
@@ -67,8 +68,10 @@ import TaskDetailFiles from './detail/TaskDetailFiles.vue'
 import TaskDetailPeers from './detail/TaskDetailPeers.vue'
 import TaskDetailSources from './detail/TaskDetailSources.vue'
 import TaskDetailTrackers from './detail/TaskDetailTrackers.vue'
+import TaskChecksumPanel from './detail/TaskChecksumPanel.vue'
 import RenameCompletedFile from './detail/RenameCompletedFile.vue'
 import MoveDownload from './detail/MoveDownload.vue'
+import FriendlyErrorNotice from '@/components/common/FriendlyErrorNotice.vue'
 import { forceBtRecheck } from '@/api/aria2'
 import { getErrorMessage } from '@shared/utils/errorMessage'
 import { formatSharingDuration, getBtLifecycleState } from '@/composables/useBtLifecycle'
@@ -205,6 +208,7 @@ interface TabDef {
   protocolOnly?: boolean
   uriOnly?: boolean
   liveOnly?: boolean
+  checksumOnly?: boolean
 }
 const allTabs: TabDef[] = [
   { key: 'general', labelKey: 'task.task-tab-general', icon: InformationCircleOutline },
@@ -212,6 +216,7 @@ const allTabs: TabDef[] = [
   { key: 'files', labelKey: 'task.task-tab-files', icon: DocumentOutline },
   { key: 'options', labelKey: 'task.task-tab-options', icon: SettingsOutline, uriOnly: true, liveOnly: true },
   { key: 'sources', labelKey: 'task.task-tab-sources', icon: ServerOutline, uriOnly: true },
+  { key: 'checksum', labelKey: 'task.task-tab-checksum', icon: ShieldCheckmarkOutline, checksumOnly: true },
   { key: 'status', labelKey: 'task.task-tab-status', icon: PulseOutline, protocolOnly: true, liveOnly: true },
   { key: 'peers', labelKey: 'task.task-tab-peers', icon: PeopleOutline, btOnly: true, liveOnly: true },
   { key: 'trackers', labelKey: 'task.task-tab-trackers', icon: ServerOutline, btOnly: true, liveOnly: true },
@@ -228,6 +233,7 @@ const visibleTabs = computed(() =>
       (!tab.btOnly || isBT.value) &&
       (!tab.protocolOnly || isBT.value || isED2K.value) &&
       (!tab.uriOnly || isURI.value || (tab.key === 'options' && Boolean(props.task?.media))) &&
+      (!tab.checksumOnly || isTerminal.value || (props.task ? checkTaskIsSharing(props.task) : false)) &&
       (!tab.liveOnly || !isTerminal.value || (tab.key === 'options' && retriesFromSource.value)),
   ),
 )
@@ -342,6 +348,11 @@ const taskErrorMessage = computed(
   () => props.task?.media?.error || props.task?.errorMessage || btInfo.value?.error?.message || '',
 )
 const taskErrorCode = computed(() => props.task?.errorCode || btInfo.value?.error?.code || '')
+const taskErrorLog = computed(() =>
+  [taskErrorCode.value && taskErrorCode.value !== '0' ? `[${taskErrorCode.value}]` : '', taskErrorMessage.value]
+    .filter(Boolean)
+    .join(' '),
+)
 const sharingDuration = computed(() =>
   formatSharingDuration(props.task ? getTaskSharingTime(props.task) : 0, {
     day: t('task.sharing-day-unit'),
@@ -480,8 +491,13 @@ async function onFileRenamed() {
                 <NDescriptionsItem v-for="row in mediaRows" :key="row.key" :label="t(row.label)">
                   <span class="technical-text-wrap">{{ row.value }}</span>
                 </NDescriptionsItem>
-                <NDescriptionsItem v-if="taskErrorMessage" :label="t('task.task-error-info') || 'Error'">
-                  {{ taskErrorCode && taskErrorCode !== '0' ? `${taskErrorCode} ` : '' }}{{ taskErrorMessage }}
+                <NDescriptionsItem v-if="taskErrorLog" :label="t('task.task-error-info') || 'Error'">
+                  <FriendlyErrorNotice
+                    :raw="taskErrorLog"
+                    :gid="task?.gid"
+                    :url="taskPrimaryUrl"
+                    source="task-detail"
+                  />
                 </NDescriptionsItem>
                 <NDescriptionsItem v-if="taskAddedAt" :label="t('task.task-added-at') || 'Added At'">
                   {{ taskAddedAt }}
@@ -616,6 +632,10 @@ async function onFileRenamed() {
               :tooltip="t('about.click-to-copy')"
               :on-copy="copyDetailValue"
             />
+          </div>
+
+          <div v-else-if="activeTab === 'checksum'" key="checksum" class="tab-content">
+            <TaskChecksumPanel v-if="task" :key="task.gid" :task="task" />
           </div>
 
           <div v-else-if="activeTab === 'options'" key="options" class="tab-content">

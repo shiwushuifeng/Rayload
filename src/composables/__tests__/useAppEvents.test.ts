@@ -111,6 +111,7 @@ function createDeps() {
   }
   const navDialog = {
     warning: vi.fn(),
+    error: vi.fn(),
   }
 
   const deps: UseAppEventsDeps = {
@@ -124,7 +125,7 @@ function createDeps() {
     onAbout: vi.fn(),
   }
 
-  return { deps, appStore, taskStore, message }
+  return { deps, appStore, taskStore, message, navDialog }
 }
 
 function mountComposable(deps: UseAppEventsDeps) {
@@ -290,16 +291,19 @@ describe('useAppEvents', () => {
   })
 
   it('shows localized readable text for external input auto-submit errors', async () => {
-    const { deps, appStore, message } = createDeps()
+    const { deps, appStore, navDialog } = createDeps()
 
     mountComposable(deps)
 
     const handler = appStore.setExternalInputErrorHandler.mock.calls[0][0] as (error: unknown) => void
     handler({ Aria2: 'aria2 RPC error [1]: Unsupported URI scheme' })
 
-    expect(message.error).toHaveBeenCalledWith('task.error-aria2-next [1]: Unsupported URI scheme', {
-      closable: true,
-    })
+    expect(navDialog.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: 'task.error-friendly-title',
+        content: 'task.error-friendly-unknown\n\ntask.error-aria2-next [1]: Unsupported URI scheme',
+      }),
+    )
   })
 
   it('keeps the external input start handler registered after listener setup', async () => {
@@ -320,7 +324,7 @@ describe('useAppEvents', () => {
   })
 
   it('keeps the external input error handler registered after listener setup', async () => {
-    const { deps, appStore, message } = createDeps()
+    const { deps, appStore, navDialog } = createDeps()
     const { setupListeners } = mountComposable(deps)
 
     await setupListeners()
@@ -331,9 +335,11 @@ describe('useAppEvents', () => {
 
     handler?.({ Aria2: 'aria2 RPC error [1]: Unsupported URI scheme' })
 
-    expect(message.error).toHaveBeenCalledWith('task.error-aria2-next [1]: Unsupported URI scheme', {
-      closable: true,
-    })
+    expect(navDialog.error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        content: 'task.error-friendly-unknown\n\ntask.error-aria2-next [1]: Unsupported URI scheme',
+      }),
+    )
   })
 
   it('reports an extension API port that cannot be bound', async () => {

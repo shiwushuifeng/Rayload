@@ -15,6 +15,7 @@ import { resolveUserVisibleDownloadDir } from '@shared/utils/userVisibleDirector
 import { toggleSpeedLimit } from '@/composables/useSpeedLimiter'
 import { changeGlobalOption, isEngineReady } from '@/api/aria2'
 import { FILE_ALLOCATION_OPTIONS, INCOMPLETE_SUFFIX, SCHEDULE_DAY } from '@shared/constants'
+import { getVideoArchiveFolder, withVideoArchiveFolder } from '@shared/utils/autoArchive'
 import { useAppMessage } from '@/composables/useAppMessage'
 import { usePlatform } from '@/composables/usePlatform'
 import { chooseAndroidDirectory } from '@/composables/useAndroidNative'
@@ -211,6 +212,12 @@ const categorySummary = computed(() => {
   return t('preferences.file-category-summary', { count: categories.length, url: urlRuleCount })
 })
 const categoryBaseDir = computed(() => form.value.dir || defaultDownloadDir.value)
+const videoArchiveFolder = computed({
+  get: () => getVideoArchiveFolder(form.value.fileCategories),
+  set: (value: string) => {
+    form.value.fileCategories = withVideoArchiveFolder(form.value.fileCategories, value)
+  },
+})
 async function handleCategoryManagerSave(categories: typeof form.value.fileCategories) {
   const saved = await commitInstant({ fileCategories: categories }, () =>
     preferenceStore.updateAndSave({ fileCategories: categories }),
@@ -328,6 +335,15 @@ onMounted(async () => {
             />
           </template>
           <NSwitch v-model:value="form.fileCategoryEnabled" />
+        </NFormItem>
+        <NFormItem v-if="form.fileCategoryEnabled">
+          <template #label>
+            <PreferenceHintLabel
+              :label="t('preferences.auto-archive-video-folder')"
+              :hint="t('preferences.auto-archive-video-folder-hint')"
+            />
+          </template>
+          <NInput v-model:value="videoArchiveFolder" class="pref-control-auto" />
         </NFormItem>
         <NFormItem :show-label="false">
           <div class="file-category-summary-row">

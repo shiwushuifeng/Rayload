@@ -76,6 +76,10 @@ vi.mock('@/api/aria2', () => ({
   isEngineReady: () => isEngineReadyMock(),
 }))
 
+vi.mock('@/components/task/HomeStatsBar.vue', () => ({
+  default: { template: '<div class="home-stats-stub" />' },
+}))
+
 vi.mock('@/components/task/TaskList.vue', () => ({
   default: { template: '<div class="task-list-stub" />' },
 }))

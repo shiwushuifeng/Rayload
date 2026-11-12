@@ -26,13 +26,18 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.Keep
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
 import java.io.File
 import java.lang.ref.WeakReference
+import java.net.Inet4Address
+import java.net.NetworkInterface
+import java.util.Collections
 import org.json.JSONObject
 
 class MainActivity : TauriActivity() {
   private var activeWebView: WebView? = null
+  private var pendingNewDownload = false
   private var backCallback: OnBackPressedCallback? = null
   private var lastBackAt = 0L
   private val shareQueueFile by lazy { File(filesDir, "rayload-share-pending.txt") }
@@ -41,12 +46,17 @@ class MainActivity : TauriActivity() {
   ) { uri -> handleDirectorySelection(uri) }
 
   companion object {
+    private val VIRTUAL_INTERFACE_PREFIXES =
+      listOf("tun", "tap", "ppp", "rmnet", "clat", "ip6tnl", "dummy", "v4-", "ipsec", "p2p")
     private const val EXTERNAL_STORAGE_DOCUMENTS = "com.android.externalstorage.documents"
     private const val APP_DOWNLOAD_DIRECTORY = "Download/Rayload"
+    private const val ACTION_NEW_DOWNLOAD = "com.shiwushuifeng.rayload.action.NEW_DOWNLOAD"
     private const val REQUEST_NOTIFICATION_PERMISSION = 4102
     private const val REQUEST_LEGACY_STORAGE_PERMISSION = 4103
     private const val WAKE_LOCK_TAG = "Rayload:active-downloads"
     private const val LAUNCHER_ICON_PREFS = "rayload-launcher-icon"
+    private const val CLIPBOARD_PREFS = "rayload-permissions"
+    private const val KEY_CLIPBOARD_CONSENT = "clipboard-consent"
 
     private var downloadWakeLock: PowerManager.WakeLock? = null
     private var activeActivity: WeakReference<MainActivity>? = null
@@ -221,12 +231,14 @@ class MainActivity : TauriActivity() {
     activeActivity = WeakReference(this)
     startEngineService()
     captureShareIntent(intent)
+    captureNewDownloadIntent(intent)
   }
 
   override fun onNewIntent(intent: Intent) {
     super.onNewIntent(intent)
     setIntent(intent)
     captureShareIntent(intent)
+    captureNewDownloadIntent(intent)
   }
 
   override fun onResume() {
@@ -253,6 +265,11 @@ class MainActivity : TauriActivity() {
       textZoom = 100
     }
     webView.addJavascriptInterface(NativeBridge(), "RayloadNative")
+    if (pendingNewDownload) {
+      webView.postDelayed({
+        if (pendingNewDownload) dispatchNativeEvent("rayload-new-task-requested")
+      }, 800)
+    }
     webView.setDownloadListener { url, userAgent, contentDisposition, _, contentLength ->
       val detail = JSONObject()
         .put("url", url)
@@ -334,6 +351,11 @@ class MainActivity : TauriActivity() {
       EngineForegroundService.setPaused(this@MainActivity, paused)
     }
 
+    @JavascriptInterface
+    fun setEngineNotificationQuiet(quiet: Boolean) {
+      EngineForegroundService.setQuiet(this@MainActivity, quiet)
+    }
+
     /** Keep-awake dashboard: clears automatically when the activity is destroyed. */
     @JavascriptInterface
     fun setKeepScreenOn(enabled: Boolean) {
@@ -361,9 +383,42 @@ class MainActivity : TauriActivity() {
       if (isIgnoringBatteryOptimizations()) "granted" else "denied"
 
     @JavascriptInterface
+    fun consumeNewDownloadRequest(): Boolean {
+      val pending = pendingNewDownload
+      pendingNewDownload = false
+      return pending
+    }
+
+    @JavascriptInterface
     fun requestBatteryOptimizationExemption() {
       runOnUiThread { this@MainActivity.requestBatteryOptimizationExemption() }
     }
+
+    @JavascriptInterface
+    fun clipboardPermissionStatus(): String = currentClipboardPermissionStatus()
+
+    @JavascriptInterface
+    fun requestClipboardPermission() {
+      runOnUiThread { this@MainActivity.requestClipboardPermission() }
+    }
+
+    @JavascriptInterface
+    fun installPermissionStatus(): String = currentInstallPermissionStatus()
+
+    @JavascriptInterface
+    fun requestInstallPermission() {
+      runOnUiThread { this@MainActivity.requestInstallPermission() }
+    }
+
+    /** Restarts the app in a fresh process so persisted preferences re-apply. */
+    @JavascriptInterface
+    fun restartApp() {
+      runOnUiThread { this@MainActivity.restartApp() }
+    }
+
+    /** Active non-loopback IPv4 address, used by the LAN panel. */
+    @JavascriptInterface
+    fun localIpAddress(): String = currentLocalIpAddress()
   }
 
   private fun openDirectoryPicker() {
@@ -393,6 +448,13 @@ class MainActivity : TauriActivity() {
     shareQueueFile.parentFile?.mkdirs()
     shareQueueFile.appendText("$sharedText\n", Charsets.UTF_8)
     dispatchNativeEvent("rayload-share-requested")
+  }
+
+  private fun captureNewDownloadIntent(intent: Intent?) {
+    if (intent?.action != ACTION_NEW_DOWNLOAD) return
+    intent.action = null
+    pendingNewDownload = true
+    if (activeWebView != null) dispatchNativeEvent("rayload-new-task-requested")
   }
 
   private fun dispatchNativeEvent(eventName: String, detail: JSONObject = JSONObject()) {
@@ -505,6 +567,112 @@ class MainActivity : TauriActivity() {
     )
     if (startActivitySafely(this, request)) return
     startActivitySafely(this, Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
+  }
+
+  /**
+   * Android has no clipboard runtime permission; reading is allowed only while
+   * the app is in the foreground. This explicit consent gates Rayload's
+   * foreground-only clipboard link detection.
+   */
+  private fun currentClipboardPermissionStatus(): String = if (
+    getSharedPreferences(CLIPBOARD_PREFS, Context.MODE_PRIVATE)
+      .getBoolean(KEY_CLIPBOARD_CONSENT, false)
+  ) {
+    "granted"
+  } else {
+    "denied"
+  }
+
+  private fun requestClipboardPermission() {
+    if (currentClipboardPermissionStatus() == "granted") {
+      dispatchNativeEvent("rayload-permission-state-changed")
+      return
+    }
+    AlertDialog.Builder(this)
+      .setTitle(R.string.clipboard_permission_title)
+      .setMessage(R.string.clipboard_permission_message)
+      .setPositiveButton(R.string.clipboard_permission_allow) { _, _ ->
+        getSharedPreferences(CLIPBOARD_PREFS, Context.MODE_PRIVATE)
+          .edit()
+          .putBoolean(KEY_CLIPBOARD_CONSENT, true)
+          .apply()
+        dispatchNativeEvent("rayload-permission-state-changed")
+      }
+      .setNegativeButton(R.string.clipboard_permission_deny) { _, _ ->
+        dispatchNativeEvent("rayload-permission-state-changed")
+      }
+      .show()
+  }
+
+  private fun currentInstallPermissionStatus(): String {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return "granted"
+    return try {
+      if (packageManager.canRequestPackageInstalls()) "granted" else "denied"
+    } catch (_: Exception) {
+      "unavailable"
+    }
+  }
+
+  private fun requestInstallPermission() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
+      dispatchNativeEvent("rayload-permission-state-changed")
+      return
+    }
+    val intent = Intent(
+      Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+      Uri.parse("package:$packageName"),
+    )
+    if (!startActivitySafely(this, intent)) {
+      startActivitySafely(this, Intent(Settings.ACTION_SECURITY_SETTINGS))
+    }
+  }
+
+  /** Relaunches the launcher activity before terminating this process. */
+  private fun restartApp() {
+    val intent = packageManager.getLaunchIntentForPackage(packageName)?.apply {
+      addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+    }
+    if (intent != null) startActivity(intent)
+    Handler(Looper.getMainLooper()).postDelayed({ Process.killProcess(Process.myPid()) }, 120)
+  }
+
+  /**
+   * Returns a private IPv4 address that a computer on the same LAN can reach.
+   * Wi-Fi, hotspot and Ethernet interfaces win; VPN, cellular and other
+   * virtual links are skipped so the QR code never advertises a dead endpoint.
+   */
+  private fun currentLocalIpAddress(): String {
+    return try {
+      findLanIpv4 { name -> name.startsWith("wlan") || name.startsWith("ap") || name.startsWith("eth") }
+    } catch (_: Exception) {
+      ""
+    }
+  }
+
+  private fun findLanIpv4(acceptInterface: (String) -> Boolean): String {
+    val interfaces = NetworkInterface.getNetworkInterfaces() ?: return ""
+    for (networkInterface in Collections.list(interfaces)) {
+      if (!networkInterface.isUp || networkInterface.isLoopback) continue
+      val interfaceName = networkInterface.name.lowercase()
+      if (VIRTUAL_INTERFACE_PREFIXES.any { interfaceName.startsWith(it) }) continue
+      if (!acceptInterface(interfaceName)) continue
+      for (address in Collections.list(networkInterface.inetAddresses)) {
+        if (address is Inet4Address && !address.isLoopbackAddress && !address.isLinkLocalAddress &&
+          isPrivateIpv4(address)
+        ) {
+          address.hostAddress?.takeIf { it.isNotBlank() }?.let { return it }
+        }
+      }
+    }
+    return ""
+  }
+
+  private fun isPrivateIpv4(address: Inet4Address): Boolean {
+    val octets = address.address
+    if (octets.size != 4) return false
+    val first = octets[0].toInt() and 0xFF
+    val second = octets[1].toInt() and 0xFF
+    return first == 10 || (first == 172 && second in 16..31) || (first == 192 && second == 168)
   }
 
   private fun startEngineService() {

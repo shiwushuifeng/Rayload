@@ -16,5 +16,6 @@
   "notification.selection-body": "%{task_name}",
   "notification.browser-kept-title": "Nedlastingen ble i nettleseren",
   "notification.browser-kept-body": "Rayload nådde ikke %{host}.",
-  "notification.browser-kept-proxy-body": "Rayload nådde ikke %{host}. Hvis nettleseren bruker en proxy, slå på proxy i nettverksinnstillingene til Rayload."
+  "notification.browser-kept-proxy-body": "Rayload nådde ikke %{host}. Hvis nettleseren bruker en proxy, slå på proxy i nettverksinnstillingene til Rayload.",
+  "notification.private-body": "Saved to your download folder"
 }

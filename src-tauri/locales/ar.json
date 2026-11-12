@@ -16,5 +16,6 @@
   "notification.selection-body": "%{task_name}",
   "notification.browser-kept-title": "بقي التنزيل في المتصفح",
   "notification.browser-kept-body": "تعذّر على Rayload الوصول إلى %{host}.",
-  "notification.browser-kept-proxy-body": "تعذّر على Rayload الوصول إلى %{host}. إذا كان المتصفح يستخدم وكيلًا، ففعّل الوكيل في إعدادات الشبكة في Rayload."
+  "notification.browser-kept-proxy-body": "تعذّر على Rayload الوصول إلى %{host}. إذا كان المتصفح يستخدم وكيلًا، ففعّل الوكيل في إعدادات الشبكة في Rayload.",
+  "notification.private-body": "Saved to your download folder"
 }

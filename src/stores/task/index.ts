@@ -77,6 +77,7 @@ export const useTaskStore = defineStore('task', () => {
   const removingGids = ref<string[]>([])
   /** Tasks the user picked in the current list for a batch action. */
   const checkedGids = ref<string[]>([])
+  const selectionMode = computed(() => checkedGids.value.length > 0)
   let checkAnchor = ''
   const resubmittingGids = ref<string[]>([])
   const taskCounts = reactive<TaskCounts>({ all: 0, progress: 0, failed: 0, completed: 0 })
@@ -350,6 +351,15 @@ export const useTaskStore = defineStore('task', () => {
       : [...checkedGids.value, gid]
   }
 
+  function setChecked(gid: string, checked: boolean) {
+    checkAnchor = gid
+    if (checked) {
+      if (!checkedGids.value.includes(gid)) checkedGids.value = [...checkedGids.value, gid]
+    } else {
+      checkedGids.value = checkedGids.value.filter((item) => item !== gid)
+    }
+  }
+
   /** Checks every task between the last toggled one and `gid` in `order`. */
   function checkRange(gid: string, order: string[]) {
     const from = order.indexOf(checkAnchor)
@@ -612,7 +622,9 @@ export const useTaskStore = defineStore('task', () => {
     removingGids,
     resubmittingGids,
     checkedGids,
+    selectionMode,
     toggleChecked,
+    setChecked,
     checkRange,
     checkAll,
     clearChecked,

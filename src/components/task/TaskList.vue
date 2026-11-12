@@ -5,9 +5,11 @@ import Sortable from 'sortablejs'
 import { useTaskStore } from '@/stores/task'
 import { usePreferenceStore } from '@/stores/preference'
 import { useReducedMotion } from '@/composables/useReducedMotion'
+import { usePlatform } from '@/composables/usePlatform'
 import { logger } from '@shared/logger'
 import TaskItem from './TaskItem.vue'
 import TaskCompactItem from './TaskCompactItem.vue'
+import TaskSwipeRow from './TaskSwipeRow.vue'
 import type { ComponentPublicInstance } from 'vue'
 import type { SortableEvent, SortableOptions } from 'sortablejs'
 import type { Aria2Task } from '@shared/types'
@@ -33,6 +35,7 @@ const emit = defineEmits<{
 const taskStore = useTaskStore()
 const preferenceStore = usePreferenceStore()
 const reduceMotion = useReducedMotion()
+const { isAndroid } = usePlatform()
 
 type ListRefTarget = HTMLElement | ComponentPublicInstance | null
 
@@ -204,7 +207,8 @@ const sortableOptions: SortableOptions = {
   animation: reduceMotion.value ? 0 : 240,
   draggable: '.task-list-item',
   filter: '.task-item-actions, button, a, input, textarea, select, [data-no-drag]',
-  delay: 450,
+  handle: isAndroid.value ? '[data-task-drag-handle]' : undefined,
+  delay: isAndroid.value ? 260 : 450,
   delayOnTouchOnly: true,
   touchStartThreshold: 4,
   ghostClass: 'task-list-item--ghost',
@@ -254,6 +258,13 @@ watch(reduceMotion, (enabled) => {
   sortable?.option('animation', duration)
 })
 
+watch(
+  () => taskStore.selectionMode,
+  (selecting) => {
+    sortable?.option('disabled', selecting)
+  },
+)
+
 function destroySortable() {
   sortable?.destroy()
   sortable = null
@@ -283,9 +294,19 @@ function handlePageSwapAfterEnter() {
   void nextTick(mountSortable)
 }
 
-// Ctrl/Cmd-click picks one task, Shift-click a range; a plain click on a card
-// ends the picking.
+// Long press starts selection. While selecting, a tap toggles the card.
+// Ctrl/Cmd-click picks one task and Shift-click a range on desktop.
+function handleLongPress(task: Aria2Task) {
+  if (!taskStore.checkedGids.includes(task.gid)) taskStore.setChecked(task.gid, true)
+}
+
 function handleItemClick(event: MouseEvent, task: Aria2Task) {
+  if (taskStore.selectionMode) {
+    event.preventDefault()
+    event.stopPropagation()
+    taskStore.toggleChecked(task.gid)
+    return
+  }
   const picking = event.ctrlKey || event.metaKey || event.shiftKey
   if (!picking) {
     taskStore.clearChecked()
@@ -349,28 +370,37 @@ function handleCardBeforeLeave(element: Element) {
           :key="item.gid"
           class="task-list-item"
           :class="{ 'task-list-item--checked': taskStore.checkedGids.includes(item.gid) }"
-          @click.capture="handleItemClick($event, item)"
         >
-          <component
-            :is="taskCardComponent"
+          <TaskSwipeRow
             :task="item"
-            :action-pending="taskStore.resubmittingGids.includes(item.gid)"
-            @pause="emit('pause', item)"
-            @resume="emit('resume', item)"
-            @retry="emit('retry', item)"
-            @redownload="emit('redownload', item)"
-            @finish-sharing="emit('finish-sharing', item)"
-            @finish-media="emit('finish-media', item)"
-            @delete="emit('delete', item)"
-            @delete-record="emit('delete-record', item)"
-            @copy-link="emit('copy-link', item)"
-            @show-info="emit('show-info', item)"
-            @folder="emit('folder', item)"
-            @checksum="emit('checksum', item)"
-            @open-file="emit('open-file', item)"
-            @share-file="emit('share-file', item)"
-            @select-files="emit('select-files', item)"
-          />
+            :selection-mode="taskStore.selectionMode"
+            :disabled="taskStore.resubmittingGids.includes(item.gid)"
+            @activate="handleItemClick($event, item)"
+            @long-press="handleLongPress"
+            @swipe-pause="emit('pause', item)"
+            @swipe-delete="emit('delete', item)"
+          >
+            <component
+              :is="taskCardComponent"
+              :task="item"
+              :action-pending="taskStore.resubmittingGids.includes(item.gid)"
+              @pause="emit('pause', item)"
+              @resume="emit('resume', item)"
+              @retry="emit('retry', item)"
+              @redownload="emit('redownload', item)"
+              @finish-sharing="emit('finish-sharing', item)"
+              @finish-media="emit('finish-media', item)"
+              @delete="emit('delete', item)"
+              @delete-record="emit('delete-record', item)"
+              @copy-link="emit('copy-link', item)"
+              @show-info="emit('show-info', item)"
+              @folder="emit('folder', item)"
+              @checksum="emit('checksum', item)"
+              @open-file="emit('open-file', item)"
+              @share-file="emit('share-file', item)"
+              @select-files="emit('select-files', item)"
+            />
+          </TaskSwipeRow>
         </div>
       </TransitionGroup>
     </Transition>
@@ -442,27 +472,28 @@ function handleCardBeforeLeave(element: Element) {
 }
 .task-list-card-leave-to {
   opacity: 0;
-  transform: scale(0.995);
+  transform: translate3d(-26px, 0, 0) scale(0.985);
 }
 .task-list-card-leave-active {
   transition:
-    transform 260ms ease,
-    opacity 180ms ease;
+    transform 320ms cubic-bezier(0.34, 1.18, 0.64, 1),
+    opacity 220ms ease;
   pointer-events: none;
 }
 .task-list-card-leave-active.task-list-item--collapsing {
   height: var(--task-list-card-leave-height);
   overflow: hidden;
   transition:
-    height 260ms ease,
-    margin-bottom 260ms ease,
-    opacity 180ms ease;
-  transform: none;
+    height 300ms cubic-bezier(0.2, 0, 0, 1),
+    margin-bottom 300ms cubic-bezier(0.2, 0, 0, 1),
+    opacity 220ms ease,
+    transform 320ms cubic-bezier(0.34, 1.18, 0.64, 1);
 }
 .task-list-card-leave-to.task-list-item--collapsing {
   height: 0;
   margin-bottom: 0;
-  transform: none;
+  opacity: 0;
+  transform: translate3d(-26px, 0, 0) scale(0.985);
 }
 .task-list-item--checked {
   border-radius: var(--radius-sm);

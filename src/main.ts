@@ -195,6 +195,12 @@ if (isFloatWindow) {
     window.addEventListener('rayload-share-requested', () => {
       void drainAndroidSharedLinks()
     })
+    window.addEventListener('rayload-new-task-requested', () => {
+      if (window.RayloadNative?.consumeNewDownloadRequest?.() !== false) appStore.showAddTaskDialog()
+    })
+    window.setTimeout(() => {
+      if (window.RayloadNative?.consumeNewDownloadRequest?.()) appStore.showAddTaskDialog()
+    }, 600)
   }
 
   async function autoCheckForUpdate() {

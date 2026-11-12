@@ -16,5 +16,6 @@
   "notification.selection-body": "%{task_name}",
   "notification.browser-kept-title": "डाउनलोड ब्राउज़र में ही रहा",
   "notification.browser-kept-body": "Rayload %{host} तक नहीं पहुँच सका।",
-  "notification.browser-kept-proxy-body": "Rayload %{host} तक नहीं पहुँच सका। अगर ब्राउज़र proxy इस्तेमाल करता है, तो Rayload की नेटवर्क सेटिंग में proxy चालू करें।"
+  "notification.browser-kept-proxy-body": "Rayload %{host} तक नहीं पहुँच सका। अगर ब्राउज़र proxy इस्तेमाल करता है, तो Rayload की नेटवर्क सेटिंग में proxy चालू करें।",
+  "notification.private-body": "Saved to your download folder"
 }

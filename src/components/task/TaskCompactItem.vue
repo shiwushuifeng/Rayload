@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { TASK_STATUS } from '@shared/constants'
 import { NIcon } from 'naive-ui'
 import MTooltip from '@/components/common/MTooltip.vue'
+import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import { AlertCircleOutline, RadioOutline, TimeOutline } from '@vicons/ionicons5'
 import { useTaskCardModel } from '@/composables/useTaskCardModel'
 import { useTaskFileIcon } from '@/composables/useTaskFileIcon'
@@ -39,6 +40,7 @@ const { isAndroid } = usePlatform()
 const taskRef = computed(() => props.task)
 const { taskFullName, isSharing, statusBadge, isActive, indeterminate, percent } = useTaskCardModel(taskRef)
 const fileIcon = useTaskFileIcon(taskFullName)
+const formatPercent = (value: number) => `${Math.round(value)}%`
 const { fileMissing, fileState } = useTaskFileMissing(taskRef)
 // The rail orders the list; the rest of a finished card drags its file out.
 const contentDraggable = computed(
@@ -95,7 +97,12 @@ const compactStatusColor = computed(() => {
     @dblclick="!fileMissing && !actionPending && canOpenTaskContent(task, $event) && emit('open-file', task)"
   >
     <div class="compact-body" :draggable="contentDraggable" @dragstart="dragTaskContent(task, $event)">
-      <span class="compact-file-icon" :class="`compact-file-icon--${fileIcon.tone}`" aria-hidden="true">
+      <span
+        class="compact-file-icon"
+        :class="`compact-file-icon--${fileIcon.tone}`"
+        data-task-drag-handle
+        aria-hidden="true"
+      >
         <NIcon :size="15"><component :is="fileIcon.icon" /></NIcon>
       </span>
       <MTooltip placement="bottom-start">
@@ -111,7 +118,8 @@ const compactStatusColor = computed(() => {
         :style="{ color: compactStatusColor }"
         :title="compactStatus?.label ?? t('task.status-active')"
       >
-        {{ indeterminate ? '—' : `${percent}%` }}
+        <AnimatedNumber v-if="!indeterminate" :value="percent" :formatter="formatPercent" />
+        <template v-else>—</template>
       </span>
       <span class="compact-status-text">{{ compactStatus?.label ?? t('task.status-active') }}</span>
       <TaskItemActions

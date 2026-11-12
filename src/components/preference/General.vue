@@ -16,7 +16,6 @@ import { arch as osArch, locale as getLocale, version as osVersion } from '@taur
 import { usePlatform } from '@/composables/usePlatform'
 import { setAndroidAppIcon } from '@/composables/useAndroidNative'
 import { getVersion as getAppVersion } from '@tauri-apps/api/app'
-import { getVersion as getAria2Version } from '@/api/aria2'
 import { resolveSystemLocale } from '@shared/utils/locale'
 import { loadLocale } from '@/composables/useLocale'
 import { isSupportedLocale, LOCALE_CATALOG, SUPPORTED_LOCALES } from '@shared/localeCatalog'
@@ -50,8 +49,8 @@ import type { UpdateChannel } from '@shared/types'
 import PreferenceHintLabel from './PreferenceHintLabel.vue'
 import PreferenceCheckboxGrid from './PreferenceCheckboxGrid.vue'
 import PreferenceAssociations from './PreferenceAssociations.vue'
-import NotificationAccess from './NotificationAccess.vue'
 import NavigationCustomization from './NavigationCustomization.vue'
+import AndroidUpdateCheck from './AndroidUpdateCheck.vue'
 import { UI_SCALE_STEPS } from '@/composables/useInterfaceScale'
 
 const { t, locale } = useI18n()
@@ -59,13 +58,12 @@ const preferenceStore = usePreferenceStore()
 const appStore = useAppStore()
 const dialog = useDialog()
 const message = useAppMessage()
-const { isMac, isLinux, isWindows, isAndroid, platformLabel, archLabel: getArchLabel } = usePlatform()
+const { isMac, isLinux, isAndroid, platformLabel, archLabel: getArchLabel } = usePlatform()
 
 // ─── System info card ────────────────────────────────────────────────
 const sysArch = ref('')
 const sysOsVersion = ref('')
 const sysAppVersion = ref('')
-const sysAria2Version = ref('')
 const detectedLocaleCode = ref('en-US')
 const archLabelDisplay = computed(() => getArchLabel(sysArch.value))
 
@@ -87,6 +85,11 @@ const checkIntervalOptions = [
 ]
 
 const CUSTOM_COLOR_SWATCHES = ['#F59E0B', '#2563EB', '#14B8A6', '#DC2626', '#9333EA', '#4B5563']
+
+function handleUpdateStableOnly(value: boolean) {
+  form.value.updateStableOnly = value
+  void commitInstant({ updateStableOnly: value }, () => preferenceStore.updateAndSave({ updateStableOnly: value }))
+}
 
 function buildForm() {
   return buildGeneralForm(preferenceStore.config)
@@ -186,25 +189,6 @@ const selectedClipboardTypes = computed<string[]>({
     }
   },
 })
-
-// ── Notifications ────────────────────────────────────────────────────
-const notificationTypeOptions = computed(() => [
-  { label: t('preferences.notify-on-start'), value: 'start' },
-  { label: t('preferences.notify-on-complete'), value: 'complete' },
-])
-const selectedNotificationTypes = computed<string[]>({
-  get: () => [...(form.value.notifyOnStart ? ['start'] : []), ...(form.value.notifyOnComplete ? ['complete'] : [])],
-  set: (types) => {
-    const selected = new Set(types)
-    form.value.notifyOnStart = selected.has('start')
-    form.value.notifyOnComplete = selected.has('complete')
-  },
-})
-// Only Windows reports clicks on notifications.
-const notificationClickOptions = computed(() => [
-  { value: 'reveal', label: t('preferences.notification-click-reveal') },
-  { value: 'open', label: t('preferences.notification-click-open') },
-])
 
 const floatWindowOptions = computed(() =>
   FLOAT_WINDOW_MODES.map((value) => ({ value, label: t(FLOAT_WINDOW_MODE_LABELS[value]) })),
@@ -345,12 +329,6 @@ onMounted(async () => {
     logger.debug('General.appVersion', e)
   }
   try {
-    const info = await getAria2Version()
-    sysAria2Version.value = info.version
-  } catch (e) {
-    logger.debug('General.aria2Version', e)
-  }
-  try {
     const raw = (await getLocale()) || 'en-US'
     detectedLocaleCode.value = resolveSystemLocale(raw, SUPPORTED_LOCALES)
   } catch (e) {
@@ -364,48 +342,42 @@ onMounted(async () => {
   <div class="preference-form-wrapper">
     <div class="preference-form-scroll">
       <NForm label-placement="left" label-align="left" label-width="260px" size="small" class="form-preference">
-        <!-- ① System info -->
-        <NDivider title-placement="left">{{ t('preferences.system-info') }}</NDivider>
-        <NFormItem :label="t('preferences.detected-platform')">
-          <NSpace :size="8">
+        <NFormItem :label="t('about.app-version')">
+          <NSpace :size="8" align="center">
+            <MTooltip>
+              <template #trigger>
+                <button
+                  class="sysinfo-ver-badge"
+                  @click="
+                    copyVersionToClipboard(
+                      `Rayload v${sysAppVersion} · ${platformLabel} · ${archLabelDisplay}`,
+                      'Rayload',
+                    )
+                  "
+                >
+                  <span class="sysinfo-ver-value">v{{ sysAppVersion || '\u2014' }}</span>
+                  <svg class="sysinfo-ver-copy" width="14" height="14" viewBox="0 0 24 24" fill="none">
+                    <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2" />
+                    <path
+                      d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    />
+                  </svg>
+                </button>
+              </template>
+              {{ t('about.click-to-copy') }}
+            </MTooltip>
             <NTag type="info" round size="medium">{{ platformLabel }}</NTag>
             <NTag type="success" round size="medium">{{ archLabelDisplay }}</NTag>
           </NSpace>
         </NFormItem>
-        <NFormItem :label="t('about.app-version')">
-          <MTooltip>
-            <template #trigger>
-              <button class="sysinfo-ver-badge" @click="copyVersionToClipboard(`Rayload v${sysAppVersion}`, 'Rayload')">
-                <span class="sysinfo-ver-value">v{{ sysAppVersion || '\u2014' }}</span>
-                <svg class="sysinfo-ver-copy" width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2" />
-                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2" />
-                </svg>
-              </button>
-            </template>
-            {{ t('about.click-to-copy') }}
-          </MTooltip>
-        </NFormItem>
-        <NFormItem :label="t('about.aria2-version')">
-          <MTooltip v-if="sysAria2Version">
-            <template #trigger>
-              <button
-                class="sysinfo-ver-badge"
-                @click="copyVersionToClipboard(`Aria2 Next v${sysAria2Version}`, 'Aria2 Next')"
-              >
-                <span class="sysinfo-ver-value">v{{ sysAria2Version }}</span>
-                <svg class="sysinfo-ver-copy" width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2" />
-                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2" />
-                </svg>
-              </button>
-            </template>
-            {{ t('about.click-to-copy') }}
-          </MTooltip>
-          <div v-else class="sysinfo-ver-badge sysinfo-ver-badge--muted">
-            <span class="sysinfo-ver-muted">{{ t('about.unavailable') }}</span>
-          </div>
-        </NFormItem>
+
+        <AndroidUpdateCheck
+          v-if="isAndroid"
+          :stable-only="form.updateStableOnly"
+          @update:stable-only="handleUpdateStableOnly"
+        />
 
         <!-- ② Language -->
         <NDivider title-placement="left">
@@ -455,25 +427,6 @@ onMounted(async () => {
             </NFormItem>
           </NCollapseTransition>
         </template>
-
-        <!-- Notifications -->
-        <NDivider title-placement="left">{{ t('preferences.notification-section') }}</NDivider>
-        <NFormItem :label="t('preferences.task-completed-notify')">
-          <NSwitch v-model:value="form.taskNotification" />
-        </NFormItem>
-        <NCollapseTransition :show="form.taskNotification">
-          <NFormItem label=" ">
-            <PreferenceCheckboxGrid v-model:value="selectedNotificationTypes" :options="notificationTypeOptions" />
-          </NFormItem>
-          <NFormItem v-if="isWindows" :label="t('preferences.notification-click-action')">
-            <NSelect
-              v-model:value="form.notificationClickAction"
-              :options="notificationClickOptions"
-              class="pref-control-auto"
-            />
-          </NFormItem>
-          <NotificationAccess />
-        </NCollapseTransition>
 
         <template v-if="!isAndroid">
           <!-- ③ Auto Update -->
@@ -592,6 +545,15 @@ onMounted(async () => {
         </NFormItem>
         <NFormItem :label="t('preferences.show-logo-when-empty')">
           <NSwitch v-model:value="form.showLogoWhenEmpty" />
+        </NFormItem>
+        <NFormItem v-if="isAndroid">
+          <template #label>
+            <PreferenceHintLabel
+              :label="t('preferences.show-speedometer')"
+              :hint="t('preferences.show-speedometer-hint')"
+            />
+          </template>
+          <NSwitch v-model:value="form.showSpeedometer" />
         </NFormItem>
         <NFormItem :label="t('preferences.reduce-motion')">
           <NSwitch v-model:value="form.reduceMotion" />

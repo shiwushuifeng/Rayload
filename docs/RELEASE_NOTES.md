@@ -1,3 +1,175 @@
+# Rayload v1.0.3
+
+## 中文
+
+Rayload `v1.0.3` 是 Android 正式稳定版。本版本完成核心下载与任务管理、
+系统交互与防错机制、数据看板与 UI 动效三轮开发，并补齐真机回归中发现的
+细节问题。
+
+### 下载与任务管理
+
+- 新建任务支持一键粘贴、清空，多行链接自动拆分为多个独立任务。
+- 高级防盗链新增 `Cookie`、`User-Agent`、`Referer`，安全拼装为 Aria2
+  `header` 数组，特殊字符不会破坏解析。
+- 长按任务卡片进入多选，支持全选、批量暂停/继续/彻底删除（二级确认）。
+- 任务卡片支持左滑删除、右滑暂停，并调用 Android 原生马达提供轻微触觉反馈。
+- 批量粘贴链接时预检重复任务，过滤列表内重复与已存在任务，并提示
+  “已跳过 X 个重复任务”。
+- 完善磁力链接与种子文件解析流程，文件选择列表与授权信息展示更稳定。
+- 新增存储空间预警，空间不足时在建任务前给出明确提示。
+- 文件校验支持 `MD5`、`SHA1`、`SHA256` 异步计算，界面显示
+  “正在后台计算...”并提供复制按钮。
+
+### 系统交互与防错
+
+- 首次启动向导提供可跳过的多页引导、个性化与引擎选项、自动归档开关、
+  全部分类图标和语言修改后的重启提醒，并修复底部安全区遮挡。
+- 权限中心集中管理存储、通知、电池优化、未知应用安装与剪贴板权限，
+  全部走 Android 原生权限申请。
+- 通知设置迁入权限中心，新增下载开始/完成/失败提醒、通知中隐藏文件名、
+  后台保活常驻通知；关闭保活后切换为原生极简静默通道，下载仍继续。
+- 桌面长按图标提供“新建下载”静态快捷方式。
+- App 内通过 GitHub Release 检查更新，支持仅检查正式版；关于页提供
+  “立即检查”，网络或接口异常统一为中文提示。
+- 自动归档支持自定义文件夹名称，例如将默认 `Video` 改为“影视”。
+- 设置支持配置导出/导入 JSON，以及通过系统分享面板导出诊断日志。
+- 局域网互联面板展示 Wi-Fi、热点或以太网私网 IPv4、RPC 6800、密钥与
+  直连二维码，并排除虚拟网卡地址。
+
+### 数据看板
+
+- 主页顶部展示总下载大小、平均速率与当前会话下载量；平均速率只累计有
+  下载活动的时间，按“本次会话已下载字节 ÷ 活动秒数”每 2 秒刷新。
+- 数据统计页提供实时网速、总下载、总任务、当前会话下载四张核心卡片。
+- 近 7 天下载趋势基于本地历史实时聚合；实时网速趋势每 2 秒采样、滚动
+  保留 3 分钟，并显示平均值参考线与放大的坐标轴文字。
+- 分类统计包含视频、音频、图片、文档、安装包、压缩包与其他。
+- “全部”页标题旁小箭头可进入数据统计；统计页默认不占用底部导航栏。
+- 当前会话数据通过 Aria2 RPC 获取，历史统计骨架已预留本地持久化。
+
+### 界面与动效
+
+- 下载速度、进度百分比使用平滑数字滚动动画。
+- 多选模式顶部标题栏颜色与文字平滑渐变；左滑删除卡片带阻尼感弹性消失。
+- 列表项、底部导航与按钮统一 Material 水波纹反馈。
+- 任务列表、回收站、局域网互联补充极简 SVG 空状态插画与优化文案。
+- 全站可点击热区不小于 44×44px，并修复暗色模式下文字与图标对比度问题。
+- 设置底栏移除“…”菜单及“重启引擎”入口，只保留保存/放弃。
+- 关于页版本号与平台合并展示；悬浮速度球更换初始位置，在统计页和设置页
+  自动隐藏，并在外观设置中提供显示开关。
+- 新建任务长表单保持紧凑，仅展开“高级选项”后滚动；认证信息输入框完整换行。
+
+### 构建信息
+
+- 版本：`1.0.3`
+- 目标 API：37（Android 17）
+- 最低 API：24（Android 7）
+- 生产架构：`arm64-v8a`
+- 应用包名：`com.shiwushuifeng.rayload`
+
+| 附件 | 文件大小 | SHA-256 |
+| --- | --- | --- |
+| `Rayload-v1.0.3-android17-arm64-release.apk` | 22,457,507 B | `d1604489b16602940461613fdcbf1d460b02d3cc55d2a201316a94b83878cab9` |
+| `Rayload-v1.0.3-android17-arm64-debug.apk` | 120,378,194 B | `07b1faab074faafa4db998501e12b22d6213377518cca4156339b41d4b5fc115` |
+| `Rayload-v1.0.3-x86_64-emulator.apk` | 22,385,829 B | `77daf51bd45a3570f31acf81f648c05dbe75a7df019bc9541249fc165c70dc31` |
+
+- 校验文件：`SHA256SUMS-v1.0.3.txt`
+- 验证：前端 1189 项测试、TypeScript、ESLint、Prettier、仓库完整性检查、
+  Rust 通知/配置测试及 Android 模拟器冒烟测试全部通过。
+
+Release 与 Debug APK 使用不同签名；切换安装前请先卸载另一版本。
+
+## English
+
+Rayload `v1.0.3` is the stable Android release that completes the download
+engine and task-management work, system integration and guardrails, the
+statistics dashboard, and the UI motion pass, together with fixes from device
+regression testing.
+
+### Downloads and tasks
+
+- The new-task dialog adds one-tap paste and clear, and splits multi-line input
+  into independent tasks.
+- Advanced anti-leech fields `Cookie`, `User-Agent` and `Referer` are safely
+  mapped to the Aria2 `header` array, including special characters.
+- Long-press multi-select supports select-all plus batch pause, resume and
+  permanent delete with a second confirmation.
+- Task cards support swipe-to-delete and swipe-to-pause with native Android
+  haptic feedback.
+- Batch input filters duplicates before creating tasks and reports
+  “Skipped X duplicate tasks”.
+- Magnet and torrent parsing now handles file selection lists and
+  authentication fields reliably.
+- Disk-space checks warn before a download is likely to fail.
+- File verification computes `MD5`, `SHA1` and `SHA256` asynchronously, shows a
+  “calculating in background” notice, and offers copy actions.
+
+### System integration and guardrails
+
+- A skippable multi-page onboarding flow covers personalization, engine choice,
+  auto-archive, all category icons and a restart reminder after language
+  changes, with safe-area padding.
+- The permission center manages storage, notifications, battery optimization,
+  unknown-app installation and clipboard access through native Android prompts.
+- Notification settings moved into the permission center and now include
+  start/complete/error alerts, filename privacy and a background keep-alive
+  notification with a native minimal silent channel.
+- A static “New download” launcher shortcut is available on long-press.
+- GitHub release checks support stable-only mode, with an About-page action and
+  friendly Chinese network error messages.
+- Auto-archive folder names are customizable.
+- Configuration can be exported or imported as JSON, and diagnostic logs can be
+  shared through the system share sheet.
+- The LAN panel shows private Wi-Fi, hotspot or Ethernet IPv4, RPC port 6800,
+  the secret and a direct-connect QR code while excluding virtual interfaces.
+
+### Statistics dashboard
+
+- The home overview shows total downloaded size, average speed and current
+  session volume; average speed counts only active download time and refreshes
+  every 2 seconds.
+- The statistics page presents live speed, total download, total tasks and
+  session download cards.
+- The 7-day trend aggregates local history; the live speed trend samples every
+  2 seconds over a rolling 3-minute window with an average reference line and
+  larger axis labels.
+- Category statistics cover video, audio, images, documents, packages, archives
+  and other files.
+- An arrow beside the “All” title opens statistics, which stays out of the
+  bottom navigation by default.
+
+### UI and motion
+
+- Animated number rolling for speed and progress values.
+- Smooth title-bar transition in multi-select mode and damped swipe-out cards.
+- Material ripple feedback across lists, navigation and buttons.
+- Minimal SVG empty states for tasks, trash and LAN devices.
+- Minimum 44×44px touch targets and dark-mode contrast fixes.
+- The settings footer no longer contains the overflow menu or engine restart.
+- The About page combines version and platform badges; the floating speedometer
+  has a new initial position, hides on statistics and settings pages, and can
+  be disabled in Appearance settings.
+- Long add-task forms stay compact and scroll only after Advanced options are
+  expanded.
+
+### Build information
+
+- Version: `1.0.3`
+- Target API: 37 (Android 17)
+- Minimum API: 24 (Android 7)
+- Production ABI: `arm64-v8a`
+- Application ID: `com.shiwushuifeng.rayload`
+- Artifacts: ARM64 release APK, ARM64 debug APK, x86_64 emulator APK and
+  `SHA256SUMS-v1.0.3.txt`.
+- Verification: 1189 frontend tests, TypeScript, ESLint, Prettier, repository
+  integrity checks, Rust notification/config tests and Android emulator smoke
+  tests passed.
+
+Release and debug APKs use different signing identities; uninstall the other
+variant before switching.
+
+---
+
 # Rayload v1.0.2
 
 ## 中文

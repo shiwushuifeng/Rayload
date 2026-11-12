@@ -51,6 +51,7 @@ import {
 import { useTheme } from './composables/useTheme'
 import { useReducedMotionClass } from './composables/useReducedMotion'
 import { useInterfaceScale } from './composables/useInterfaceScale'
+import { useMaterialRipple } from './composables/useMaterialRipple'
 import { usePreferenceStore } from './stores/preference'
 import { setIecSizeUnits } from '@shared/utils/format'
 import { isSupportedLocale, type SupportedLocale } from '@shared/localeCatalog'
@@ -63,6 +64,7 @@ const { colorTokens, themeOverrides } = useColorScheme()
 provide(APP_COLOR_TOKENS_KEY, colorTokens)
 useReducedMotionClass()
 useInterfaceScale()
+useMaterialRipple()
 const preferenceStore = usePreferenceStore()
 watchEffect(() => setIecSizeUnits(preferenceStore.config.iecSizeUnits))
 

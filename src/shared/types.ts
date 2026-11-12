@@ -528,6 +528,12 @@ export interface AppConfig {
   notifyOnStart: boolean
   /** OS notification when a download completes or BT enters seeding (gated by taskNotification). */
   notifyOnComplete: boolean
+  /** OS notification when a download fails (gated by taskNotification). */
+  notifyOnError: boolean
+  /** Include the task name in completion notifications; off keeps them private. */
+  notificationIncludeName: boolean
+  /** Keep the Android foreground-service notification visible while the engine runs. */
+  notificationKeepAlive: boolean
   /** When the floating window with speed and progress stays on top (#669, #718, #726). */
   floatWindow: FloatWindowMode
   /** Lightweight mode keeps the floating window in the tray instead of releasing it too. */
@@ -535,6 +541,8 @@ export interface AppConfig {
   showProgressBar: boolean
   showTrayIcon: boolean
   traySpeedometer: boolean
+  /** Show the floating smart-capsule speedometer on Android. */
+  showSpeedometer: boolean
   dockBadgeSpeed: boolean
   logLevel: AppLogLevel
   aria2LogLevel: Aria2LogLevel
@@ -556,6 +564,8 @@ export interface AppConfig {
   /** Linux-only: opt into WebKitGTK hardware compositing. */
   hardwareRendering: boolean
   updateChannel: UpdateChannel
+  /** Android update checks ignore Beta and pre-release tags. */
+  updateStableOnly: boolean
   runMode: string
   userAgent: string
   userAgentProfiles: UserAgentProfile[]

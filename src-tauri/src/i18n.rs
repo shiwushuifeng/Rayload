@@ -118,6 +118,28 @@ pub fn bt_complete(locale: &str, task_name: &str) -> NativeMessage {
     }
 }
 
+/// Completion messages without the task name, for users who hide filenames.
+pub fn download_complete_private(locale: &str) -> NativeMessage {
+    NativeMessage {
+        title: rust_i18n::t!("notification.download-complete-title", locale = locale).into_owned(),
+        body: rust_i18n::t!("notification.private-body", locale = locale).into_owned(),
+    }
+}
+
+pub fn bt_complete_private(locale: &str) -> NativeMessage {
+    NativeMessage {
+        title: rust_i18n::t!("notification.bt-complete-title", locale = locale).into_owned(),
+        body: rust_i18n::t!("notification.private-body", locale = locale).into_owned(),
+    }
+}
+
+pub fn ed2k_complete_private(locale: &str) -> NativeMessage {
+    NativeMessage {
+        title: rust_i18n::t!("notification.ed2k-complete-title", locale = locale).into_owned(),
+        body: rust_i18n::t!("notification.private-body", locale = locale).into_owned(),
+    }
+}
+
 pub fn ed2k_complete(locale: &str, task_name: &str) -> NativeMessage {
     NativeMessage {
         title: rust_i18n::t!("notification.ed2k-complete-title", locale = locale).into_owned(),

@@ -9,7 +9,7 @@
 import { ref, h, computed } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { relaunch } from '@tauri-apps/plugin-process'
-import { appDataDir, join } from '@tauri-apps/api/path'
+import { appCacheDir, appDataDir, join } from '@tauri-apps/api/path'
 import { open as openDialog, save as saveDialog } from '@tauri-apps/plugin-dialog'
 import { getVersion } from '@tauri-apps/api/app'
 import { NTag, useDialog, type DataTableColumns } from 'naive-ui'
@@ -21,6 +21,7 @@ import { buildSettingsBackup, parseSettingsBackup } from '@shared/utils/settings
 import { buildSystemConfigFromAppConfig } from '@shared/utils/systemConfig'
 import { useEngineStore } from '@/stores/engine'
 import { useDatabaseReset } from '@/composables/useDatabaseReset'
+import { getRayloadNativeBridge, shareAndroidFile } from '@/composables/useAndroidNative'
 import type { AppConfig, HistoryRecord } from '@shared/types'
 import type { DataTableSortState, PaginationProps } from 'naive-ui'
 import type { I18nKey } from '@shared/i18nTypes'
@@ -231,7 +232,7 @@ export function useAdvancedActions(deps: AdvancedActionsDeps) {
         message.warning(`${t('preferences.db-integrity-check-fail')}: ${result}`)
       }
     } catch (e) {
-      message.error(`${t('preferences.db-integrity-check-fail')}: ${(e as Error).message}`)
+      message.error(`${t('preferences.db-integrity-check-fail')}: ${t('task.error-friendly-unknown')}`)
       logger.error('Advanced.dbIntegrityCheck', e)
     }
   }
@@ -255,7 +256,7 @@ export function useAdvancedActions(deps: AdvancedActionsDeps) {
       dbRecordsTotal.value = page.total
     } catch (e) {
       logger.error('Advanced.dbBrowse', e)
-      message.error((e as Error).message)
+      message.error(t('task.error-friendly-unknown'))
     } finally {
       dbRecordsLoading.value = false
     }
@@ -275,6 +276,17 @@ export function useAdvancedActions(deps: AdvancedActionsDeps) {
 
   async function handleExportLogs() {
     try {
+      if (getRayloadNativeBridge()) {
+        const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+        const savePath = await join(await appCacheDir(), `rayload-logs-${stamp}.zip`)
+        const zipPath = await invoke<string>('export_diagnostic_logs', { savePath })
+        if (!shareAndroidFile(zipPath)) {
+          message.error(t('preferences.export-diagnostic-logs-failed'))
+          return
+        }
+        message.success(t('preferences.export-diagnostic-logs-shared'))
+        return
+      }
       const resolvedDir = await resolveUserVisibleDownloadDir({ configuredDir: preferenceStore.config.dir })
       const defaultPath = await join(resolvedDir.path, 'rayload-logs.zip')
       logger.info('Advanced.exportLogs', `defaultDir source=${resolvedDir.source} fallback=${resolvedDir.usedFallback}`)
@@ -426,7 +438,7 @@ export function useAdvancedActions(deps: AdvancedActionsDeps) {
       message.success(t('task.open-folder-success'))
     } catch (e) {
       logger.error('Advanced.openConfigFolder', e)
-      message.error(String(e))
+      message.error(t('task.error-friendly-unknown'))
     }
   }
 

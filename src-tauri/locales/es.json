@@ -16,5 +16,6 @@
   "notification.selection-body": "%{task_name}",
   "notification.browser-kept-title": "La descarga sigue en el navegador",
   "notification.browser-kept-body": "Rayload no pudo conectar con %{host}.",
-  "notification.browser-kept-proxy-body": "Rayload no pudo conectar con %{host}. Si el navegador usa un proxy, actívalo en los ajustes de red de Rayload."
+  "notification.browser-kept-proxy-body": "Rayload no pudo conectar con %{host}. Si el navegador usa un proxy, actívalo en los ajustes de red de Rayload.",
+  "notification.private-body": "Saved to your download folder"
 }

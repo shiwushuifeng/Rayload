@@ -41,7 +41,9 @@ interface TaskCardModel {
   totalSize: ComputedRef<string>
   hasSizeInfo: ComputedRef<boolean>
   downloadSpeed: ComputedRef<string>
+  downloadSpeedValue: ComputedRef<number>
   uploadSpeed: ComputedRef<string>
+  uploadSpeedValue: ComputedRef<number>
   remaining: ComputedRef<number>
   remainingText: ComputedRef<string>
   transferSummary: ComputedRef<ReturnType<typeof buildTaskTransferSummary>>
@@ -150,7 +152,9 @@ export function useTaskCardModel(task: ComputedRef<Aria2Task>): TaskCardModel {
       : completedLengthValue.value > 0 || displayedTotalLength.value > 0,
   )
   const downloadSpeed = computed(() => bytesToSize(task.value.downloadSpeed))
+  const downloadSpeedValue = computed(() => Number(task.value.downloadSpeed) || 0)
   const uploadSpeed = computed(() => bytesToSize(task.value.uploadSpeed))
+  const uploadSpeedValue = computed(() => Number(task.value.uploadSpeed) || 0)
   const transferSummary = computed(() => buildTaskTransferSummary(task.value))
   const remaining = computed(() => {
     if (!isActive.value || task.value.media) return 0
@@ -185,7 +189,9 @@ export function useTaskCardModel(task: ComputedRef<Aria2Task>): TaskCardModel {
     totalSize,
     hasSizeInfo,
     downloadSpeed,
+    downloadSpeedValue,
     uploadSpeed,
+    uploadSpeedValue,
     remaining,
     remainingText,
     transferSummary,

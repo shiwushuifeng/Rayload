@@ -3,4 +3,12 @@
     <string name="engine_channel_description">保持 Rayload 下载在后台运行</string>
     <string name="engine_running">Rayload 正在后台运行</string>
     <string name="engine_paused">Rayload 下载已暂停</string>
+    <string name="engine_quiet_channel_name">后台保活（极简）</string>
+    <string name="engine_quiet_channel_description">使用折叠的静默通知保持下载在后台运行</string>
+    <string name="shortcut_new_download">新建下载</string>
+    <string name="shortcut_new_download_long">创建新的下载任务</string>
+    <string name="clipboard_permission_title">剪贴板链接识别</string>
+    <string name="clipboard_permission_message">Rayload 只在应用位于前台时读取剪贴板中的链接，不会保存或上传任何内容。</string>
+    <string name="clipboard_permission_allow">允许</string>
+    <string name="clipboard_permission_deny">暂不</string>
 </resources>

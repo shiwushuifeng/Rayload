@@ -40,11 +40,11 @@ function update(amount: number | null, unit: SpeedLimitUnit) {
 
 <style scoped>
 .speed-limit-amount {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 auto;
+  min-width: 132px;
 }
 .speed-limit-unit {
-  width: 96px;
-  flex-shrink: 0;
+  flex: 0 0 92px;
+  width: 92px;
 }
 </style>

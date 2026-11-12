@@ -6,6 +6,7 @@ import { TASK_STATUS } from '@shared/constants'
 import { NIcon } from 'naive-ui'
 import LinearProgress from '@/components/common/LinearProgress.vue'
 import MTooltip from '@/components/common/MTooltip.vue'
+import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import {
   ArrowUpOutline,
   ArrowDownOutline,
@@ -27,6 +28,8 @@ import { useTaskFileMissing } from '@/composables/useTaskFileMissing'
 import TaskItemActions from './TaskItemActions.vue'
 import TaskTextTransition from './TaskTextTransition.vue'
 import type { Aria2Task } from '@shared/types'
+import { friendlyErrorKind } from '@shared/utils/friendlyError'
+import { bytesToSize } from '@shared/utils/format'
 
 const props = withDefaults(defineProps<{ task: Aria2Task; actionPending?: boolean }>(), { actionPending: false })
 const emit = defineEmits<{
@@ -62,13 +65,16 @@ const {
   completedSize,
   totalSize,
   hasSizeInfo,
-  downloadSpeed,
-  uploadSpeed,
+  downloadSpeedValue,
+  uploadSpeedValue,
   remaining,
   remainingText,
   transferSummary,
 } = useTaskCardModel(taskRef)
 const fileIcon = useTaskFileIcon(taskFullName)
+
+const formatSpeed = (value: number) => bytesToSize(Math.max(0, Math.round(value)))
+const formatPercent = (value: number) => `${Math.round(value)}%`
 
 const statusColorMap: Record<string, string> = {
   active: 'var(--m3-status-active)',
@@ -82,6 +88,9 @@ const statusColorMap: Record<string, string> = {
 
 const progressColor = computed(() => statusColorMap[taskStatus.value] || 'var(--m3-status-active)')
 const displayErrorMessage = computed(() => props.task.errorMessage || props.task.bittorrent?.error?.message || '')
+const friendlyErrorMessage = computed(() =>
+  displayErrorMessage.value ? t(`task.error-friendly-${friendlyErrorKind(displayErrorMessage.value)}`) : '',
+)
 const displayStatus = computed(() => {
   if (fileMissing.value)
     return fileState.value === 'inaccessible' ? t('task.file-inaccessible') : t('task.file-missing')
@@ -192,7 +201,12 @@ const contentDraggable = computed(
   >
     <div class="task-body" :draggable="contentDraggable" @dragstart="dragTaskContent(task, $event)">
       <div class="task-primary">
-        <span class="file-type-icon" :class="`file-type-icon--${fileIcon.tone}`" aria-hidden="true">
+        <span
+          class="file-type-icon"
+          :class="`file-type-icon--${fileIcon.tone}`"
+          data-task-drag-handle
+          aria-hidden="true"
+        >
           <NIcon :size="18"><component :is="fileIcon.icon" /></NIcon>
         </span>
         <div class="task-heading">
@@ -210,17 +224,20 @@ const contentDraggable = computed(
             <LinearProgress v-if="!indeterminate" :percentage="percent" :color="progressColor" :height="6" />
             <div class="task-progress-info">
               <span class="progress-left" :class="{ 'info-hidden': !hasSizeInfo }">
-                {{ indeterminate ? '' : `${percent}% · ` }}{{ completedSize }} / {{ totalSize }}
+                <template v-if="!indeterminate">
+                  <AnimatedNumber :value="percent" :formatter="formatPercent" /> ·
+                </template>
+                {{ completedSize }} / {{ totalSize }}
               </span>
               <span class="progress-right" :class="{ 'is-idle': !isActive }">
                 <span v-if="remaining > 0" class="speed-text">{{ remainingText }}</span>
                 <span v-if="transferSummary.showUploadMetrics" class="speed-text">
                   <NIcon :size="10"><ArrowUpOutline /></NIcon>
-                  <span>{{ uploadSpeed }}/s</span>
+                  <span><AnimatedNumber :value="uploadSpeedValue" :formatter="formatSpeed" />/s</span>
                 </span>
                 <span class="speed-text">
                   <NIcon :size="10"><ArrowDownOutline /></NIcon>
-                  <span>{{ downloadSpeed }}/s</span>
+                  <span><AnimatedNumber :value="downloadSpeedValue" :formatter="formatSpeed" />/s</span>
                 </span>
                 <span v-if="transferSummary.showSeeders" class="speed-text">
                   <NIcon :size="10"><MagnetOutline /></NIcon>
@@ -257,8 +274,8 @@ const contentDraggable = computed(
           @select-files="emit('select-files', task)"
         />
       </div>
-      <div v-if="displayErrorMessage" class="error-message technical-text-wrap">
-        {{ displayErrorMessage }}
+      <div v-if="friendlyErrorMessage" class="error-message" :title="displayErrorMessage">
+        {{ friendlyErrorMessage }}
       </div>
     </div>
   </div>

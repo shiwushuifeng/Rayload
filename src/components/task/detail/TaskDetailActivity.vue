@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NDescriptions, NDescriptionsItem } from 'naive-ui'
 import LinearProgress from '@/components/common/LinearProgress.vue'
+import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import { TASK_STATUS } from '@shared/constants'
 import { bytesToSize, calcProgress, getTaskCompletedLength, timeFormat, timeRemaining } from '@shared/utils'
 import type { Aria2Task } from '@shared/types'
@@ -15,6 +16,8 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+const formatSpeed = (value: number) => bytesToSize(Math.max(0, Math.round(value)))
+const formatPercent = (value: number) => `${Math.round(value)}%`
 const isActive = computed(() => props.task?.status === TASK_STATUS.ACTIVE)
 const completedLengthValue = computed(() => (props.task ? getTaskCompletedLength(props.task) : 0))
 const percent = computed(() => (props.task ? calcProgress(props.task.totalLength, completedLengthValue.value) : 0))
@@ -43,7 +46,7 @@ const remainingText = computed(() => {
       <NDescriptionsItem :label="t('task.task-progress-info') || 'Progress'">
         <div class="progress-row">
           <LinearProgress :percentage="percent" :height="10" />
-          <span class="progress-pct">{{ percent }}%</span>
+          <span class="progress-pct"><AnimatedNumber :value="percent" :formatter="formatPercent" /></span>
         </div>
       </NDescriptionsItem>
       <NDescriptionsItem :label="t('task.task-file-size') || 'Size'">
@@ -52,10 +55,10 @@ const remainingText = computed(() => {
         <span v-if="remainingText" class="remaining-text">{{ remainingText }}</span>
       </NDescriptionsItem>
       <NDescriptionsItem :label="t('task.task-download-speed') || 'DL Speed'">
-        {{ bytesToSize(task.downloadSpeed) }}/s
+        <AnimatedNumber :value="Number(task.downloadSpeed) || 0" :formatter="formatSpeed" />/s
       </NDescriptionsItem>
       <NDescriptionsItem v-if="transferSummary.showUploadMetrics" :label="t('task.task-upload-speed') || 'UL Speed'">
-        {{ bytesToSize(task.uploadSpeed) }}/s
+        <AnimatedNumber :value="Number(task.uploadSpeed) || 0" :formatter="formatSpeed" />/s
       </NDescriptionsItem>
       <NDescriptionsItem v-if="transferSummary.showUploadMetrics" :label="t('task.task-upload-length') || 'Uploaded'">
         {{ bytesToSize(task.uploadLength) }}

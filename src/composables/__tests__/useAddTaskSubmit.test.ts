@@ -757,6 +757,28 @@ describe('submitManualUris', () => {
     expect(call.outs).toEqual(['']) // The engine resolves the output name.
   })
 
+  it('drops repeated URI lines before creating tasks', async () => {
+    await submitManualUris(
+      {
+        ...baseForm,
+        uris: 'http://example.com/a.zip\nhttp://example.com/a.zip\nhttp://example.com/b.zip',
+      },
+      mockTaskStore,
+    )
+
+    const submitted = (mockTaskStore.addUri as ReturnType<typeof vi.fn>).mock.calls.flatMap(
+      (call) => call[0].uris as string[],
+    )
+    expect(submitted).toEqual(['http://example.com/a.zip', 'http://example.com/b.zip'])
+  })
+
+  it('honours the duplicate skip set for magnet links too', async () => {
+    const magnet = 'magnet:?xt=urn:btih:deadbeef'
+    await submitManualUris({ ...baseForm, uris: magnet }, mockTaskStore, undefined, new Set([magnet]))
+
+    expect(mockTaskStore.addMagnetUri).not.toHaveBeenCalled()
+  })
+
   it('returns structured magnet failures without throwing away successful submissions', async () => {
     ;(mockTaskStore.addMagnetUri as ReturnType<typeof vi.fn>)
       .mockResolvedValueOnce('magnet-gid-1')

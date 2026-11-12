@@ -69,16 +69,18 @@ default, runs every protocol through one reliable engine, feels native on a
 phone, and grows through themes and plugins without losing its simplicity. See
 the [roadmap](ROADMAP.md) for what comes next.
 
-## v1.0.2 Highlights
+## v1.0.3 Highlights
 
-- Rebuilt the task list around an infinite, two-row card layout with full and
-  compact density modes.
-- Added the keep-awake dashboard and an edge-docked speedometer with live
-  statistics, bulk controls and engine restart.
-- Removed desktop-only settings, localized the persistent notification and
-  tightened Android permissions and wake-lock behavior.
-- Refined the icon, dialogs, navigation and theme system while reducing the APK
-  size.
+- Finished core download and task management: multi-line links, anti-leech
+  headers, long-press multi-select, swipe actions, duplicate filtering, storage
+  warnings and `MD5`/`SHA1`/`SHA256` verification.
+- Added the skippable onboarding flow, centralized permissions and notification
+  controls, launcher shortcut, GitHub update checks, JSON config transfer and
+  LAN connection panel.
+- Added the home overview and statistics dashboard with live-speed sampling,
+  7-day trends, activity-based average speed and category totals.
+- Polished motion and accessibility: animated numbers, ripple feedback, damped
+  swipe-out cards, SVG empty states, 44px touch targets and dark-mode contrast.
 
 ## Features
 
@@ -132,6 +134,15 @@ Download the latest ARM64 APK from
 | Target system  | Android 17 / API 37         |
 | Production ABI | `arm64-v8a`                 |
 | Application ID | `com.shiwushuifeng.rayload` |
+
+Release artifacts:
+
+| Artifact | Purpose |
+| --- | --- |
+| `Rayload-v1.0.3-android17-arm64-release.apk` | Production ARM64 release |
+| `Rayload-v1.0.3-android17-arm64-debug.apk` | ARM64 debug/testing build |
+| `Rayload-v1.0.3-x86_64-emulator.apk` | x86_64 emulator build |
+| `SHA256SUMS-v1.0.3.txt` | SHA-256 checksums for all APKs |
 
 ### Quick start
 
@@ -308,12 +319,16 @@ Rayload 是 Rayburst 的独立非官方 Android 移植版，仅专注于 Android
 引擎处理所有协议，提供原生移动端体验，并通过主题与插件持续扩展。未来计划见
 [路线图](ROADMAP.md)。
 
-### v1.0.2 更新亮点
+### v1.0.3 更新亮点
 
-- 任务列表改为无限滚动，并重构为完整/紧凑两种密度的两行卡片布局。
-- 新增不息屏挂机页，以及带实时统计、批量控制和引擎重启的贴边悬浮球。
-- 移除桌面端无效设置，完成通知栏中文化，并完善 Android 权限与唤醒锁逻辑。
-- 优化图标、弹窗、导航和主题系统，同时压缩安装包体积。
+- 完成核心下载与任务管理：多行链接拆分、防盗链请求头、长按多选、滑动操作、
+  重复任务过滤、存储预警与 `MD5`/`SHA1`/`SHA256` 校验。
+- 新增可跳过的首次向导、集中式权限与通知管理、桌面快捷方式、GitHub 更新检查、
+  JSON 配置导入导出和局域网互联面板。
+- 新增主页概览与数据统计页：实时网速采样、7 天趋势、按活动时间计算的平均速率
+  与分类统计。
+- 打磨动效与可访问性：数字滚动、水波纹、弹性滑出、SVG 空状态、44px 热区与
+  暗色模式对比度。
 
 ### 截图
 
@@ -346,6 +361,15 @@ Rayload 是 Rayburst 的独立非官方 Android 移植版，仅专注于 Android
 | 目标系统 | Android 17 / API 37         |
 | 生产架构 | `arm64-v8a`                 |
 | 应用包名 | `com.shiwushuifeng.rayload` |
+
+发布附件：
+
+| 附件 | 用途 |
+| --- | --- |
+| `Rayload-v1.0.3-android17-arm64-release.apk` | ARM64 正式发布包 |
+| `Rayload-v1.0.3-android17-arm64-debug.apk` | ARM64 调试/测试包 |
+| `Rayload-v1.0.3-x86_64-emulator.apk` | x86_64 模拟器包 |
+| `SHA256SUMS-v1.0.3.txt` | 全部 APK 的 SHA-256 校验值 |
 
 #### 快速开始
 

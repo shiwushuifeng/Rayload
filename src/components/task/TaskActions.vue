@@ -4,6 +4,7 @@ import { ref, computed, h, nextTick, type Component } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { useTaskStore } from '@/stores/task'
+import { useRouter } from 'vue-router'
 
 import { batchFinishMedia, saveSession, isEngineReady, removeTaskRecord } from '@/api/aria2'
 import { useHistoryStore } from '@/stores/history'
@@ -44,10 +45,12 @@ import {
   ArrowUpOutline,
   ArrowDownOutline,
   EllipsisHorizontalOutline,
+  ChevronForwardOutline,
 } from '@vicons/ionicons5'
 
 const props = defineProps<{ scope: 'all' | 'progress' | 'failed' | 'completed'; mobile?: boolean }>()
 const { t } = useI18n()
+const router = useRouter()
 const appStore = useAppStore()
 const taskStore = useTaskStore()
 const preferenceStore = usePreferenceStore()
@@ -592,6 +595,19 @@ function runMobileAction(action: BatchAction) {
 <template>
   <template v-if="props.mobile">
     <div class="mobile-task-toolbar">
+      <NButton
+        v-if="props.scope === 'all'"
+        quaternary
+        circle
+        size="large"
+        class="mobile-stats-link"
+        :aria-label="t('navigation.statistics')"
+        @click="router.push('/statistics')"
+      >
+        <template #icon
+          ><NIcon><ChevronForwardOutline /></NIcon
+        ></template>
+      </NButton>
       <NDropdown
         trigger="click"
         placement="bottom-end"

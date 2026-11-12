@@ -2,16 +2,33 @@
 /** @fileoverview About panel with staggered entrance animations and glass effect. */
 import { computed, ref, onMounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NModal, NIcon } from 'naive-ui'
+import { NButton, NIcon, NModal } from 'naive-ui'
 import MTooltip from '@/components/common/MTooltip.vue'
-import { LogoGithub, HeartOutline, GlobeOutline, RocketOutline } from '@vicons/ionicons5'
+import {
+  CloudDownloadOutline,
+  DownloadOutline,
+  LogoGithub,
+  HeartOutline,
+  GlobeOutline,
+  QrCodeOutline,
+  RocketOutline,
+} from '@vicons/ionicons5'
 import { useBrandLogo } from '@/composables/useBrandLogo'
 import { openUrl as openExternalUrl } from '@tauri-apps/plugin-opener'
 import { getVersion } from '@tauri-apps/api/app'
-import { getVersion as getAria2Version } from '@/api/aria2'
+import { arch } from '@tauri-apps/plugin-os'
+import { usePlatform } from '@/composables/usePlatform'
+import { usePreferenceStore } from '@/stores/preference'
+import { exportDiagnosticLogs } from '@/composables/useDiagnosticLogExport'
 import { useAppMessage } from '@/composables/useAppMessage'
 import { logger } from '@shared/logger'
 import { writeAppClipboardText } from '@shared/utils'
+import ConfigTransfer from '@/components/preference/ConfigTransfer.vue'
+import { checkGithubUpdate } from '@/api/githubUpdate'
+import { getErrorMessage } from '@shared/utils/errorMessage'
+import { friendlyErrorKind } from '@shared/utils/friendlyError'
+import { resolveAppProxyUrl } from '@shared/utils/proxy'
+import { PROXY_SCOPES } from '@shared/constants'
 
 const props = defineProps<{ show: boolean }>()
 const emit = defineEmits<{ close: [] }>()
@@ -19,40 +36,50 @@ const emit = defineEmits<{ close: [] }>()
 const { t } = useI18n()
 const { brandLogo } = useBrandLogo()
 const message = useAppMessage()
+const preferenceStore = usePreferenceStore()
+const { archLabel, platformLabel } = usePlatform()
 const appVersion = ref('')
-const aria2Version = ref('')
-const aria2Loading = ref(true)
-const aria2Error = ref(false)
+const archTag = ref('')
+const exportingLogs = ref(false)
+const checkingUpdate = ref(false)
+const showConfigTransfer = ref(false)
 const animate = ref(false)
 
 onMounted(async () => {
   appVersion.value = await getVersion()
+  try {
+    const raw = arch()
+    archTag.value = raw === 'aarch64' ? 'arm64' : archLabel(raw).toLowerCase()
+  } catch (error) {
+    logger.debug('AboutPanel.arch', `arch() unavailable: ${error}`)
+  }
 })
 
-/* Trigger entrance animation and re-fetch Aria2 Next version each time the panel opens. */
+const versionLabel = computed(() => `v${appVersion.value}${archTag.value ? `-${archTag.value}` : ''}`)
+
+async function exportLogs() {
+  if (exportingLogs.value) return
+  exportingLogs.value = true
+  try {
+    await exportDiagnosticLogs({
+      t,
+      message,
+      configuredDir: preferenceStore.config.dir,
+    })
+  } finally {
+    exportingLogs.value = false
+  }
+}
+
+/* Replay the staggered entrance animation whenever the panel opens. */
 watch(
   () => props.show,
-  async (visible) => {
-    if (visible) {
-      animate.value = false
-      requestAnimationFrame(() => {
-        animate.value = true
-      })
-
-      /* Reset state and fetch fresh Aria2 Next version */
-      aria2Loading.value = true
-      aria2Error.value = false
-      aria2Version.value = ''
-      try {
-        const info = await getAria2Version()
-        aria2Version.value = info.version
-      } catch (e) {
-        logger.warn('AboutPanel', `Aria2 Next version fetch failed: ${e}`)
-        aria2Error.value = true
-      } finally {
-        aria2Loading.value = false
-      }
-    }
+  (visible) => {
+    if (!visible) return
+    animate.value = false
+    requestAnimationFrame(() => {
+      animate.value = true
+    })
   },
 )
 
@@ -122,6 +149,33 @@ async function copyToClipboard(text: string, label: string) {
 function openUrl(url: string) {
   openExternalUrl(url)
 }
+
+async function checkUpdates() {
+  if (checkingUpdate.value) return
+  checkingUpdate.value = true
+  try {
+    const version = appVersion.value || (await getVersion())
+    const proxy = resolveAppProxyUrl(preferenceStore.config.proxy, PROXY_SCOPES.UPDATE_APP)
+    const result = await checkGithubUpdate(version, preferenceStore.config.updateStableOnly, proxy)
+    await preferenceStore.updateAndSave({ lastCheckUpdateTime: Date.now() })
+    if (result.updateAvailable) {
+      message.info(t('preferences.update-available', { version: result.version }))
+      if (result.releaseUrl) openUrl(result.releaseUrl)
+    } else {
+      message.success(t('preferences.update-up-to-date'))
+    }
+  } catch (error) {
+    const raw = getErrorMessage(error)
+    logger.warn('AboutPanel.checkUpdates', raw)
+    message.error(
+      friendlyErrorKind(raw) === 'network'
+        ? t('preferences.update-network-error')
+        : t('preferences.update-check-failed'),
+    )
+  } finally {
+    checkingUpdate.value = false
+  }
+}
 </script>
 
 <template>
@@ -150,13 +204,16 @@ function openUrl(url: string) {
       <!-- Title -->
       <div class="about-title stagger stagger-2">Rayload</div>
 
-      <!-- Version Badges (stacked, prominent) -->
+      <!-- Version and platform detection -->
       <div class="about-versions stagger stagger-2">
         <MTooltip>
           <template #trigger>
-            <button class="version-badge" @click="copyToClipboard(`Rayload v${appVersion}`, 'Rayload')">
+            <button
+              class="version-badge"
+              @click="copyToClipboard(`Rayload ${versionLabel} · ${platformLabel}`, 'Rayload')"
+            >
               <span class="version-label">{{ t('about.app-version') }}</span>
-              <span class="version-value">v{{ appVersion }}</span>
+              <span class="version-value">{{ versionLabel }}</span>
               <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none">
                 <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2" />
                 <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2" />
@@ -165,38 +222,10 @@ function openUrl(url: string) {
           </template>
           {{ t('about.click-to-copy') }}
         </MTooltip>
-        <Transition name="version-swap" mode="out-in">
-          <!-- Loading -->
-          <div v-if="aria2Loading" key="loading" class="version-badge version-badge--loading">
-            <span class="version-label">{{ t('about.aria2-version') }}</span>
-            <span class="version-loading">
-              <svg class="spinner" width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2.5" opacity="0.2" />
-                <path d="M22 12a10 10 0 0 0-10-10" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
-              </svg>
-              {{ t('about.loading') }}
-            </span>
-          </div>
-          <!-- Error -->
-          <div v-else-if="aria2Error" key="error" class="version-badge version-badge--loading">
-            <span class="version-label">{{ t('about.aria2-version') }}</span>
-            <span class="version-error">{{ t('about.unavailable') }}</span>
-          </div>
-          <!-- Success -->
-          <MTooltip v-else key="loaded">
-            <template #trigger>
-              <button class="version-badge" @click="copyToClipboard(`Aria2 Next v${aria2Version}`, 'Aria2 Next')">
-                <span class="version-label">{{ t('about.aria2-version') }}</span>
-                <span class="version-value">v{{ aria2Version }}</span>
-                <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none">
-                  <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2" />
-                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor" stroke-width="2" />
-                </svg>
-              </button>
-            </template>
-            {{ t('about.click-to-copy') }}
-          </MTooltip>
-        </Transition>
+        <div class="about-platform">
+          <span class="about-platform__tag">{{ platformLabel }}</span>
+          <span v-if="archTag" class="about-platform__tag about-platform__tag--arch">{{ archTag }}</span>
+        </div>
       </div>
 
       <!-- Slogan -->
@@ -237,6 +266,28 @@ function openUrl(url: string) {
           <span>{{ link.label }}</span>
         </a>
       </div>
+
+      <div class="about-actions stagger stagger-6">
+        <NButton size="small" :loading="checkingUpdate" @click="checkUpdates">
+          <template #icon>
+            <NIcon :size="16"><CloudDownloadOutline /></NIcon>
+          </template>
+          {{ t('app.check-updates-now') }}
+        </NButton>
+        <NButton size="small" :loading="exportingLogs" @click="exportLogs">
+          <template #icon>
+            <NIcon :size="16"><DownloadOutline /></NIcon>
+          </template>
+          {{ t('preferences.export-diagnostic-logs') }}
+        </NButton>
+        <NButton size="small" secondary @click="showConfigTransfer = true">
+          <template #icon>
+            <NIcon :size="16"><QrCodeOutline /></NIcon>
+          </template>
+          {{ t('preferences.config-transfer-title') }}
+        </NButton>
+      </div>
+      <ConfigTransfer :show="showConfigTransfer" @close="showConfigTransfer = false" />
 
       <!-- Footer -->
       <div class="about-footer stagger stagger-6">
@@ -448,6 +499,13 @@ function openUrl(url: string) {
 }
 
 /* ── Footer ───────────────────────────────────────────────────────── */
+.about-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 18px;
+}
 .about-footer {
   margin-top: 20px;
   display: flex;
@@ -476,6 +534,27 @@ function openUrl(url: string) {
 }
 .about-link:hover {
   text-decoration: underline;
+}
+.about-platform {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 8px;
+}
+.about-platform__tag {
+  padding: 3px 9px;
+  color: var(--m3-on-surface-variant);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  background: var(--m3-surface-container-highest);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--radius-full);
+}
+.about-platform__tag--arch {
+  color: var(--m3-on-primary-container);
+  background: var(--m3-primary-container);
+  border-color: transparent;
 }
 .version-error {
   margin-left: auto;

@@ -28,6 +28,15 @@ vi.mock('../TaskCompactItem.vue', () => ({
   default: { name: 'TaskCompactItem', props: ['task'], template: '<div class="compact-task-item" />' },
 }))
 
+vi.mock('../TaskSwipeRow.vue', () => ({
+  default: {
+    name: 'TaskSwipeRow',
+    props: ['task', 'selectionMode', 'disabled'],
+    emits: ['activate', 'long-press', 'swipe-pause', 'swipe-delete'],
+    template: '<div class="task-swipe-row"><slot /></div>',
+  },
+}))
+
 import TaskList from '../TaskList.vue'
 
 function createTask(): Aria2Task {

@@ -5,4 +5,12 @@
     <string name="engine_channel_description">Keeps active Rayload downloads running in the background</string>
     <string name="engine_running">Rayload is running in the background</string>
     <string name="engine_paused">Rayload downloads are paused</string>
+    <string name="engine_quiet_channel_name">Background keep-alive (minimal)</string>
+    <string name="engine_quiet_channel_description">Keeps downloads alive with a collapsed, silent notification</string>
+    <string name="shortcut_new_download">New download</string>
+    <string name="shortcut_new_download_long">Create a new download</string>
+    <string name="clipboard_permission_title">Clipboard link detection</string>
+    <string name="clipboard_permission_message">Rayload reads clipboard links only while the app is in the foreground. Nothing is stored or uploaded.</string>
+    <string name="clipboard_permission_allow">Allow</string>
+    <string name="clipboard_permission_deny">Not now</string>
 </resources>

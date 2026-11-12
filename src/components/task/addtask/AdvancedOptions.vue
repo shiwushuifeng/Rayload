@@ -17,7 +17,7 @@ import {
 import { hasUnsafeHeaderChars, sanitizeHeaderValue } from '@shared/utils/headerSanitize'
 import { useSystemProxyDetect } from '@/composables/useSystemProxyDetect'
 import { useAppMessage } from '@/composables/useAppMessage'
-import { SearchOutline } from '@vicons/ionicons5'
+import { ChevronDownOutline, SearchOutline, SettingsOutline } from '@vicons/ionicons5'
 import type { TaskProxyMode } from '@shared/utils/proxy'
 import UserAgentPopover from '@/components/common/UserAgentPopover.vue'
 import SpeedLimitInput from '@/components/common/SpeedLimitInput.vue'
@@ -106,12 +106,19 @@ const { detecting: detectingProxy, detect: detectProxy } = useSystemProxyDetect(
   <!-- The space below the toggle belongs to the options, so it opens and
        closes with them instead of appearing at once. -->
   <NFormItem class="advanced-toggle" :show-label="false" :show-feedback="false">
-    <NCheckbox :checked="show" @update:checked="$emit('update:show', $event)">
-      {{ t('task.show-advanced-options') }}
-    </NCheckbox>
+    <NButton class="advanced-toggle-button" quaternary block :aria-expanded="show" @click="$emit('update:show', !show)">
+      <template #icon>
+        <NIcon :size="18"><SettingsOutline /></NIcon>
+      </template>
+      <span class="advanced-toggle-label">{{ t('task.show-advanced-options') }}</span>
+      <NIcon :size="16" class="advanced-toggle-chevron" :class="{ 'advanced-toggle-chevron--open': show }">
+        <ChevronDownOutline />
+      </NIcon>
+    </NButton>
   </NFormItem>
   <NCollapseTransition :show="show">
     <div class="advanced-options">
+      <div class="advanced-section-title">{{ t('task.anti-leech') }}</div>
       <NFormItem :label="t('task.task-user-agent') + ':'">
         <div class="ua-field-wrapper">
           <NInputGroup class="ua-input-row">
@@ -148,6 +155,22 @@ const { detecting: detectingProxy, detect: detectProxy } = useSystemProxyDetect(
             </div>
           </div>
         </div>
+      </NFormItem>
+      <NFormItem :label="t('task.task-referer') + ':'">
+        <NInput
+          :value="referer"
+          type="textarea"
+          :autosize="{ minRows: 1, maxRows: 3 }"
+          @update:value="$emit('update:referer', $event)"
+        />
+      </NFormItem>
+      <NFormItem :label="t('task.task-cookie') + ':'">
+        <NInput
+          :value="cookie"
+          type="textarea"
+          :autosize="{ minRows: 1, maxRows: 3 }"
+          @update:value="$emit('update:cookie', $event)"
+        />
       </NFormItem>
       <NFormItem :label="t('task.speed-limit') + ':'">
         <SpeedLimitInput
@@ -214,22 +237,6 @@ const { detecting: detectingProxy, detect: detectProxy } = useSystemProxyDetect(
           </NCheckbox>
         </div>
       </NFormItem>
-      <NFormItem :label="t('task.task-referer') + ':'">
-        <NInput
-          :value="referer"
-          type="textarea"
-          :autosize="{ minRows: 1, maxRows: 3 }"
-          @update:value="$emit('update:referer', $event)"
-        />
-      </NFormItem>
-      <NFormItem :label="t('task.task-cookie') + ':'">
-        <NInput
-          :value="cookie"
-          type="textarea"
-          :autosize="{ minRows: 1, maxRows: 3 }"
-          @update:value="$emit('update:cookie', $event)"
-        />
-      </NFormItem>
       <NFormItem :label="t('task.use-proxy') + ':'">
         <NSwitch
           :value="proxyMode !== 'direct'"
@@ -280,14 +287,34 @@ const { detecting: detectingProxy, detect: detectProxy } = useSystemProxyDetect(
 </template>
 
 <style scoped>
-/* The toggle holds no input, so it takes the checkbox's height rather than an
- * input's. The free space hint above it and the checkbox's own line both add
- * leading; pulling it up makes the visible gap match the gap between fields. */
 .advanced-toggle {
   margin-top: -6px;
+  margin-bottom: 0;
 }
 .advanced-toggle :deep(.n-form-item-blank) {
   min-height: 0;
+}
+.advanced-toggle-button {
+  min-height: 44px;
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--radius-sm);
+}
+.advanced-toggle-label {
+  flex: 1;
+  text-align: start;
+}
+.advanced-toggle-chevron {
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+.advanced-toggle-chevron--open {
+  transform: rotate(180deg);
+}
+.advanced-section-title {
+  padding: 2px 0 4px;
+  color: var(--m3-on-surface-variant);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 /* The empty feedback line a form item keeps below itself (Naive's medium
  * `feedbackHeight`), here inside the collapsing options. */
@@ -396,7 +423,14 @@ const { detecting: detectingProxy, detect: detectProxy } = useSystemProxyDetect(
 }
 .http-auth-credentials {
   display: flex;
+  flex-direction: column;
   gap: 6px;
+  width: 100%;
+}
+.http-auth-credentials > * {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
 }
 
 /* The checksum's hint fills the space other items keep empty below them;

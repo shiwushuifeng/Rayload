@@ -16,5 +16,6 @@
   "notification.selection-body": "%{task_name}",
   "notification.browser-kept-title": "Descărcarea a rămas în browser",
   "notification.browser-kept-body": "Rayload nu a putut accesa %{host}.",
-  "notification.browser-kept-proxy-body": "Rayload nu a putut accesa %{host}. Dacă browserul folosește un proxy, activați proxy-ul în setările de rețea ale Rayload."
+  "notification.browser-kept-proxy-body": "Rayload nu a putut accesa %{host}. Dacă browserul folosește un proxy, activați proxy-ul în setările de rețea ale Rayload.",
+  "notification.private-body": "Saved to your download folder"
 }

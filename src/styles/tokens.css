@@ -82,6 +82,10 @@
   /* ── M3 Drop Zone ──────────────────────────────────────────────── */
   --m3-drop-zone-border: var(--m3-outline-variant);
 
+  /* ── Illustration accents (violet + warm gold) ─────────────────── */
+  --illustration-gold: #c6923f;
+  --illustration-gold-soft: #eed7a5;
+
   --sidebar-hover-bg: color-mix(in srgb, var(--m3-on-surface) 8%, transparent);
 
   --sidebar-bg: var(--m3-surface-container);
@@ -258,6 +262,10 @@
   --m3-status-paused: #958e99;
   --m3-status-error: #ffb2bc;
   --m3-status-success: #82d996;
+
+  /* ── Illustration accents (lighter gold on dark surfaces) ──────── */
+  --illustration-gold: #e7c37c;
+  --illustration-gold-soft: #6b5228;
 
   --sidebar-hover-bg: color-mix(in srgb, var(--m3-on-surface) 12%, transparent);
 

@@ -425,4 +425,21 @@ function onAction(event: string) {
 .action-item-move {
   transition: transform 0.2s ease-out;
 }
+
+@media (max-width: 768px) {
+  .task-item-actions,
+  .task-item-actions--compact {
+    --task-action-height: 44px;
+    --task-action-padding-x: 6px;
+    --task-action-item-margin: 1px;
+    --task-action-icon-size: 20px;
+    --task-action-item-max-width: 44px;
+    --task-action-button-size: 44px;
+    max-width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    overflow: visible;
+    border-radius: var(--radius-lg);
+  }
+}
 </style>

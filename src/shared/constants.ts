@@ -150,7 +150,7 @@ export const BUILTIN_CATEGORY_TEMPLATES = [
   {
     label: 'file-category-videos',
     extensions: ['mp4', 'mkv', 'avi', 'mov', 'wmv', 'flv', 'webm', 'ts', 'm4v', 'rmvb'],
-    subdirName: 'Videos',
+    subdirName: 'Video',
   },
   {
     label: 'file-category-music',
@@ -288,6 +288,10 @@ export const DEFAULT_APP_CONFIG = {
   taskNotification: true, // users expect download-complete notifications
   notifyOnStart: true,
   notifyOnComplete: true, // main value of OS notification: background completion alert
+  notifyOnError: true,
+  notificationIncludeName: true,
+  notificationKeepAlive: true,
+  showSpeedometer: true,
   floatWindow: 'off' as const,
   floatWindowInLightweight: false, // lightweight mode frees every webview by default
   mediaSelectBeforeDownload: true,
@@ -304,6 +308,7 @@ export const DEFAULT_APP_CONFIG = {
   /** Linux-only: WebKitGTK hardware compositing, opt-in: it freezes or blanks windows on many drivers and virtual GPUs. */
   hardwareRendering: false,
   updateChannel: (appVersion.includes('-') ? 'beta' : 'stable') as 'stable' | 'beta',
+  updateStableOnly: true,
   lastCheckUpdateTime: 0,
 
   // ── Network & Security ────────────────────────────────────────

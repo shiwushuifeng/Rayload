@@ -14,6 +14,7 @@ import {
 } from '@vicons/ionicons5'
 import { usePreferenceStore } from '@/stores/preference'
 import { useAppMessage } from '@/composables/useAppMessage'
+import EmptyIllustration from '@/components/common/EmptyIllustration.vue'
 import { bytesToSize } from '@shared/utils/format'
 import { logger } from '@shared/logger'
 import { resolveUserVisibleDownloadDir } from '@shared/utils/userVisibleDirectory'
@@ -153,7 +154,10 @@ watch(
             </template>
           </NEmpty>
         </div>
-        <NEmpty v-else-if="items.length === 0" class="trash-empty" :description="t('trash.empty')" />
+        <div v-else-if="items.length === 0" class="trash-empty">
+          <EmptyIllustration variant="trash" class="trash-empty-art" />
+          <p class="trash-empty-text">{{ t('trash.empty') }}</p>
+        </div>
         <template v-else>
           <p class="trash-count">{{ t('trash.item-count', { count: items.length }) }}</p>
           <ul class="trash-list">
@@ -268,6 +272,25 @@ watch(
 .trash-state,
 .trash-empty {
   padding: 54px 16px;
+}
+.trash-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.trash-empty-art {
+  width: min(230px, 74%);
+  filter: drop-shadow(0 16px 30px color-mix(in srgb, var(--m3-primary) 16%, transparent));
+}
+.trash-empty-text {
+  width: min(320px, 88%);
+  margin: 0;
+  color: var(--m3-on-surface-variant);
+  font-size: var(--font-size-base);
+  line-height: 1.6;
+  text-align: center;
+  text-wrap: balance;
 }
 .trash-state {
   display: grid;

@@ -19,6 +19,7 @@ export interface GeneralForm {
   autoCheckUpdate: boolean
   autoCheckUpdateInterval: number
   updateChannel: AppConfig['updateChannel']
+  updateStableOnly: boolean
   showProgressBar: boolean
   floatWindow: AppConfig['floatWindow']
   floatWindowInLightweight: boolean
@@ -32,6 +33,7 @@ export interface GeneralForm {
   showTrayIcon: boolean
   hideDockOnMinimize: boolean
   traySpeedometer: boolean
+  showSpeedometer: boolean
   lightweightMode: boolean
   // Links picked up from the clipboard.
   clipboardEnable: boolean
@@ -47,6 +49,9 @@ export interface GeneralForm {
   taskNotification: boolean
   notifyOnStart: boolean
   notifyOnComplete: boolean
+  notifyOnError: boolean
+  notificationIncludeName: boolean
+  notificationKeepAlive: boolean
   notificationClickAction: AppConfig['notificationClickAction']
 }
 
@@ -72,6 +77,7 @@ export function buildGeneralForm(config: AppConfig): GeneralForm {
     autoCheckUpdate: config.autoCheckUpdate,
     autoCheckUpdateInterval: config.autoCheckUpdateInterval,
     updateChannel: config.updateChannel,
+    updateStableOnly: config.updateStableOnly,
     showProgressBar: config.showProgressBar,
     floatWindow: config.floatWindow,
     floatWindowInLightweight: config.floatWindowInLightweight,
@@ -85,6 +91,7 @@ export function buildGeneralForm(config: AppConfig): GeneralForm {
     showTrayIcon: config.showTrayIcon,
     hideDockOnMinimize: config.hideDockOnMinimize,
     traySpeedometer: config.traySpeedometer,
+    showSpeedometer: config.showSpeedometer,
     lightweightMode: config.lightweightMode,
     clipboardEnable: config.clipboard.enable,
     clipboardBackground: config.clipboard.background,
@@ -98,6 +105,9 @@ export function buildGeneralForm(config: AppConfig): GeneralForm {
     taskNotification: config.taskNotification,
     notifyOnStart: config.notifyOnStart,
     notifyOnComplete: config.notifyOnComplete,
+    notifyOnError: config.notifyOnError,
+    notificationIncludeName: config.notificationIncludeName,
+    notificationKeepAlive: config.notificationKeepAlive,
     notificationClickAction: config.notificationClickAction,
   }
 }

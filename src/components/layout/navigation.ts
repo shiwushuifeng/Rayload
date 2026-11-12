@@ -16,4 +16,13 @@ export function useTaskDestinations() {
   )
 }
 
-export const preferenceDestinations = ['general', 'downloads', 'bt', 'ed2k', 'network', 'advanced'] as const
+export const preferenceDestinations = [
+  'general',
+  'permissions',
+  'downloads',
+  'bt',
+  'ed2k',
+  'network',
+  'lan',
+  'advanced',
+] as const

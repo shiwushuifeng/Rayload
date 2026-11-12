@@ -16,5 +16,6 @@
   "notification.selection-body": "%{task_name}",
   "notification.browser-kept-title": "การดาวน์โหลดยังอยู่ในเบราว์เซอร์",
   "notification.browser-kept-body": "Rayload เชื่อมต่อ %{host} ไม่ได้",
-  "notification.browser-kept-proxy-body": "Rayload เชื่อมต่อ %{host} ไม่ได้ หากเบราว์เซอร์ใช้พร็อกซี ให้เปิดพร็อกซีในการตั้งค่าเครือข่ายของ Rayload"
+  "notification.browser-kept-proxy-body": "Rayload เชื่อมต่อ %{host} ไม่ได้ หากเบราว์เซอร์ใช้พร็อกซี ให้เปิดพร็อกซีในการตั้งค่าเครือข่ายของ Rayload",
+  "notification.private-body": "Saved to your download folder"
 }

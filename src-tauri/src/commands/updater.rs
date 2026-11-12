@@ -1,7 +1,7 @@
 use crate::error::AppError;
 use crate::services::engine_fetch::{self, FetchRequest};
 use semver::Version;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering as AtomicOrdering};
 use std::sync::Arc;
@@ -17,6 +17,9 @@ const METADATA_MAX_SIZE: u64 = 1024 * 1024;
 /// Largest accepted update package.
 const PACKAGE_MAX_SIZE: u64 = 1024 * 1024 * 1024;
 const UPDATER_BASE_URL: &str = "https://github.com/shiwushuifeng/Rayload/releases/download/updater";
+const GITHUB_LATEST_RELEASE_API: &str = "https://api.github.com/repos/shiwushuifeng/Rayload/releases/latest";
+const GITHUB_RELEASES_API: &str = "https://api.github.com/repos/shiwushuifeng/Rayload/releases?per_page=20";
+const GITHUB_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(12);
 
 /// Serializable update metadata returned to the frontend.
 #[derive(Debug, Clone, Serialize)]
@@ -27,6 +30,68 @@ pub struct UpdateMetadata {
     pub date: Option<String>,
     pub channel: String,
     pub requested_channel: String,
+}
+
+/// A public release as returned by the GitHub releases API.
+#[derive(Debug, Clone, Deserialize)]
+struct GithubRelease {
+    tag_name: String,
+    name: Option<String>,
+    body: Option<String>,
+    html_url: String,
+    prerelease: bool,
+    draft: bool,
+    published_at: Option<String>,
+}
+
+/// GitHub release information for the Android in-app update check.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GithubUpdateMetadata {
+    pub version: String,
+    pub name: String,
+    pub body: Option<String>,
+    pub release_url: String,
+    pub prerelease: bool,
+    pub published_at: Option<String>,
+    pub current_version: String,
+    pub update_available: bool,
+}
+
+fn github_release_version(release: &GithubRelease) -> Option<Version> {
+    parse_semver(&release.tag_name)
+}
+
+fn select_github_release(
+    releases: Vec<GithubRelease>,
+    stable_only: bool,
+) -> Option<GithubRelease> {
+    releases
+        .into_iter()
+        .filter(|release| !release.draft && (!stable_only || !release.prerelease))
+        .max_by(|left, right| match (github_release_version(left), github_release_version(right)) {
+            (Some(left_version), Some(right_version)) => left_version.cmp(&right_version),
+            (Some(_), None) => Ordering::Greater,
+            (None, Some(_)) => Ordering::Less,
+            (None, None) => Ordering::Equal,
+        })
+}
+
+fn build_github_client(current_version: &str, proxy: Option<String>) -> Result<reqwest::Client, AppError> {
+    let mut builder = reqwest::Client::builder()
+        .timeout(GITHUB_TIMEOUT)
+        .user_agent(format!("Rayload/{current_version}"));
+    if let Some(server) = crate::commands::proxy::resolve(proxy)
+        .map(|value| value.trim().to_owned())
+        .filter(|value| !value.is_empty())
+    {
+        let proxy = reqwest::Proxy::all(&server)
+            .map_err(|error| AppError::Updater(format!("Invalid update proxy: {error}")))?;
+        builder = builder.proxy(proxy);
+    }
+    builder
+        .build()
+        .map_err(|error| AppError::Updater(format!("Failed to initialize update client: {error}")))
 }
 
 /// Progress event emitted to the frontend during update download.
@@ -396,6 +461,76 @@ pub async fn check_for_update(
     Ok(metadata)
 }
 
+/// Checks the public GitHub releases API for the Android in-app update banner.
+///
+/// `stable_only` uses the `/releases/latest` endpoint, which ignores drafts and
+/// pre-releases. Turning it off lists recent releases and picks the highest
+/// semantic version. The request has a short timeout so the settings page never
+/// appears frozen when GitHub is unreachable.
+#[tauri::command]
+pub async fn check_github_update(
+    current_version: String,
+    stable_only: bool,
+    proxy: Option<String>,
+) -> Result<GithubUpdateMetadata, AppError> {
+    log::info!(
+        "updater:github-check stable_only={stable_only} current={current_version} proxy={}",
+        redact_proxy_for_log(&proxy)
+    );
+    let client = build_github_client(&current_version, proxy)?;
+    let url = if stable_only {
+        GITHUB_LATEST_RELEASE_API
+    } else {
+        GITHUB_RELEASES_API
+    };
+    let response = client
+        .get(url)
+        .header(reqwest::header::ACCEPT, "application/vnd.github+json")
+        .header("X-GitHub-Api-Version", "2022-11-28")
+        .send()
+        .await
+        .map_err(|error| AppError::Updater(format!("GitHub request failed: {error}")))?;
+    let status = response.status();
+    if !status.is_success() {
+        return Err(AppError::Updater(format!(
+            "GitHub API returned HTTP {status}"
+        )));
+    }
+
+    let releases = if stable_only {
+        vec![response
+            .json::<GithubRelease>()
+            .await
+            .map_err(|error| AppError::Updater(format!("Invalid GitHub release response: {error}")))?]
+    } else {
+        response
+            .json::<Vec<GithubRelease>>()
+            .await
+            .map_err(|error| AppError::Updater(format!("Invalid GitHub releases response: {error}")))?
+    };
+    let release = select_github_release(releases, stable_only)
+        .ok_or_else(|| AppError::NotFound("No public GitHub release found".into()))?;
+    let latest_version = release.tag_name.trim().trim_start_matches('v');
+    let update_available = match (parse_semver(&current_version), parse_semver(latest_version)) {
+        (Some(current), Some(latest)) => latest > current,
+        _ => false,
+    };
+    log::info!(
+        "updater:github-check result version={latest_version} available={update_available} prerelease={}",
+        release.prerelease
+    );
+    Ok(GithubUpdateMetadata {
+        version: latest_version.to_owned(),
+        name: release.name.unwrap_or_else(|| release.tag_name.clone()),
+        body: release.body,
+        release_url: release.html_url,
+        prerelease: release.prerelease,
+        published_at: release.published_at,
+        current_version,
+        update_available,
+    })
+}
+
 /// Download the selected update without another metadata request or installation.
 ///
 /// The Aria2 Next engine keeps running during download — user tasks are unaffected.
@@ -684,5 +819,50 @@ mod tests {
     fn redact_proxy_for_log_marks_invalid_proxy() {
         let proxy = Some("://not-a-url".to_string());
         assert_eq!(redact_proxy_for_log(&proxy), "invalid");
+    }
+
+    fn github_release(tag: &str, prerelease: bool) -> GithubRelease {
+        GithubRelease {
+            tag_name: tag.into(),
+            name: Some(tag.into()),
+            body: None,
+            html_url: format!("https://github.com/shiwushuifeng/Rayload/releases/tag/{tag}"),
+            prerelease,
+            draft: false,
+            published_at: None,
+        }
+    }
+
+    #[test]
+    fn stable_only_github_selection_ignores_prereleases() {
+        let selected = select_github_release(
+            vec![
+                github_release("v1.1.0-beta.1", true),
+                github_release("v1.0.3", false),
+            ],
+            true,
+        )
+        .expect("stable release");
+        assert_eq!(selected.tag_name, "v1.0.3");
+    }
+
+    #[test]
+    fn github_selection_prefers_the_highest_semantic_version() {
+        let selected = select_github_release(
+            vec![
+                github_release("v1.0.9", false),
+                github_release("v1.1.0-beta.2", true),
+                github_release("v1.0.10", false),
+            ],
+            false,
+        )
+        .expect("release");
+        assert_eq!(selected.tag_name, "v1.1.0-beta.2");
+    }
+
+    #[test]
+    fn github_release_tags_are_compared_without_a_v_prefix() {
+        assert!(parse_semver("v1.0.4").is_some());
+        assert!(!is_strict_semver_upgrade("v1.0.4", "v1.0.3"));
     }
 }

@@ -16,5 +16,6 @@
   "notification.selection-body": "%{task_name}",
   "notification.browser-kept-title": "Загрузка осталась в браузере",
   "notification.browser-kept-body": "Rayload не смог подключиться к %{host}.",
-  "notification.browser-kept-proxy-body": "Rayload не смог подключиться к %{host}. Если браузер использует прокси, включите прокси в сетевых настройках Rayload."
+  "notification.browser-kept-proxy-body": "Rayload не смог подключиться к %{host}. Если браузер использует прокси, включите прокси в сетевых настройках Rayload.",
+  "notification.private-body": "Saved to your download folder"
 }

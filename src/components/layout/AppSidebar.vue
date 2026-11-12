@@ -5,7 +5,13 @@ import { RouterLink, useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import MTooltip from '@/components/common/MTooltip.vue'
 import { NIcon } from 'naive-ui'
-import { InformationCircleOutline, SettingsOutline, SunnyOutline, TrashOutline } from '@vicons/ionicons5'
+import {
+  InformationCircleOutline,
+  SettingsOutline,
+  StatsChartOutline,
+  SunnyOutline,
+  TrashOutline,
+} from '@vicons/ionicons5'
 import { useTaskStore } from '@/stores/task'
 import { usePreferenceStore } from '@/stores/preference'
 import { useAppStore } from '@/stores/app'
@@ -29,12 +35,14 @@ const appMessage = useAppMessage()
 const { isAndroid } = usePlatform()
 const { isItemVisible } = useNavigationVisibility()
 const isSettings = computed(() => route.matched.some((record) => record.name === 'preference'))
+const isStatistics = computed(() => route.name === 'statistics')
 const visibleTaskDestinations = computed(() =>
   taskDestinations.value.filter((item) => !props.compact || isItemVisible(item.key)),
 )
 const trashVisible = computed(() => !props.compact || isItemVisible('trash'))
 const aboutVisible = computed(() => !props.compact || isItemVisible('about'))
 const keepAwakeVisible = computed(() => !props.compact || isItemVisible('keep-awake'))
+const statisticsVisible = computed(() => !props.compact || isItemVisible('statistics'))
 
 function showAbout(): void {
   triggerHaptic()
@@ -95,6 +103,22 @@ function enterKeepAwake(): void {
           </button>
         </template>
         {{ t('navigation.keep-awake') }}
+      </MTooltip>
+      <MTooltip v-if="statisticsVisible" placement="right" :disabled="props.compact">
+        <template #trigger>
+          <RouterLink
+            :to="{ name: 'statistics' }"
+            class="sidebar-item"
+            :class="{ active: isStatistics }"
+            :aria-label="t('navigation.statistics')"
+            :aria-current="isStatistics ? 'page' : undefined"
+            @click="triggerHaptic"
+          >
+            <NIcon :size="18" aria-hidden="true"><StatsChartOutline /></NIcon>
+            <span class="sidebar-label">{{ t('navigation.statistics') }}</span>
+          </RouterLink>
+        </template>
+        {{ t('navigation.statistics') }}
       </MTooltip>
       <MTooltip placement="right" :disabled="props.compact">
         <template #trigger>
@@ -164,7 +188,7 @@ function enterKeepAwake(): void {
   display: flex;
   align-items: center;
   gap: 10px;
-  min-height: 38px;
+  min-height: 44px;
   position: relative;
   overflow: hidden;
   width: 100%;

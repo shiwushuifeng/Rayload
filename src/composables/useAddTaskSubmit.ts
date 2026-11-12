@@ -272,6 +272,35 @@ export function classifySubmitError(err: unknown): 'engine-not-ready' | 'duplica
  * Submits file-based torrent batch items to the engine.
  * Mutates item.status in place; returns count of failures.
  */
+interface ParsedAria2InputLike {
+  entries: Array<{ uris: string[]; options: Aria2EngineOptions }>
+  validLineCount: number
+}
+
+/**
+ * Removes repeated URI entries before submission. The same URI with different
+ * aria2 input-file options (for example two `out=` names) is intentional and
+ * stays as two tasks.
+ */
+function dedupeParsedInput(parsed: ParsedAria2InputLike): ParsedAria2InputLike {
+  const seen = new Set<string>()
+  const entries = parsed.entries
+    .map((entry) => {
+      const optionKey = JSON.stringify(entry.options)
+      return {
+        ...entry,
+        uris: entry.uris.filter((uri) => {
+          const key = `${uri}\u0000${optionKey}`
+          if (seen.has(key)) return false
+          seen.add(key)
+          return true
+        }),
+      }
+    })
+    .filter((entry) => entry.uris.length > 0)
+  return { entries, validLineCount: entries.length }
+}
+
 export async function submitBatchItems(
   items: BatchItem[],
   options: Aria2EngineOptions,
@@ -322,7 +351,7 @@ export async function submitManualUris(
   skip: ReadonlySet<string> = new Set(),
 ): Promise<ManualUriSubmitResult> {
   if (!form.uris.trim()) return { submittedTaskNames: [], magnetGids: [], magnetFailures: [] }
-  const parsedInput = parseAria2Input(form.uris)
+  const parsedInput = dedupeParsedInput(parseAria2Input(form.uris))
   const allUris = parsedInput.entries.flatMap((entry) => entry.uris)
   logger.info('submitManualUris', 'manual_uris_submitted', {
     regular: allUris.filter((u) => !isMagnetUri(u)).length,
@@ -334,7 +363,7 @@ export async function submitManualUris(
   })
 
   const baseOptions = buildEngineOptions(form)
-  const magnetUris = allUris.filter(isMagnetUri)
+  const magnetUris = allUris.filter((uri) => isMagnetUri(uri) && !skip.has(uri))
   const regularEntries: ManualRegularEntry[] = parsedInput.entries
     .map((entry) => ({
       uris: entry.uris.filter((uri) => !isMagnetUri(uri) && !skip.has(uri)),

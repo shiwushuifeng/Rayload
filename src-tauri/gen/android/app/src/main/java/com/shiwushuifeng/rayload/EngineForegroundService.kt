@@ -35,6 +35,20 @@ class EngineForegroundService : Service() {
           lockscreenVisibility = Notification.VISIBILITY_PUBLIC
         },
       )
+      manager.deleteNotificationChannel(LEGACY_QUIET_CHANNEL_ID)
+      manager.createNotificationChannel(
+        NotificationChannel(
+          QUIET_CHANNEL_ID,
+          getString(R.string.engine_quiet_channel_name),
+          NotificationManager.IMPORTANCE_MIN,
+        ).apply {
+          description = getString(R.string.engine_quiet_channel_description)
+          setShowBadge(false)
+          setSound(null, null)
+          enableVibration(false)
+          lockscreenVisibility = Notification.VISIBILITY_SECRET
+        },
+      )
     }
   }
 
@@ -44,6 +58,10 @@ class EngineForegroundService : Service() {
         setPausedState(intent.getBooleanExtra(EXTRA_PAUSED, false))
         publishNotification()
       }
+      ACTION_SET_QUIET -> {
+        setQuietState(intent.getBooleanExtra(EXTRA_QUIET, false))
+        publishNotification()
+      }
       else -> publishNotification()
     }
     return START_NOT_STICKY
@@ -51,8 +69,9 @@ class EngineForegroundService : Service() {
 
   private fun publishNotification() {
     val paused = isPaused()
+    val quiet = isQuiet()
     val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      Notification.Builder(this, CHANNEL_ID)
+      Notification.Builder(this, if (quiet) QUIET_CHANNEL_ID else CHANNEL_ID)
     } else {
       @Suppress("DEPRECATION")
       Notification.Builder(this)
@@ -94,6 +113,13 @@ class EngineForegroundService : Service() {
     getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_PAUSED, paused).apply()
   }
 
+  private fun isQuiet(): Boolean =
+    getSharedPreferences(PREFS, Context.MODE_PRIVATE).getBoolean(KEY_QUIET, false)
+
+  private fun setQuietState(quiet: Boolean) {
+    getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_QUIET, quiet).apply()
+  }
+
   override fun onTaskRemoved(rootIntent: Intent?) {
     stopSelf()
     super.onTaskRemoved(rootIntent)
@@ -109,11 +135,16 @@ class EngineForegroundService : Service() {
     private const val PREFS = "rayload-engine"
     private const val CHANNEL_ID = "rayload-engine-v2"
     private const val LEGACY_CHANNEL_ID = "rayload-engine"
+    private const val QUIET_CHANNEL_ID = "rayload-engine-quiet"
+    private const val LEGACY_QUIET_CHANNEL_ID = "rayload-engine-quiet-legacy"
     private const val KEY_RPC_PORT = "rpcPort"
     private const val KEY_RPC_SECRET = "rpcSecret"
     private const val KEY_PAUSED = "paused"
+    private const val KEY_QUIET = "quiet"
     private const val ACTION_SET_PAUSED = "com.shiwushuifeng.rayload.action.SET_PAUSED"
+    private const val ACTION_SET_QUIET = "com.shiwushuifeng.rayload.action.SET_QUIET"
     private const val EXTRA_PAUSED = "paused"
+    private const val EXTRA_QUIET = "quiet"
 
     @JvmStatic
     fun setCredentials(context: Context, port: Int, secret: String) {
@@ -128,6 +159,18 @@ class EngineForegroundService : Service() {
       val intent = Intent(context, EngineForegroundService::class.java)
         .setAction(ACTION_SET_PAUSED)
         .putExtra(EXTRA_PAUSED, paused)
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        context.startForegroundService(intent)
+      } else {
+        context.startService(intent)
+      }
+    }
+
+    @JvmStatic
+    fun setQuiet(context: Context, quiet: Boolean) {
+      val intent = Intent(context, EngineForegroundService::class.java)
+        .setAction(ACTION_SET_QUIET)
+        .putExtra(EXTRA_QUIET, quiet)
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         context.startForegroundService(intent)
       } else {

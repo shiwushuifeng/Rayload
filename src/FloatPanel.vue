@@ -17,6 +17,7 @@ import { AddOutline, ArrowForwardOutline, PauseOutline, PlayOutline } from '@vic
 import aria2Api from '@/api/aria2'
 import { useBrandLogo } from '@/composables/useBrandLogo'
 import SegmentBar from '@/components/task/SegmentBar.vue'
+import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import { useEscapeKey } from '@/composables/useEscapeKey'
 import { useFloatUpdates } from '@/composables/useFloatUpdates'
 import { afterReveal, nextFrame, reducedMotion } from '@/composables/useWindowReveal'
@@ -42,6 +43,7 @@ interface PanelSide {
 const LEAVE_MS = 170
 
 const { t } = useI18n()
+const formatSpeed = (value: number) => bytesToSize(Math.max(0, Math.round(value)))
 const { brandLogo } = useBrandLogo()
 const view = getCurrentWebviewWindow()
 const root = ref<HTMLElement | null>(null)
@@ -218,8 +220,10 @@ onBeforeUnmount(() => {
         <img class="panel-logo" :src="brandLogo" alt="" draggable="false" />
         <span class="panel-title">Rayload</span>
         <span v-if="update" class="panel-speeds">
-          <span>↓ {{ bytesToSize(update.stat.downloadSpeed) }}/s</span>
-          <span v-if="update.stat.uploadSpeed > 0">↑ {{ bytesToSize(update.stat.uploadSpeed) }}/s</span>
+          <span>↓ <AnimatedNumber :value="update.stat.downloadSpeed" :formatter="formatSpeed" />/s</span>
+          <span v-if="update.stat.uploadSpeed > 0"
+            >↑ <AnimatedNumber :value="update.stat.uploadSpeed" :formatter="formatSpeed" />/s</span
+          >
         </span>
       </header>
 

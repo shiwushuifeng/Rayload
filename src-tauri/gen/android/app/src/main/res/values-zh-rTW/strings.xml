@@ -3,4 +3,12 @@
     <string name="engine_channel_description">保持 Rayload 下載在背景執行</string>
     <string name="engine_running">Rayload 正在背景執行</string>
     <string name="engine_paused">Rayload 下載已暫停</string>
+    <string name="engine_quiet_channel_name">背景保活（極簡）</string>
+    <string name="engine_quiet_channel_description">使用折疊的靜默通知保持下載在背景執行</string>
+    <string name="shortcut_new_download">新建下載</string>
+    <string name="shortcut_new_download_long">建立新的下載任務</string>
+    <string name="clipboard_permission_title">剪貼簿連結識別</string>
+    <string name="clipboard_permission_message">Rayload 只在應用程式位於前景時讀取剪貼簿中的連結，不會儲存或上傳任何內容。</string>
+    <string name="clipboard_permission_allow">允許</string>
+    <string name="clipboard_permission_deny">暫不</string>
 </resources>

@@ -13,6 +13,11 @@ const router = createRouter({
           redirect: '/task/all',
         },
         {
+          path: '/statistics',
+          name: 'statistics',
+          component: () => import('@/views/StatisticsView.vue'),
+        },
+        {
           path: '/task/:status(all|progress|failed|completed)?',
           name: 'task',
           component: () => import('@/views/TaskView.vue'),
@@ -35,6 +40,11 @@ const router = createRouter({
               component: () => import('@/components/preference/Downloads.vue'),
             },
             {
+              path: 'permissions',
+              name: 'preference-permissions',
+              component: () => import('@/components/preference/Permissions.vue'),
+            },
+            {
               path: 'bt',
               name: 'preference-bt',
               component: () => import('@/components/preference/BitTorrent.vue'),
@@ -48,6 +58,11 @@ const router = createRouter({
               path: 'network',
               name: 'preference-network',
               component: () => import('@/components/preference/Network.vue'),
+            },
+            {
+              path: 'lan',
+              name: 'preference-lan',
+              component: () => import('@/components/preference/LanLinks.vue'),
             },
             {
               path: 'advanced',

@@ -14,6 +14,9 @@ val tauriProperties = Properties().apply {
     }
 }
 
+val includeSmokeX86_64Engine =
+    providers.environmentVariable("RAYLOAD_SMOKE_X86_64").orNull == "1"
+
 android {
     compileSdk = 37
     namespace = "com.shiwushuifeng.rayload"
@@ -44,6 +47,9 @@ android {
     packaging {
         jniLibs {
             useLegacyPackaging = true
+            if (!includeSmokeX86_64Engine) {
+                excludes.add("x86_64/**")
+            }
         }
     }
     buildTypes {
@@ -132,4 +138,20 @@ tasks.register<Delete>("removeLegacyAria2EngineAlias") {
 
 tasks.named("prepareAria2Engine") {
     finalizedBy("removeLegacyAria2EngineAlias")
+}
+
+if (includeSmokeX86_64Engine) {
+    val aria2X86_64EngineSource =
+        rootProject.file("../../../.toolchains/binaries/aria2-next-android-x86_64")
+    check(aria2X86_64EngineSource.exists()) {
+        "Missing emulator engine: $aria2X86_64EngineSource"
+    }
+    tasks.register<Copy>("prepareAria2X86_64Engine") {
+        from(aria2X86_64EngineSource)
+        into(layout.projectDirectory.dir("src/main/jniLibs/x86_64"))
+        rename { "libaria2.so" }
+    }
+    tasks.named("preBuild") {
+        dependsOn("prepareAria2X86_64Engine")
+    }
 }

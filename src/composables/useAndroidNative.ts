@@ -14,9 +14,17 @@ interface RayloadNativeBridge {
   requestNotificationPermission(): void
   batteryOptimizationStatus(): string
   requestBatteryOptimizationExemption(): void
+  installPermissionStatus(): string
+  requestInstallPermission(): void
+  clipboardPermissionStatus(): string
+  requestClipboardPermission(): void
+  localIpAddress(): string
   setEngineCredentials(port: number, secret: string): void
   setEnginePaused(paused: boolean): void
+  setEngineNotificationQuiet(quiet: boolean): void
   setKeepScreenOn(enabled: boolean): void
+  restartApp(): void
+  consumeNewDownloadRequest?(): boolean
 }
 
 declare global {
@@ -39,17 +47,32 @@ export function getRayloadNativeBridge(): RayloadNativeBridge | null {
 }
 
 export function readAndroidPermissionStatuses(): Record<
-  'storage' | 'notification' | 'battery',
+  'storage' | 'notification' | 'battery' | 'install' | 'clipboard',
   AndroidPermissionStatus
 > {
   const bridge = getRayloadNativeBridge()
   if (!bridge) {
-    return { storage: 'unavailable', notification: 'unavailable', battery: 'unavailable' }
+    return {
+      storage: 'unavailable',
+      notification: 'unavailable',
+      battery: 'unavailable',
+      install: 'unavailable',
+      clipboard: 'unavailable',
+    }
+  }
+  const read = (status: () => string): AndroidPermissionStatus => {
+    try {
+      return normalizeStatus(status())
+    } catch {
+      return 'unavailable'
+    }
   }
   return {
-    storage: normalizeStatus(bridge.storagePermissionStatus()),
-    notification: normalizeStatus(bridge.notificationPermissionStatus()),
-    battery: normalizeStatus(bridge.batteryOptimizationStatus()),
+    storage: read(() => bridge.storagePermissionStatus()),
+    notification: read(() => bridge.notificationPermissionStatus()),
+    battery: read(() => bridge.batteryOptimizationStatus()),
+    install: read(() => bridge.installPermissionStatus()),
+    clipboard: read(() => bridge.clipboardPermissionStatus()),
   }
 }
 
@@ -65,6 +88,21 @@ export function requestAndroidBatteryOptimizationExemption(): void {
   getRayloadNativeBridge()?.requestBatteryOptimizationExemption()
 }
 
+/** Shows the native consent dialog for foreground-only clipboard link detection. */
+export function requestAndroidClipboardPermission(): void {
+  getRayloadNativeBridge()?.requestClipboardPermission()
+}
+
+/** Opens the system screen that allows this app to install unknown APK files. */
+export function requestAndroidInstallPermission(): void {
+  getRayloadNativeBridge()?.requestInstallPermission()
+}
+
+/** Returns the active Wi-Fi/Ethernet IPv4 address, or an empty string. */
+export function readAndroidLocalIp(): string {
+  return getRayloadNativeBridge()?.localIpAddress() ?? ''
+}
+
 /** Shares the local aria2 RPC endpoint with the Android foreground service. */
 export function syncAndroidEngineCredentials(port: number, secret: string): void {
   getRayloadNativeBridge()?.setEngineCredentials(port, secret)
@@ -75,9 +113,19 @@ export function setAndroidEnginePaused(paused: boolean): void {
   getRayloadNativeBridge()?.setEnginePaused(paused)
 }
 
+/** Switches the foreground-service notification between normal and minimal modes. */
+export function syncAndroidNotificationMode(keepAlive: boolean): void {
+  getRayloadNativeBridge()?.setEngineNotificationQuiet(!keepAlive)
+}
+
 /** Keeps the Android window awake while the full-screen download dashboard is open. */
 export function setAndroidKeepScreenOn(enabled: boolean): void {
   getRayloadNativeBridge()?.setKeepScreenOn(enabled)
+}
+
+/** Restarts the Android host activity in a fresh process. */
+export function restartAndroidApp(): void {
+  getRayloadNativeBridge()?.restartApp()
 }
 
 export function shareAndroidFile(path: string): boolean {

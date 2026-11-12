@@ -35,6 +35,7 @@ async function setup(path: string) {
   const router = createRouter({
     history: createMemoryHistory(),
     routes: [
+      { path: '/statistics', name: 'statistics', component: page },
       { path: '/task/:status', name: 'task', component: page },
       {
         path: '/preference',

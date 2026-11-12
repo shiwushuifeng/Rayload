@@ -16,5 +16,6 @@
   "notification.selection-body": "%{task_name}",
   "notification.browser-kept-title": "Unduhan tetap di browser",
   "notification.browser-kept-body": "Rayload tidak dapat menjangkau %{host}.",
-  "notification.browser-kept-proxy-body": "Rayload tidak dapat menjangkau %{host}. Jika browser memakai proxy, aktifkan proxy di pengaturan jaringan Rayload."
+  "notification.browser-kept-proxy-body": "Rayload tidak dapat menjangkau %{host}. Jika browser memakai proxy, aktifkan proxy di pengaturan jaringan Rayload.",
+  "notification.private-body": "Saved to your download folder"
 }

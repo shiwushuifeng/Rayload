@@ -21,6 +21,45 @@ this file.
 - Normalized license and sponsor links across all translated README editions.
 - Documented the v0.9.0-beta through v1.0.1 milestones in `ROADMAP.md`.
 
+## v1.0.3 - 2026-11-12
+
+### Added
+
+- One-tap paste/clear, multi-line task splitting and advanced anti-leech
+  `Cookie`, `User-Agent` and `Referer` handling in the new-task dialog.
+- Long-press multi-select with select-all and batch pause, resume and permanent
+  delete, plus swipe gestures and native haptic feedback.
+- Duplicate-link filtering, storage-space warnings and asynchronous
+  `MD5`/`SHA1`/`SHA256` file verification.
+- Skippable onboarding, centralized permissions, notification controls,
+  launcher shortcut, GitHub update checks, JSON config transfer and LAN panel.
+- Statistics dashboard with home overview cards, 7-day trends, live-speed
+  sampling, category totals and Aria2 session data.
+- Animated numbers, multi-select title transitions, damped swipe-out cards,
+  Material ripples and SVG empty states.
+- ARM64 release/debug and x86_64 emulator build artifacts with SHA256SUMS.
+
+### Changed
+
+- Auto-archive folder names are customizable.
+- The settings footer no longer contains the overflow menu or engine restart.
+- The floating speedometer moved to a lower-left initial position, hides on
+  statistics/settings pages, and can be disabled in Appearance settings.
+- The About page combines version/platform badges and adds update checks.
+- Notification settings moved from General into the permission center.
+
+### Fixed
+
+- Duplicate-task dialog layering, onboarding safe areas, auto-archive icons and
+  detail-page error-banner overlap.
+- Friendly update-check and notification errors, statistics chart labels,
+  live-trend sampling and activity-based average speed.
+- LAN IP detection excluding virtual interfaces, settings tab-strip jumping,
+  dark-mode contrast and undersized touch targets.
+
+See `RELEASE_NOTES.md` for the complete bilingual release notes and artifact
+checksums.
+
 ## v1.0.2 - 2026-11-11
 
 ### Changed
