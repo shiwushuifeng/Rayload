@@ -849,6 +849,8 @@ pub fn run() {
             commands::lan_handoff,
             commands::lan_remote_tasks,
             commands::lan_remote_action,
+            commands::lan_remote_fetch,
+            commands::lan_remote_checksum,
             commands::lan_credentials,
             commands::lan_set_credentials,
             commands::lan_set_device_name,

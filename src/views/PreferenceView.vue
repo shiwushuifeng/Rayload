@@ -5,15 +5,11 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { NTabs, NTab } from 'naive-ui'
 import { preferenceDestinations } from '@/components/layout/navigation'
-import { useBuildInfoStore } from '@/stores/build'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const buildInfo = useBuildInfoStore()
-const destinations = computed(() =>
-  preferenceDestinations.filter((key) => key !== 'plugins' || buildInfo.info.pluginEngine),
-)
+const destinations = preferenceDestinations
 const selectedTab = computed(() => String(route.name ?? 'preference-general'))
 const tabsRef = ref<{ $el: HTMLElement } | null>(null)
 

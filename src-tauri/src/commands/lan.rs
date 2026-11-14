@@ -8,6 +8,7 @@ use tauri::{AppHandle, Manager, State};
 use tauri_plugin_store::StoreExt;
 
 use crate::api_auth::PairingRequestView;
+use crate::api_server::TaskChecksum;
 use crate::error::AppError;
 use crate::lan_client::{self, PairResult, PeerHistoryStats, PeerStatus, PeerView, RemoteTaskView};
 use crate::lan_discovery::DiscoveredPeer;
@@ -170,6 +171,43 @@ pub async fn lan_remote_action(
     action: String,
 ) -> Result<(), AppError> {
     lan_client::remote_action(&store_path(&app)?, &device_id, &gid, &action)
+        .await
+        .map_err(AppError::Lan)
+}
+
+/// Starts a local task that pulls one completed file from a paired device.
+#[tauri::command]
+pub async fn lan_remote_fetch(
+    app: AppHandle,
+    device_id: String,
+    gid: String,
+) -> Result<String, AppError> {
+    let request = lan_client::remote_file_request(&store_path(&app)?, &device_id, &gid)
+        .map_err(AppError::Lan)?;
+    let mut options = serde_json::Map::new();
+    options.insert("header".into(), serde_json::json!(request.headers));
+    options.insert("media".into(), serde_json::json!("file"));
+    options.insert("all-proxy".into(), serde_json::json!(""));
+    if !request.filename.is_empty() {
+        options.insert("out".into(), serde_json::json!(request.filename));
+    }
+    crate::services::downloads::submit(
+        &app,
+        crate::services::downloads::TaskInput::Uris(vec![request.url]),
+        serde_json::Value::Object(options),
+        None,
+    )
+    .await
+}
+
+/// Calculates checksums on the paired device without transferring the file.
+#[tauri::command]
+pub async fn lan_remote_checksum(
+    app: AppHandle,
+    device_id: String,
+    gid: String,
+) -> Result<TaskChecksum, AppError> {
+    lan_client::remote_checksum(&store_path(&app)?, &device_id, &gid)
         .await
         .map_err(AppError::Lan)
 }

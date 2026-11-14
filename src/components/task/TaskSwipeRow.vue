@@ -54,6 +54,8 @@ const contentStyle = computed<Record<string, string>>(() => {
   return style
 })
 
+const pauseDisabled = computed(() => !['active', 'waiting', 'paused'].includes(props.task.status))
+
 function actionStyle(action: 'pause' | 'delete') {
   const visible = direction.value === action
   const progress = Math.min(1, Math.abs(offset.value) / SWIPE_THRESHOLD)
@@ -127,6 +129,7 @@ function onPointerMove(event: PointerEvent) {
     dragging.value = true
   }
   offset.value = Math.max(-MAX_OFFSET, Math.min(MAX_OFFSET, deltaX))
+  if (pauseDisabled.value && offset.value > 0) offset.value = 0
   direction.value = offset.value < 0 ? 'delete' : 'pause'
   if (!hapticFired.value && Math.abs(offset.value) >= SWIPE_THRESHOLD) {
     hapticFired.value = true
@@ -221,7 +224,12 @@ onBeforeUnmount(() => {
     @pointercancel="onPointerCancel"
     @click="onClick"
   >
-    <div class="task-swipe-action task-swipe-action--pause" :style="actionStyle('pause')" aria-hidden="true">
+    <div
+      v-if="!pauseDisabled"
+      class="task-swipe-action task-swipe-action--pause"
+      :style="actionStyle('pause')"
+      aria-hidden="true"
+    >
       <NIcon :size="20"><PauseOutline /></NIcon>
       <span>{{ t('task.pause-task') }}</span>
     </div>

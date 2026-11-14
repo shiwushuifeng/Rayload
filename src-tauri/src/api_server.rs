@@ -9,21 +9,27 @@
 
 use std::future::Future;
 use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, SocketAddr};
+use std::path::PathBuf;
 use std::pin::Pin;
 use std::sync::Arc;
 
 use axum::{
     body::{to_bytes, Body},
     extract::{ConnectInfo, Path as UrlPath, State},
-    http::{HeaderMap, Request, StatusCode},
+    http::{
+        header::{CONTENT_DISPOSITION, CONTENT_LENGTH, CONTENT_TYPE},
+        HeaderMap, HeaderValue, Request, StatusCode,
+    },
     middleware::{self, Next},
     response::{IntoResponse, Response},
     routing::{get, post},
     Json, Router,
 };
 use base64::{engine::general_purpose::STANDARD, Engine as _};
+use futures_util::stream;
 use serde::{Deserialize, Serialize};
 use socket2::{Domain, Protocol, Socket, Type};
+use tokio::io::AsyncReadExt;
 
 use crate::api_auth::{
     fingerprint_of, AuthService, PairingRequestView, PendingPairData, ARCH_HEADER, DEVICE_HEADER,
@@ -121,7 +127,7 @@ pub struct HandoffResult {
 }
 
 /// Task snapshot returned to the device that pushed it.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct HandoffTask {
     pub gid: String,
@@ -130,6 +136,43 @@ pub struct HandoffTask {
     pub completed_length: u64,
     pub download_speed: u64,
     pub filename: String,
+    #[serde(default)]
+    pub dir: String,
+    #[serde(default)]
+    pub files: Vec<HandoffTaskFile>,
+    #[serde(default)]
+    pub seeder: bool,
+    #[serde(default)]
+    pub bittorrent: bool,
+    #[serde(default)]
+    pub ed2k: bool,
+}
+
+#[derive(Debug, Clone, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HandoffTaskFile {
+    pub index: String,
+    pub path: String,
+    pub length: u64,
+    pub completed_length: u64,
+    pub selected: bool,
+}
+
+#[derive(Debug)]
+pub struct HandoffFile {
+    pub path: PathBuf,
+    pub filename: String,
+    pub length: u64,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TaskChecksum {
+    pub md5: String,
+    pub sha1: String,
+    pub sha256: String,
+    pub sha512: String,
+    pub size: u64,
 }
 
 #[derive(Debug, Clone, Copy, Deserialize)]
@@ -138,6 +181,8 @@ pub enum TaskAction {
     Pause,
     Unpause,
     Remove,
+    #[serde(rename = "stop-seeding")]
+    StopSeeding,
 }
 
 pub type BackendFuture<T> = Pin<Box<dyn Future<Output = Result<T, String>> + Send>>;
@@ -152,6 +197,14 @@ pub trait Backend: Send + Sync + 'static {
     fn handoff(&self, request: HandoffRequest) -> BackendFuture<HandoffResult>;
     fn task(&self, gid: String) -> BackendFuture<HandoffTask>;
     fn task_action(&self, gid: String, action: TaskAction) -> BackendFuture<()>;
+    /// Streams a completed single-file task to a paired device.
+    fn task_file(&self, _gid: String) -> BackendFuture<HandoffFile> {
+        Box::pin(async { Err("file transfer is not available".into()) })
+    }
+    /// Reuses the host's file checksum implementation for a completed task.
+    fn task_checksum(&self, _gid: String) -> BackendFuture<TaskChecksum> {
+        Box::pin(async { Err("checksums are not available".into()) })
+    }
     /// Whether a human must approve incoming pairing requests.
     fn requires_pair_approval(&self) -> bool {
         false
@@ -188,6 +241,8 @@ pub fn router(backend: Arc<dyn Backend>, auth: Arc<AuthService>) -> Router {
         .route("/api/v1/devices/{id}/revoke", post(revoke_device))
         .route("/api/v1/handoff", post(handoff))
         .route("/api/v1/tasks/{gid}", get(task_status))
+        .route("/api/v1/tasks/{gid}/file", get(task_file))
+        .route("/api/v1/tasks/{gid}/checksum", get(task_checksum))
         .route("/api/v1/tasks/{gid}/{action}", post(task_action))
         .route_layer(middleware::from_fn_with_state(state.clone(), require_auth));
     Router::new()
@@ -554,6 +609,59 @@ async fn task_status(State(state): State<AppState>, UrlPath(gid): UrlPath<String
     }
 }
 
+async fn task_file(State(state): State<AppState>, UrlPath(gid): UrlPath<String>) -> Response {
+    match state.backend.task_file(gid).await {
+        Ok(file) => stream_task_file(file).await,
+        Err(error) => backend_error(error),
+    }
+}
+
+/// Streams the file in chunks so multi-gigabyte downloads never sit in memory.
+/// shortcut: no byte-range resume, add ranges if interrupted transfers must resume.
+async fn stream_task_file(file: HandoffFile) -> Response {
+    let handle = match tokio::fs::File::open(&file.path).await {
+        Ok(handle) => handle,
+        Err(error) => return backend_error(format!("cannot open task file: {error}")),
+    };
+    let body = stream::unfold(handle, |mut handle| async move {
+        let mut buffer = vec![0_u8; 64 * 1024];
+        match handle.read(&mut buffer).await {
+            Ok(0) => None,
+            Ok(read) => {
+                buffer.truncate(read);
+                Some((
+                    Ok::<_, std::io::Error>(axum::body::Bytes::from(buffer)),
+                    handle,
+                ))
+            }
+            Err(error) => Some((Err(error), handle)),
+        }
+    });
+    let mut response = Body::from_stream(body).into_response();
+    let headers = response.headers_mut();
+    headers.insert(
+        CONTENT_TYPE,
+        HeaderValue::from_static("application/octet-stream"),
+    );
+    if let Ok(value) = HeaderValue::from_str(&file.length.to_string()) {
+        headers.insert(CONTENT_LENGTH, value);
+    }
+    if let Ok(value) = HeaderValue::from_str(&format!(
+        "attachment; filename*=UTF-8''{}",
+        urlencoding::encode(&file.filename)
+    )) {
+        headers.insert(CONTENT_DISPOSITION, value);
+    }
+    response
+}
+
+async fn task_checksum(State(state): State<AppState>, UrlPath(gid): UrlPath<String>) -> Response {
+    match state.backend.task_checksum(gid).await {
+        Ok(value) => (StatusCode::OK, Json(value)).into_response(),
+        Err(error) => backend_error(error),
+    }
+}
+
 async fn task_action(
     State(state): State<AppState>,
     UrlPath((gid, action)): UrlPath<(String, String)>,
@@ -606,6 +714,7 @@ mod tests {
                     completed_length: 40,
                     download_speed: 20,
                     filename: "file.bin".into(),
+                    ..Default::default()
                 })
             })
         }
@@ -652,6 +761,23 @@ mod tests {
             .unwrap();
 
         assert_eq!(body["status"], "ok");
+    }
+
+    #[tokio::test]
+    async fn task_file_streams_the_completed_download() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("sample.bin");
+        std::fs::write(&path, b"rayload").unwrap();
+        let response = stream_task_file(HandoffFile {
+            path,
+            filename: "sample.bin".into(),
+            length: 7,
+        })
+        .await;
+
+        assert_eq!(response.status(), StatusCode::OK);
+        let body = to_bytes(response.into_body(), 1024).await.unwrap();
+        assert_eq!(&body[..], b"rayload");
     }
 
     #[tokio::test]

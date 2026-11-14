@@ -34,4 +34,19 @@ describe('remoteTaskToAria2', () => {
   it('keeps the offline flag', () => {
     expect(remoteTaskToAria2({ ...base, online: false }).remote?.online).toBe(false)
   })
+
+  it('maps remote files, directory and seeding state', () => {
+    const task = remoteTaskToAria2({
+      ...base,
+      status: 'complete',
+      dir: '/srv/downloads',
+      seeder: true,
+      bittorrent: true,
+      files: [{ index: '1', path: '/srv/downloads/file.zip', length: 100, completedLength: 100, selected: true }],
+    })
+    expect(task.dir).toBe('/srv/downloads')
+    expect(task.files[0]?.path).toBe('/srv/downloads/file.zip')
+    expect(task.files[0]?.selected).toBe('true')
+    expect(task.remote).toMatchObject({ seeder: true, bittorrent: true })
+  })
 })

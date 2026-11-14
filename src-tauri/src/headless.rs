@@ -167,6 +167,7 @@ impl Backend for RpcBackend {
                             .to_string()
                     })
                     .unwrap_or_default(),
+                ..Default::default()
             })
         })
     }
@@ -178,6 +179,7 @@ impl Backend for RpcBackend {
                 TaskAction::Pause => "aria2.pause",
                 TaskAction::Unpause => "aria2.unpause",
                 TaskAction::Remove => "aria2.remove",
+                TaskAction::StopSeeding => "aria2.remove",
             };
             let result = match rpc.call::<String>(method, vec![json!(gid.clone())]).await {
                 Ok(value) => Ok(value),

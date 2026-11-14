@@ -33,7 +33,7 @@ pub async fn file_digests(path: String) -> Result<FileDigests, AppError> {
         .map_err(|error| AppError::Io(format!("Digest worker failed: {error}")))?
 }
 
-fn file_digests_sync(path: &Path) -> Result<FileDigests, AppError> {
+pub(crate) fn file_digests_sync(path: &Path) -> Result<FileDigests, AppError> {
     if !path.is_file() {
         return Err(AppError::NotFound(format!(
             "File is unavailable for checksum calculation: {}",

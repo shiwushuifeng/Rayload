@@ -5,6 +5,8 @@ import { resolve } from 'path'
 
 const host = process.env.TAURI_DEV_HOST
 
+const demoBuild = process.env.VITE_RAYLOAD_DEMO === '1'
+
 export default defineConfig(async () => ({
   plugins: [
     vue(),
@@ -14,11 +16,18 @@ export default defineConfig(async () => ({
     }),
   ],
   resolve: {
-    alias: {
-      '@': resolve(__dirname, 'src'),
-      '@shared': resolve(__dirname, 'src/shared'),
-      path: 'path-browserify',
-    },
+    alias: [
+      { find: '@tauri-core-real', replacement: resolve(__dirname, 'node_modules/@tauri-apps/api/core.js') },
+      ...(demoBuild
+        ? [
+            { find: /^@tauri-apps\/api\/core$/, replacement: resolve(__dirname, 'src/demo/core.ts') },
+            { find: /^@tauri-apps\/api\/event$/, replacement: resolve(__dirname, 'src/demo/event.ts') },
+          ]
+        : []),
+      { find: '@shared', replacement: resolve(__dirname, 'src/shared') },
+      { find: '@', replacement: resolve(__dirname, 'src') },
+      { find: 'path', replacement: 'path-browserify' },
+    ],
   },
   clearScreen: false,
   build: {

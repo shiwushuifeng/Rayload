@@ -264,6 +264,9 @@ export interface Aria2Task {
     gid: string
     online: boolean
     error?: string
+    seeder?: boolean
+    bittorrent?: boolean
+    ed2k?: boolean
   }
   selectionManaged?: boolean
   selectionPrompt?: boolean

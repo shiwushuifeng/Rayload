@@ -1,8 +1,8 @@
-# Rayload v1.0.4
+# Rayload v1.0.4 Beta 2
 
 ## 中文
 
-Rayload `v1.0.4` 新增局域网设备互联与多设备数据视图，并拆分出
+Rayload `v1.0.4 Beta 2` 新增局域网设备互联与多设备数据视图，并拆分出
 轻量版、完整版与 F-Droid 版三个构建变体。
 
 ### 局域网设备
@@ -49,7 +49,8 @@ Rayload `v1.0.4` 新增局域网设备互联与多设备数据视图，并拆分
   `ray -d pending/allow/reject`。
 - 简写命令统一为 `ray -s`、`ray -a`、`ray -c`、`ray -d`；`ray -d list` 与
   `ray -s` 使用 ANSI 彩色树状图，在线绿色、离线红色。
-- `ray start -d` 写入 `<data-dir>/rayload.log`，`ray log -f` 可实时跟踪；
+- `ray start` 默认后台常驻并写入 `<data-dir>/rayload.log`，`ray log -f` 可实时跟踪；
+  `ray start --foreground` 保持终端前台，`ray start --restart` 先停旧进程。
   `ray install` 注册 systemd 开机自启服务。
 
 ### 合规与引导
@@ -100,7 +101,7 @@ Rayload `v1.0.4` 新增局域网设备互联与多设备数据视图，并拆分
 
 ## English
 
-Rayload `v1.0.4` adds LAN device pairing and multi-device views, and splits the
+Rayload `v1.0.4 Beta 2` adds LAN device pairing and multi-device views, and splits the
 Android build into lite, full and F-Droid variants.
 
 ### LAN devices
@@ -184,8 +185,10 @@ Android build into lite, full and F-Droid variants.
   control, log tailing, plugin listing, device approval and `--json` output.
 - Shorthand commands include `ray -s`, `ray -a`, `ray -c` and `ray -d`.
   `ray -s` and `ray -d list` print ANSI tree output (green online, red offline).
-- `ray start -d` writes `<data-dir>/rayload.log`; `ray log -f` follows it, and
-  `ray install` registers the systemd service for boot startup.
+- `ray start` now detaches by default and writes `<data-dir>/rayload.log`;
+  `ray log -f` follows it, `ray start --foreground` stays attached, and
+  `ray start --restart` replaces a running instance. `ray install` registers
+  the systemd service for boot startup.
 
 ### Builds and updates
 
@@ -273,6 +276,8 @@ Rayload `v1.0.3` 是 Android 正式稳定版。本版本完成核心下载与任
 - 关于页版本号与平台合并展示；悬浮速度球更换初始位置，在统计页和设置页
   自动隐藏，并在外观设置中提供显示开关。
 - 新建任务长表单保持紧凑，仅展开“高级选项”后滚动；认证信息输入框完整换行。
+- 紧凑任务行只保留“任务详情”和“删除”，文件操作集中到详情页底部操作条；
+  手机端文件页改为纵向卡片，桌面端表格不变。
 
 ### 构建信息
 
@@ -366,6 +371,9 @@ regression testing.
   be disabled in Appearance settings.
 - Long add-task forms stay compact and scroll only after Advanced options are
   expanded.
+- Compact rows keep only task details and delete; file actions move to a fixed
+  footer in the task detail page, and the mobile file tab uses stacked cards
+  while the desktop table stays unchanged.
 
 ### Build information
 

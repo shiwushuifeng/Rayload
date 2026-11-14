@@ -30,6 +30,10 @@ const emit = defineEmits<{
   'open-file': [task: Aria2Task]
   'share-file': [task: Aria2Task]
   'select-files': [task: Aria2Task]
+  'send-to-local': [task: Aria2Task]
+  'remote-details': [task: Aria2Task]
+  'remote-checksum': [task: Aria2Task]
+  'stop-seeding': [task: Aria2Task]
 }>()
 
 const props = withDefaults(defineProps<{ remoteTasks?: Aria2Task[] }>(), { remoteTasks: () => [] })
@@ -78,7 +82,7 @@ let loadObserver: IntersectionObserver | null = null
 
 function loadMoreTasks() {
   if (!hasMoreTasks.value) return
-  renderLimit.value = Math.min(taskList.value.length, renderLimit.value + pageSize.value)
+  renderLimit.value = Math.min(displayTasks.value.length, renderLimit.value + pageSize.value)
 }
 
 function disconnectLoadObserver() {
@@ -406,6 +410,10 @@ function handleCardBeforeLeave(element: Element) {
               @open-file="emit('open-file', item)"
               @share-file="emit('share-file', item)"
               @select-files="emit('select-files', item)"
+              @send-to-local="emit('send-to-local', item)"
+              @remote-details="emit('remote-details', item)"
+              @remote-checksum="emit('remote-checksum', item)"
+              @stop-seeding="emit('stop-seeding', item)"
             />
           </TaskSwipeRow>
         </div>

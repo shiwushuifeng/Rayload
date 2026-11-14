@@ -27,6 +27,7 @@ vi.mock('naive-ui', async (importOriginal) => {
   return {
     NEllipsis,
     NIcon: { template: '<span><slot /></span>' },
+    NButton: { template: '<button><slot name="icon" /><slot /></button>' },
     NTooltip: { template: '<span><slot name="trigger" /><slot /></span>' },
   }
 })
@@ -152,6 +153,20 @@ describe('TaskItem', () => {
 
     expect(full.find('.progress-left').text()).toContain('25%')
     expect(compact.get('.compact-percent').text()).toBe('25%')
+  })
+
+  it('offers transfer actions instead of pause for a completed remote task', () => {
+    const task = {
+      ...createTask('/downloads/remote.bin'),
+      gid: 'remote:nas:abc',
+      remote: { deviceId: 'nas', deviceName: 'NAS', gid: 'abc', online: true },
+    } satisfies Aria2Task
+    const wrapper = mount(TaskItem, { props: { task } })
+    const labels = wrapper.findAll('button').map((button) => button.text())
+    expect(labels).not.toContain('task.pause-task')
+    expect(labels).toContain('task.remote-send-local')
+    expect(labels).toContain('task.remote-checksum')
+    expect(labels).toContain('task.remote-details')
   })
 
   it('keeps the compact row mounted while progress changes', async () => {

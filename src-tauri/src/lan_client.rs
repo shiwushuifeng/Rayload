@@ -19,7 +19,7 @@ use reqwest::{
 use serde::{Deserialize, Serialize};
 
 use crate::api_auth::{signing_payload, AuthService, PendingPairData};
-use crate::api_server::HistoryStats;
+use crate::api_server::{HistoryStats, TaskChecksum};
 
 pub const API_PORT: u16 = 6767;
 
@@ -62,7 +62,7 @@ pub struct PeerHistoryStats {
     pub stats: HistoryStats,
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Default, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct RemoteTaskView {
     pub device_id: String,
@@ -77,6 +77,32 @@ pub struct RemoteTaskView {
     pub online: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
+    #[serde(default)]
+    pub dir: String,
+    #[serde(default)]
+    pub files: Vec<RemoteTaskFileView>,
+    #[serde(default)]
+    pub seeder: bool,
+    #[serde(default)]
+    pub bittorrent: bool,
+    #[serde(default)]
+    pub ed2k: bool,
+}
+
+#[derive(Debug, Clone, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RemoteTaskFileView {
+    pub index: String,
+    pub path: String,
+    pub length: u64,
+    pub completed_length: u64,
+    pub selected: bool,
+}
+
+pub struct RemoteFileRequest {
+    pub url: String,
+    pub headers: Vec<String>,
+    pub filename: String,
 }
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -826,6 +852,7 @@ pub async fn handoff(
         download_speed: 0,
         online: true,
         error: None,
+        ..Default::default()
     })
 }
 
@@ -849,6 +876,7 @@ pub async fn remote_tasks(path: &Path) -> Result<Vec<RemoteTaskView>, String> {
             download_speed: 0,
             online: false,
             error: Some(error),
+            ..Default::default()
         };
         let Ok(headers) = signed_headers(peer, "GET", &route, b"") else {
             views.push(offline("stored key is invalid".into()));
@@ -881,6 +909,25 @@ pub async fn remote_tasks(path: &Path) -> Result<Vec<RemoteTaskView>, String> {
                     download_speed: value["downloadSpeed"].as_u64().unwrap_or(0),
                     online: true,
                     error: None,
+                    dir: value["dir"].as_str().unwrap_or_default().to_string(),
+                    files: value["files"]
+                        .as_array()
+                        .map(|files| {
+                            files
+                                .iter()
+                                .map(|file| RemoteTaskFileView {
+                                    index: file["index"].as_str().unwrap_or_default().to_string(),
+                                    path: file["path"].as_str().unwrap_or_default().to_string(),
+                                    length: file["length"].as_u64().unwrap_or(0),
+                                    completed_length: file["completedLength"].as_u64().unwrap_or(0),
+                                    selected: file["selected"].as_bool().unwrap_or(true),
+                                })
+                                .collect()
+                        })
+                        .unwrap_or_default(),
+                    seeder: value["seeder"].as_bool().unwrap_or(false),
+                    bittorrent: value["bittorrent"].as_bool().unwrap_or(false),
+                    ed2k: value["ed2k"].as_bool().unwrap_or(false),
                 });
             }
             Ok(response) => views.push(offline(format!(
@@ -899,7 +946,7 @@ pub async fn remote_action(
     gid: &str,
     action: &str,
 ) -> Result<(), String> {
-    if !matches!(action, "pause" | "unpause" | "remove") {
+    if !matches!(action, "pause" | "unpause" | "remove" | "stop-seeding") {
         return Err("unknown task action".into());
     }
     let store = load(path);
@@ -938,7 +985,77 @@ pub async fn remote_action(
             return Err(error_message(&text, status));
         }
     }
+    if action == "stop-seeding" {
+        let mut store = load(path);
+        store
+            .tasks
+            .retain(|task| !(task.device_id == device_id && task.gid == gid));
+        save(path, &store)?;
+    }
     Ok(())
+}
+
+/// Builds a signed request Aria2 can use to pull one completed file.
+pub fn remote_file_request(
+    path: &Path,
+    device_id: &str,
+    gid: &str,
+) -> Result<RemoteFileRequest, String> {
+    let store = load(path);
+    let peer = store
+        .peers
+        .iter()
+        .find(|peer| peer.id == device_id)
+        .cloned()
+        .ok_or("device is not paired")?;
+    let task = store
+        .tasks
+        .iter()
+        .find(|task| task.device_id == device_id && task.gid == gid)
+        .ok_or("remote task is not tracked")?;
+    let route = format!("/api/v1/tasks/{gid}/file");
+    let headers = signed_headers(&peer, "GET", &route, b"")?;
+    let headers = headers
+        .iter()
+        .filter_map(|(name, value)| {
+            value
+                .to_str()
+                .ok()
+                .map(|value| format!("{}: {value}", name.as_str()))
+        })
+        .collect();
+    Ok(RemoteFileRequest {
+        url: format!("{}{route}", peer.address),
+        headers,
+        filename: task.filename.clone(),
+    })
+}
+
+pub async fn remote_checksum(
+    path: &Path,
+    device_id: &str,
+    gid: &str,
+) -> Result<TaskChecksum, String> {
+    let store = load(path);
+    let peer = store
+        .peers
+        .iter()
+        .find(|peer| peer.id == device_id)
+        .cloned()
+        .ok_or("device is not paired")?;
+    let route = format!("/api/v1/tasks/{gid}/checksum");
+    let headers = signed_headers(&peer, "GET", &route, b"")?;
+    let response = send_with_fallback(&peer.address, Duration::from_secs(300), |http| {
+        http.get(format!("{}{route}", peer.address))
+            .headers(headers.clone())
+    })
+    .await?;
+    let status = response.status();
+    let text = response.text().await.map_err(|error| error.to_string())?;
+    if !status.is_success() {
+        return Err(error_message(&text, status.as_u16()));
+    }
+    serde_json::from_str(&text).map_err(|error| error.to_string())
 }
 
 fn error_message(body: &str, status: u16) -> String {
@@ -1153,6 +1270,7 @@ mod tests {
                     completed_length: 5,
                     download_speed: 1,
                     filename: "a.bin".into(),
+                    ..Default::default()
                 })
             })
         }

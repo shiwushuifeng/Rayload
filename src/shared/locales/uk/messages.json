@@ -1138,7 +1138,22 @@
     "remote-removed": "Remote task removed",
     "remote-badge": "Remote {'@'}{name}",
     "handoff-dir-hint": "Завантаження зберігаються в теку, вказану на {device}.",
-    "handoff-advanced-unavailable": "Додаткові параметри не надсилаються на інший пристрій."
+    "handoff-advanced-unavailable": "Додаткові параметри не надсилаються на інший пристрій.",
+    "remote-send-local": "Send to this device",
+    "remote-send-started": "Transfer from {device} started",
+    "remote-details": "File details",
+    "remote-details-title": "Remote task details",
+    "remote-checksum": "Checksum",
+    "remote-checksum-title": "File checksums",
+    "remote-checksum-running": "Calculating checksums on the remote device…",
+    "remote-stop-seeding": "Stop seeding",
+    "remote-stop-seeding-success": "Stopped seeding",
+    "remote-device": "Device",
+    "remote-file-size": "Size",
+    "remote-file-path": "Location",
+    "copy-file-name": "Copy file name",
+    "copy-file-path": "Copy file path",
+    "file-actions": "File actions"
   },
   "media": {
     "probing": "Аналіз медіа",

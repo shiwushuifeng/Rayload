@@ -65,7 +65,7 @@ is another device; configure those on the target itself.
 ## 4. Manual approval on the CLI / CLI 手动确认
 
 For NAS or server deployments set `lan.require_manual_confirm: true` in
-`config.yml`. A foreground `ray start` prompts `y/N`; a background daemon keeps
+`config.yml`. `ray start --foreground` prompts `y/N`; the background daemon keeps
 the request pending until you run:
 
 ```bash
@@ -133,7 +133,7 @@ More answers: [FAQ](FAQ.md).
 ### 4. CLI 手动确认
 
 NAS 或服务器部署可在 `config.yml` 设置 `lan.require_manual_confirm: true`。
-前台 `ray start` 会弹出 `y/N` 确认；后台守护进程会挂起请求，等待：
+`ray start --foreground` 会弹出 `y/N` 确认；后台守护进程会挂起请求，等待：
 
 ```bash
 ray -d pending

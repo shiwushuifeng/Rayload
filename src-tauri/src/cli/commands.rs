@@ -169,8 +169,18 @@ fn ask_aria2_number(
         .map_err(|error| error.to_string())
 }
 
-pub fn start(overrides: &Overrides, daemon: bool) -> Result<(), String> {
+pub fn start(overrides: &Overrides, daemon: bool, restart: bool) -> Result<(), String> {
     let settings = settings(overrides)?;
+    #[cfg(unix)]
+    if restart {
+        if let Some(pid) = stop_pid(&settings)? {
+            println!("Stopped Rayload (pid {pid}).");
+        }
+    }
+    #[cfg(not(unix))]
+    if restart {
+        return Err("restart is only supported on Unix systems".into());
+    }
     if daemon {
         return spawn_daemon(&settings, overrides);
     }
@@ -279,6 +289,7 @@ fn spawn_daemon(settings: &Settings, overrides: &Overrides) -> Result<(), String
             .arg("--config")
             .arg(&settings.config_path)
             .arg("start")
+            .arg("--foreground")
             .stdin(Stdio::null())
             .stdout(Stdio::from(
                 log.try_clone().map_err(|error| error.to_string())?,
@@ -438,7 +449,7 @@ pub fn log(overrides: &Overrides, lines: usize, follow: bool) -> Result<(), Stri
     let path = settings.log_path();
     if !path.exists() {
         return Err(format!(
-            "{} does not exist; start the daemon with ray start -d",
+            "{} does not exist; start it with ray start",
             path.display()
         ));
     }
@@ -549,33 +560,39 @@ pub fn plugin_list(
     Ok(())
 }
 
+#[cfg(unix)]
+fn stop_pid(settings: &Settings) -> Result<Option<u32>, String> {
+    let Some(pid) = read_pid(&settings.pid_path()) else {
+        return Ok(None);
+    };
+    if !process_alive(pid) {
+        let _ = fs::remove_file(settings.pid_path());
+        return Ok(None);
+    }
+    unsafe {
+        libc::kill(pid as i32, libc::SIGTERM);
+    }
+    let deadline = std::time::Instant::now() + Duration::from_secs(5);
+    while process_alive(pid) && std::time::Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(100));
+    }
+    if process_alive(pid) {
+        unsafe {
+            libc::kill(pid as i32, libc::SIGKILL);
+        }
+    }
+    let _ = fs::remove_file(settings.pid_path());
+    Ok(Some(pid))
+}
+
 pub fn stop(_overrides: &Overrides) -> Result<(), String> {
     let settings = settings(_overrides)?;
     #[cfg(unix)]
     {
-        let Some(pid) = read_pid(&settings.pid_path()) else {
-            println!("Rayload is not running (no pid file).");
-            return Ok(());
-        };
-        if !process_alive(pid) {
-            let _ = fs::remove_file(settings.pid_path());
-            println!("Rayload is not running (stale pid {pid}).");
-            return Ok(());
+        match stop_pid(&settings)? {
+            Some(pid) => println!("Stopped Rayload (pid {pid})."),
+            None => println!("Rayload is not running."),
         }
-        unsafe {
-            libc::kill(pid as i32, libc::SIGTERM);
-        }
-        let deadline = std::time::Instant::now() + Duration::from_secs(5);
-        while process_alive(pid) && std::time::Instant::now() < deadline {
-            std::thread::sleep(Duration::from_millis(100));
-        }
-        if process_alive(pid) {
-            unsafe {
-                libc::kill(pid as i32, libc::SIGKILL);
-            }
-        }
-        let _ = fs::remove_file(settings.pid_path());
-        println!("Stopped Rayload (pid {pid}).");
         Ok(())
     }
     #[cfg(not(unix))]

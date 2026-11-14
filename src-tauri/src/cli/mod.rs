@@ -82,9 +82,15 @@ enum Command {
     /// Start the Aria2 engine and the LAN API.
     #[command(visible_alias = "up")]
     Start {
-        /// Run detached in the background.
-        #[arg(short = 'd', long)]
+        /// Kept for compatibility; background is now the default.
+        #[arg(short = 'd', long, hide = true)]
         daemon: bool,
+        /// Stay attached to the terminal instead of detaching.
+        #[arg(short = 'f', long)]
+        foreground: bool,
+        /// Stop the running instance before starting.
+        #[arg(long)]
+        restart: bool,
     },
     /// Add a URL to the download queue.
     Add {
@@ -240,7 +246,11 @@ pub fn run() -> ExitCode {
 fn dispatch(command: Command, overrides: &Overrides) -> Result<(), String> {
     match command {
         Command::Init { force } => commands::init(overrides, force),
-        Command::Start { daemon } => commands::start(overrides, daemon),
+        Command::Start {
+            daemon,
+            foreground,
+            restart,
+        } => commands::start(overrides, daemon || !foreground, restart),
         Command::Add { url, out, json } => commands::add(overrides, &url, out.as_deref(), json),
         Command::List { json } => commands::list(overrides, json),
         Command::Pause { gid } => commands::pause(overrides, &gid),
@@ -342,5 +352,27 @@ mod tests {
         assert_eq!(normalized_command("-a"), Some("auth"));
         assert_eq!(normalized_command("-c"), Some("config"));
         assert_eq!(normalized_command("-d"), Some("device"));
+    }
+
+    #[test]
+    fn start_defaults_to_background_and_accepts_foreground() {
+        let detached = Cli::try_parse_from(["ray", "start"]).expect("start parses");
+        match detached.command {
+            Some(Command::Start {
+                daemon,
+                foreground,
+                restart,
+            }) => {
+                assert!(!daemon && !foreground && !restart);
+            }
+            _ => panic!("expected start"),
+        }
+
+        let attached =
+            Cli::try_parse_from(["ray", "start", "--foreground"]).expect("foreground parses");
+        match attached.command {
+            Some(Command::Start { foreground, .. }) => assert!(foreground),
+            _ => panic!("expected start"),
+        }
     }
 }

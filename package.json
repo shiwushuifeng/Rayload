@@ -1,11 +1,13 @@
 {
   "name": "rayload",
   "private": true,
-  "version": "1.0.4",
+  "version": "1.0.4-beta2",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:demo": "VITE_RAYLOAD_DEMO=1 vite",
     "build": "vue-tsc --noEmit && vite build",
+    "build:demo": "VITE_RAYLOAD_DEMO=1 vue-tsc --noEmit && VITE_RAYLOAD_DEMO=1 vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

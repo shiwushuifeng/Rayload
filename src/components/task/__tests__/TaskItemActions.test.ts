@@ -216,4 +216,26 @@ describe('TaskItemActions', () => {
     expect(complete.emitted('redownload')).toBeTruthy()
     expect(complete.emitted('resume')).toBeFalsy()
   })
+
+  it('limits compact rows to task details and delete', () => {
+    const active = mount(TaskItemActions, { props: { task: makeTask('active'), density: 'compact', minimal: true } })
+    expect(active.findAll('.task-item-action')).toHaveLength(2)
+    expect(active.find('[aria-label="task.task-detail-title"]').exists()).toBe(true)
+    expect(active.find('[aria-label="task.delete-task"]').exists()).toBe(true)
+    expect(active.find('[aria-label="task.pause-task"]').exists()).toBe(false)
+
+    const complete = mount(TaskItemActions, {
+      props: { task: makeTask('complete'), density: 'compact', minimal: true },
+    })
+    expect(complete.find('[aria-label="task.remove-record"]').exists()).toBe(true)
+    expect(complete.find('[aria-label="task.sha256"]').exists()).toBe(false)
+  })
+
+  it('moves full file actions into the detail bar without the info shortcut', () => {
+    const wrapper = mount(TaskItemActions, { props: { task: makeTask('complete'), density: 'detail' } })
+    expect(wrapper.find('[aria-label="task.task-detail-title"]').exists()).toBe(false)
+    expect(wrapper.find('[aria-label="task.show-in-folder"]').exists()).toBe(true)
+    expect(wrapper.find('[aria-label="task.sha256"]').exists()).toBe(true)
+    expect(wrapper.find('[aria-label="task.copy-link"]').exists()).toBe(true)
+  })
 })

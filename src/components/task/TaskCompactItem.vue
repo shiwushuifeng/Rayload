@@ -127,6 +127,7 @@ const compactStatusColor = computed(() => {
         :file-missing="fileMissing"
         :pending="actionPending"
         density="compact"
+        minimal
         @pause="emit('pause', task)"
         @resume="emit('resume', task)"
         @retry="emit('retry', task)"

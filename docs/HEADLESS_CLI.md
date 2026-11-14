@@ -35,8 +35,10 @@ default; override it with `download.engine_bin`, `--engine-bin` or
 
 ```bash
 ray init                 # interactive config.yml
-ray start                # foreground engine + LAN API
-ray start -d             # daemon; log at <data-dir>/rayload.log
+ray start                # background engine + LAN API; log at <data-dir>/rayload.log
+ray start --foreground   # stay attached to this terminal
+ray start --restart      # stop the running instance, then start
+ray start -f             # short form of --foreground
 ray -s                   # tree status (alias: ray status)
 ray -d list              # paired-device tree
 ray install              # install and enable the systemd unit
@@ -46,7 +48,7 @@ Typical first run on a NAS:
 
 ```bash
 ray init
-ray start -d
+ray start
 ray -s
 ray -d list
 sudo ray install
@@ -127,8 +129,9 @@ running process to pick them up.
 | Command | Description |
 | --- | --- |
 | `ray init` | Interactive `config.yml` generation |
-| `ray start` | Run Aria2 + LAN API in the foreground |
-| `ray start -d` | Run detached; logs go to `<data-dir>/rayload.log` |
+| `ray start` | Run Aria2 + LAN API in the background; logs go to `<data-dir>/rayload.log` |
+| `ray start --foreground`, `-f` | Run attached to the terminal |
+| `ray start --restart` | Stop the running instance before starting |
 | `ray stop` | Stop the background process |
 | `ray security-check` | Audit LAN credentials, ports, download path and user |
 | `ray status`, `ray -s` | Tree status: engine, RPC, LAN, speed, devices |
@@ -218,7 +221,7 @@ Paired devices
 
 When `lan.require_manual_confirm: true`:
 
-- Foreground `ray start` shows a `y/N` prompt in the terminal.
+- `ray start --foreground` shows a `y/N` prompt in the terminal.
 - Background/systemd mode leaves the request pending until
   `ray -d allow <id>` (or `ray -d reject <id>`) runs against the local API.
 

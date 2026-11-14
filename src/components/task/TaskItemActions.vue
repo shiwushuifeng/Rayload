@@ -28,8 +28,14 @@ import { getBtLifecycleState } from '@/composables/useBtLifecycle'
 import { getSharingActionLabelKey, getTaskSharingState } from '@shared/utils/task'
 
 const props = withDefaults(
-  defineProps<{ task: Aria2Task; fileMissing?: boolean; pending?: boolean; density?: 'full' | 'compact' }>(),
-  { density: 'full' },
+  defineProps<{
+    task: Aria2Task
+    fileMissing?: boolean
+    pending?: boolean
+    density?: 'full' | 'compact' | 'detail'
+    minimal?: boolean
+  }>(),
+  { density: 'full', minimal: false },
 )
 const emit = defineEmits<{
   pause: []
@@ -177,7 +183,7 @@ const actions = computed(() => {
       : []),
   ].filter((a) => !primaryKeys.has(a.key))
 
-  return [...leading, ...common, ...trailing]
+  const full = [...leading, ...common, ...trailing]
     .filter(
       (action) =>
         action.key !== 'folder' ||
@@ -190,6 +196,16 @@ const actions = computed(() => {
       action.key === 'retry' || action.key === 'redownload' ? { ...action, disabled: props.pending } : action,
     )
     .reverse()
+
+  if (props.minimal) {
+    const destructive = full.find((action) => action.key === 'delete' || action.key === 'trash')
+    return [
+      { key: 'info', icon: InformationCircleOutline, label: t('task.task-detail-title'), event: 'show-info' },
+      ...(destructive ? [destructive] : []),
+    ].reverse()
+  }
+  if (props.density === 'detail') return full.filter((action) => action.key !== 'info')
+  return full
 })
 
 function onAction(event: string) {

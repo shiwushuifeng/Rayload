@@ -561,7 +561,7 @@ fn is_terminal_download_status(status: &str) -> bool {
     matches!(status, "complete" | "error" | "removed")
 }
 
-async fn remove_engine_task(client: &TaskService, gid: &str) -> Result<(), AppError> {
+pub(crate) async fn remove_engine_task(client: &TaskService, gid: &str) -> Result<(), AppError> {
     let operation = async {
         let mut removal_requested = false;
         loop {
@@ -589,7 +589,7 @@ async fn remove_engine_task(client: &TaskService, gid: &str) -> Result<(), AppEr
         .map_err(|_| AppError::Aria2(format!("Task {gid} did not finish removal")))?
 }
 
-fn is_p2p_sharing_task(task: &Aria2Task) -> bool {
+pub(crate) fn is_p2p_sharing_task(task: &Aria2Task) -> bool {
     matches!(task.status.as_str(), "active" | "paused")
         && (task.bittorrent.is_some() || task.ed2k.is_some())
         && task.seeder.as_deref() == Some("true")

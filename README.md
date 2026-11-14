@@ -94,7 +94,10 @@ default, runs every protocol through one reliable engine, feels native on a
 phone, and grows through themes and plugins without losing its simplicity. See
 the [roadmap](ROADMAP.md) for what comes next.
 
-## v1.0.4 Highlights
+## v1.0.4 Beta 2 Highlights
+
+> Beta preview: LAN and multi-device testing only. Known issues are still being
+> fixed; production users should stay on `v1.0.3` until the stable release.
 
 - Mutual LAN pairing: both devices confirm the peer and fingerprint, store each
   other, and can push tasks or view live statistics in either direction.
@@ -408,7 +411,9 @@ Rayload 是 Rayburst 的独立非官方 Android 移植版，仅专注于 Android
 引擎处理所有协议，提供原生移动端体验，并通过主题与插件持续扩展。未来计划见
 [路线图](ROADMAP.md)。
 
-### v1.0.4 更新亮点
+### v1.0.4 Beta 更新亮点
+
+> Beta 预览版：仅用于局域网与多设备功能测试，已知问题仍在修复；生产环境请继续使用 `v1.0.3`，稳定版修复完成后发布。
 
 - 双向局域网配对：双方确认设备与指纹并互相保存，任意一方都能推送任务、
   查看实时统计。

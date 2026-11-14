@@ -16,6 +16,7 @@ import { triggerHaptic } from '@/composables/useHaptics'
 import { isEngineReady } from '@/api/aria2'
 import { logger } from '@shared/logger'
 import { getErrorMessage } from '@shared/utils/errorMessage'
+import { bytesToSize } from '@shared/utils/format'
 import { TASK_STATUS } from '@shared/constants'
 import type { Aria2Task, TaskDeletionOptions } from '@shared/types'
 import TaskList from '@/components/task/TaskList.vue'
@@ -204,6 +205,68 @@ async function remoteAction(task: Aria2Task, action: 'pause' | 'unpause' | 'remo
   }
 }
 
+async function stopRemoteSeeding(task: Aria2Task): Promise<void> {
+  if (!task.remote) return
+  try {
+    await lan.remoteAction(task.remote.deviceId, task.remote.gid, 'stop-seeding')
+    message.success(t('task.remote-stop-seeding-success'))
+  } catch (error) {
+    logger.warn('TaskView.stopRemoteSeeding', getErrorMessage(error))
+    message.error(getErrorMessage(error))
+  }
+}
+
+async function sendRemoteToLocal(task: Aria2Task): Promise<void> {
+  if (!task.remote || !requireEngine()) return
+  try {
+    await lan.remoteFetch(task.remote.deviceId, task.remote.gid)
+    await taskStore.fetchList()
+    message.success(t('task.remote-send-started', { device: task.remote.deviceName }))
+  } catch (error) {
+    logger.warn('TaskView.sendRemoteToLocal', getErrorMessage(error))
+    message.error(getErrorMessage(error))
+  }
+}
+
+function showRemoteDetails(task: Aria2Task): void {
+  if (!task.remote) return
+  const lines = [
+    `${t('task.remote-device')}: ${task.remote.deviceName}`,
+    `${t('task.remote-file-size')}: ${bytesToSize(Number(task.totalLength) || 0)}`,
+  ]
+  if (task.dir) lines.push(`${t('task.remote-file-path')}: ${task.dir}`)
+  for (const file of task.files) {
+    lines.push(`${file.path || '—'} · ${bytesToSize(Number(file.completedLength) || 0)}`)
+  }
+  dialog.info({
+    title: t('task.remote-details-title'),
+    content: () => h('p', { style: 'white-space: pre-line; word-break: break-all; margin: 0;' }, lines.join('\n')),
+    positiveText: t('app.close'),
+  })
+}
+
+async function showRemoteChecksum(task: Aria2Task): Promise<void> {
+  if (!task.remote) return
+  const body = ref(t('task.remote-checksum-running'))
+  dialog.info({
+    title: t('task.remote-checksum-title'),
+    content: () => h('p', { style: 'white-space: pre-line; word-break: break-all; margin: 0;' }, body.value),
+    positiveText: t('app.close'),
+  })
+  try {
+    const digests = await lan.remoteChecksum(task.remote.deviceId, task.remote.gid)
+    body.value = [
+      `MD5: ${digests.md5}`,
+      `SHA-1: ${digests.sha1}`,
+      `SHA-256: ${digests.sha256}`,
+      `SHA-512: ${digests.sha512}`,
+    ].join('\n')
+  } catch (error) {
+    logger.warn('TaskView.remoteChecksum', getErrorMessage(error))
+    message.error(getErrorMessage(error))
+  }
+}
+
 function pauseTask(task: Aria2Task): void {
   if (task.remote) void remoteAction(task, 'pause')
   else handlePauseTask(task)
@@ -265,6 +328,10 @@ function deleteTask(task: Aria2Task): void {
           @open-file="handleOpenFile"
           @share-file="handleShareFile"
           @select-files="handleSelectFiles"
+          @send-to-local="sendRemoteToLocal"
+          @remote-details="showRemoteDetails"
+          @remote-checksum="showRemoteChecksum"
+          @stop-seeding="stopRemoteSeeding"
         />
       </div>
     </div>
@@ -295,6 +362,18 @@ function deleteTask(task: Aria2Task): void {
       :task="taskStore.currentTaskItem"
       :files="taskStore.currentTaskFiles"
       @close="taskStore.hideTaskDetail()"
+      @pause="pauseTask"
+      @resume="resumeTask"
+      @retry="handleRetryTask"
+      @redownload="handleRedownloadTask"
+      @finish-sharing="handleFinishSharing"
+      @finish-media="handleFinishMedia"
+      @delete="deleteTask"
+      @delete-record="handleDeleteRecord"
+      @copy-link="handleCopyLink"
+      @folder="handleShowInFolder"
+      @checksum="handleVerifyChecksum"
+      @share-file="handleShareFile"
     />
   </div>
 </template>

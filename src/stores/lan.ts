@@ -40,6 +40,27 @@ export interface RemoteTask {
   downloadSpeed: number
   online: boolean
   error?: string
+  dir?: string
+  files?: RemoteTaskFile[]
+  seeder?: boolean
+  bittorrent?: boolean
+  ed2k?: boolean
+}
+
+export interface RemoteTaskFile {
+  index: string
+  path: string
+  length: number
+  completedLength: number
+  selected: boolean
+}
+
+export interface RemoteChecksum {
+  md5: string
+  sha1: string
+  sha256: string
+  sha512: string
+  size: number
 }
 
 export interface PeerStatus {
@@ -100,6 +121,25 @@ function remoteName(task: RemoteTask): string {
 /** Renders a remote task with the same card model as local tasks. */
 export function remoteTaskToAria2(task: RemoteTask): Aria2Task {
   const name = remoteName(task)
+  const files = task.files?.length
+    ? task.files.map((file, index) => ({
+        index: file.index || String(index + 1),
+        path: file.path,
+        length: String(file.length),
+        completedLength: String(file.completedLength),
+        selected: file.selected ? 'true' : 'false',
+        uris: [],
+      }))
+    : [
+        {
+          index: '1',
+          path: name,
+          length: String(task.totalLength),
+          completedLength: String(task.completedLength),
+          selected: 'true',
+          uris: [],
+        },
+      ]
   return {
     gid: `remote:${task.deviceId}:${task.gid}`,
     status: toTaskStatus(task.status),
@@ -109,23 +149,17 @@ export function remoteTaskToAria2(task: RemoteTask): Aria2Task {
     downloadSpeed: String(task.downloadSpeed),
     uploadSpeed: '0',
     connections: '0',
-    dir: '',
-    files: [
-      {
-        index: '1',
-        path: name,
-        length: String(task.totalLength),
-        completedLength: String(task.completedLength),
-        selected: 'true',
-        uris: [],
-      },
-    ],
+    dir: task.dir ?? '',
+    files,
     remote: {
       deviceId: task.deviceId,
       deviceName: task.deviceName,
       gid: task.gid,
       online: task.online,
       error: task.error,
+      seeder: task.seeder,
+      bittorrent: task.bittorrent,
+      ed2k: task.ed2k,
     },
   }
 }
@@ -281,13 +315,30 @@ export const useLanStore = defineStore('lan', () => {
     return invoke<LanScanResult[]>('lan_scan')
   }
 
-  function handoff(deviceId: string, url: string, filename: string | null): Promise<RemoteTask> {
-    return invoke('lan_handoff', { deviceId, url, filename })
+  async function handoff(deviceId: string, url: string, filename: string | null): Promise<RemoteTask> {
+    const task = await invoke<RemoteTask>('lan_handoff', { deviceId, url, filename })
+    remoteTasks.value = [
+      ...remoteTasks.value.filter((item) => item.deviceId !== task.deviceId || item.gid !== task.gid),
+      task,
+    ]
+    return task
   }
 
-  async function remoteAction(id: string, gid: string, action: 'pause' | 'unpause' | 'remove'): Promise<void> {
+  async function remoteAction(
+    id: string,
+    gid: string,
+    action: 'pause' | 'unpause' | 'remove' | 'stop-seeding',
+  ): Promise<void> {
     await invoke('lan_remote_action', { deviceId: id, gid, action })
     await refreshRemoteTasks()
+  }
+
+  function remoteFetch(deviceId: string, gid: string): Promise<string> {
+    return invoke<string>('lan_remote_fetch', { deviceId, gid })
+  }
+
+  function remoteChecksum(deviceId: string, gid: string): Promise<RemoteChecksum> {
+    return invoke<RemoteChecksum>('lan_remote_checksum', { deviceId, gid })
   }
 
   return {
@@ -317,5 +368,7 @@ export const useLanStore = defineStore('lan', () => {
     scan,
     handoff,
     remoteAction,
+    remoteFetch,
+    remoteChecksum,
   }
 })

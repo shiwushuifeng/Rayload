@@ -69,6 +69,7 @@ import TaskDetailPeers from './detail/TaskDetailPeers.vue'
 import TaskDetailSources from './detail/TaskDetailSources.vue'
 import TaskDetailTrackers from './detail/TaskDetailTrackers.vue'
 import TaskChecksumPanel from './detail/TaskChecksumPanel.vue'
+import TaskItemActions from './TaskItemActions.vue'
 import RenameCompletedFile from './detail/RenameCompletedFile.vue'
 import MoveDownload from './detail/MoveDownload.vue'
 import FriendlyErrorNotice from '@/components/common/FriendlyErrorNotice.vue'
@@ -82,7 +83,21 @@ const props = defineProps<{
   task: Aria2Task | null
   files: Aria2File[]
 }>()
-const emit = defineEmits<{ close: [] }>()
+const emit = defineEmits<{
+  close: []
+  pause: [task: Aria2Task]
+  resume: [task: Aria2Task]
+  retry: [task: Aria2Task]
+  redownload: [task: Aria2Task]
+  'finish-sharing': [task: Aria2Task]
+  'finish-media': [task: Aria2Task]
+  delete: [task: Aria2Task]
+  'delete-record': [task: Aria2Task]
+  'copy-link': [task: Aria2Task]
+  folder: [task: Aria2Task]
+  checksum: [task: Aria2Task]
+  'share-file': [task: Aria2Task]
+}>()
 
 const { t, locale } = useI18n()
 const { isAndroid } = usePlatform()
@@ -885,11 +900,35 @@ async function onFileRenamed() {
           </div>
         </Transition>
       </div>
+      <template v-if="task && activeTab === 'general'" #footer>
+        <div class="detail-action-bar">
+          <TaskItemActions
+            :task="task"
+            density="detail"
+            @pause="emit('pause', task)"
+            @resume="emit('resume', task)"
+            @retry="emit('retry', task)"
+            @redownload="emit('redownload', task)"
+            @finish-sharing="emit('finish-sharing', task)"
+            @finish-media="emit('finish-media', task)"
+            @delete="emit('delete', task)"
+            @delete-record="emit('delete-record', task)"
+            @copy-link="emit('copy-link', task)"
+            @folder="emit('folder', task)"
+            @checksum="emit('checksum', task)"
+            @share-file="emit('share-file', task)"
+          />
+        </div>
+      </template>
     </NDrawerContent>
   </NDrawer>
 </template>
 
 <style scoped>
+.detail-action-bar {
+  display: flex;
+  justify-content: center;
+}
 .detail-status-value {
   display: flex;
   align-items: center;

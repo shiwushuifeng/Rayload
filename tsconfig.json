@@ -27,6 +27,9 @@
       ],
       "@shared/*": [
         "./src/shared/*"
+      ],
+      "@tauri-core-real": [
+        "./node_modules/@tauri-apps/api/core.d.ts"
       ]
     }
   },

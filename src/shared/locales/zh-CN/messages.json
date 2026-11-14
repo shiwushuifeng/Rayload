@@ -1138,7 +1138,22 @@
     "remote-removed": "远程任务已移除",
     "remote-badge": "远程 {'@'}{name}",
     "handoff-dir-hint": "下载将保存到 {device} 上设置的文件夹。",
-    "handoff-advanced-unavailable": "发送到其他设备时不支持高级设置。"
+    "handoff-advanced-unavailable": "发送到其他设备时不支持高级设置。",
+    "remote-send-local": "发送到本机",
+    "remote-send-started": "已开始从 {device} 传输",
+    "remote-details": "文件详情",
+    "remote-details-title": "远程任务详情",
+    "remote-checksum": "校验值",
+    "remote-checksum-title": "文件校验值",
+    "remote-checksum-running": "正在远程设备上计算校验值…",
+    "remote-stop-seeding": "停止做种",
+    "remote-stop-seeding-success": "已停止做种",
+    "remote-device": "设备",
+    "remote-file-size": "大小",
+    "remote-file-path": "位置",
+    "copy-file-name": "复制文件名",
+    "copy-file-path": "复制文件路径",
+    "file-actions": "文件操作"
   },
   "media": {
     "probing": "正在探测媒体",

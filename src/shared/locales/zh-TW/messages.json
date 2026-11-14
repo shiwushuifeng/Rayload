@@ -1138,7 +1138,22 @@
     "remote-removed": "遠端任務已移除",
     "remote-badge": "遠端 {'@'}{name}",
     "handoff-dir-hint": "下載將儲存到 {device} 上設定的資料夾。",
-    "handoff-advanced-unavailable": "傳送到其他裝置時不支援進階設定。"
+    "handoff-advanced-unavailable": "傳送到其他裝置時不支援進階設定。",
+    "remote-send-local": "傳送到本機",
+    "remote-send-started": "已開始從 {device} 傳輸",
+    "remote-details": "檔案詳情",
+    "remote-details-title": "遠端任務詳情",
+    "remote-checksum": "校驗值",
+    "remote-checksum-title": "檔案校驗值",
+    "remote-checksum-running": "正在遠端裝置上計算校驗值…",
+    "remote-stop-seeding": "停止做種",
+    "remote-stop-seeding-success": "已停止做種",
+    "remote-device": "裝置",
+    "remote-file-size": "大小",
+    "remote-file-path": "位置",
+    "copy-file-name": "複製檔案名稱",
+    "copy-file-path": "複製檔案路徑",
+    "file-actions": "檔案操作"
   },
   "media": {
     "probing": "正在探測媒體",

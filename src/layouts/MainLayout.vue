@@ -188,6 +188,7 @@ watch(
 const isTaskPage = computed(() => route.path.startsWith('/task'))
 const isPreferencePage = computed(() => route.matched.some((record) => record.name === 'preference'))
 const isStatisticsPage = computed(() => route.name === 'statistics')
+const isPluginsPage = computed(() => route.name === 'plugins')
 const preferenceActions = providePreferenceActions()
 const activePreferenceActions = computed(() =>
   preferenceActions.value?.routeName === route.name ? preferenceActions.value : null,
@@ -212,6 +213,7 @@ const pageTitle = computed(() => {
       taskDestinations.value.find((item) => item.key === (route.params.status || 'all'))?.label ?? t('task.scope-all')
     )
   if (isStatisticsPage.value) return t('navigation.statistics')
+  if (isPluginsPage.value) return t('navigation.plugins')
   return t('navigation.settings')
 })
 const showAbout = ref(false)
@@ -1204,6 +1206,8 @@ onUnmounted(() => {
 .page-header {
   grid-column: 2;
   grid-row: 2;
+  position: relative;
+  min-height: 44px;
   margin-inline: var(--content-gutter);
   padding-bottom: 12px;
   align-items: flex-end;
@@ -1224,8 +1228,10 @@ onUnmounted(() => {
   border-bottom-color: color-mix(in srgb, var(--m3-primary) 40%, transparent);
 }
 .page-title-slot {
-  flex: 1;
-  min-width: 0;
+  position: absolute;
+  inset-inline: 0;
+  text-align: center;
+  pointer-events: none;
 }
 .page-header h1 {
   min-width: 0;
@@ -1233,7 +1239,9 @@ onUnmounted(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.page-header :deep(.task-actions) {
+.page-header :deep(.task-actions),
+.page-header :deep(.mobile-task-toolbar) {
+  margin-inline-start: auto;
   flex-shrink: 0;
 }
 .content {
@@ -1385,7 +1393,8 @@ onUnmounted(() => {
 #container.compact-navigation .page-title-slot {
   flex: 1 0 auto;
 }
-#container.compact-navigation .page-header :deep(.task-actions) {
+#container.compact-navigation .page-header :deep(.task-actions),
+#container.compact-navigation .page-header :deep(.mobile-task-toolbar) {
   max-width: 100%;
   margin-inline-start: auto;
   overflow-x: auto;

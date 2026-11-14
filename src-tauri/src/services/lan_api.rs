@@ -10,8 +10,9 @@ use tauri_plugin_store::StoreExt;
 
 use crate::api_auth::{AuthService, PairingRequestView, PendingPairData, HEARTBEAT_TTL};
 use crate::api_server::{
-    self, Backend, BackendFuture, DeviceStatus, HandoffRequest, HandoffResult, HandoffTask,
-    HistoryDay, HistoryExtension, HistoryStats, TaskAction,
+    self, Backend, BackendFuture, DeviceStatus, HandoffFile, HandoffRequest, HandoffResult,
+    HandoffTask, HandoffTaskFile, HistoryDay, HistoryExtension, HistoryStats, TaskAction,
+    TaskChecksum,
 };
 use crate::database::{Database, HistoryRecord};
 use crate::lan_client;
@@ -175,30 +176,143 @@ impl Backend for TaskBackend {
                 .tell_status(&gid)
                 .await
                 .map_err(|error| error.to_string())?;
+            let files = task
+                .files
+                .iter()
+                .map(|file| HandoffTaskFile {
+                    index: file.index.clone(),
+                    path: file.path.clone(),
+                    length: file.length.parse().unwrap_or(0),
+                    completed_length: file.completed_length.parse().unwrap_or(0),
+                    selected: file.selected != "false",
+                })
+                .collect::<Vec<_>>();
+            let filename = task
+                .files
+                .first()
+                .map(|file| {
+                    file.path
+                        .rsplit(['/', '\\'])
+                        .next()
+                        .unwrap_or_default()
+                        .to_string()
+                })
+                .unwrap_or_default();
             Ok(HandoffTask {
                 gid: task.gid,
                 status: task.status,
                 total_length: task.total_length.parse().unwrap_or(0),
                 completed_length: task.completed_length.parse().unwrap_or(0),
                 download_speed: task.download_speed.parse().unwrap_or(0),
-                filename: task
-                    .files
-                    .first()
-                    .map(|file| {
-                        file.path
-                            .rsplit(['/', '\\'])
-                            .next()
-                            .unwrap_or_default()
-                            .to_string()
-                    })
-                    .unwrap_or_default(),
+                filename,
+                dir: task.dir,
+                files,
+                seeder: task.seeder.as_deref() == Some("true"),
+                bittorrent: task.bittorrent.is_some(),
+                ed2k: task.ed2k.is_some(),
+            })
+        })
+    }
+
+    fn task_file(&self, gid: String) -> BackendFuture<HandoffFile> {
+        let tasks = Arc::clone(&self.tasks);
+        Box::pin(async move {
+            let task = tasks
+                .tell_status(&gid)
+                .await
+                .map_err(|error| error.to_string())?;
+            if task.status != "complete" && task.seeder.as_deref() != Some("true") {
+                return Err("task is not complete".into());
+            }
+            let file = task
+                .files
+                .iter()
+                .find(|file| file.selected != "false")
+                .or_else(|| task.files.first())
+                .ok_or("task has no file")?;
+            let path = PathBuf::from(&file.path);
+            let metadata = tokio::fs::metadata(&path)
+                .await
+                .map_err(|error| format!("cannot read task file: {error}"))?;
+            if !metadata.is_file() {
+                return Err("only single-file tasks can be sent to another device".into());
+            }
+            let filename = path
+                .file_name()
+                .and_then(|name| name.to_str())
+                .unwrap_or("download")
+                .to_string();
+            Ok(HandoffFile {
+                path,
+                filename,
+                length: metadata.len(),
+            })
+        })
+    }
+
+    fn task_checksum(&self, gid: String) -> BackendFuture<TaskChecksum> {
+        let tasks = Arc::clone(&self.tasks);
+        Box::pin(async move {
+            let task = tasks
+                .tell_status(&gid)
+                .await
+                .map_err(|error| error.to_string())?;
+            if task.status != "complete" && task.seeder.as_deref() != Some("true") {
+                return Err("task is not complete".into());
+            }
+            let path = task
+                .files
+                .iter()
+                .find(|file| file.selected != "false")
+                .or_else(|| task.files.first())
+                .map(|file| PathBuf::from(&file.path))
+                .ok_or("task has no file")?;
+            let digests = tauri::async_runtime::spawn_blocking(move || {
+                crate::commands::checksum::file_digests_sync(&path)
+            })
+            .await
+            .map_err(|error| format!("checksum worker failed: {error}"))?
+            .map_err(|error| error.to_string())?;
+            Ok(TaskChecksum {
+                md5: digests.md5,
+                sha1: digests.sha1,
+                sha256: digests.sha256,
+                sha512: digests.sha512,
+                size: digests.size,
             })
         })
     }
 
     fn task_action(&self, gid: String, action: TaskAction) -> BackendFuture<()> {
         let tasks = Arc::clone(&self.tasks);
+        let database = Arc::clone(&self.database);
         Box::pin(async move {
+            if matches!(action, TaskAction::StopSeeding) {
+                let task = tasks
+                    .tell_status(&gid)
+                    .await
+                    .map_err(|error| error.to_string())?;
+                if !crate::commands::aria2::is_p2p_sharing_task(&task) {
+                    return Err("task is not seeding".into());
+                }
+                let event = crate::services::monitor::TaskEvent::from_aria2(&task);
+                let record = crate::services::monitor::build_history_record_with_added_at(
+                    &event,
+                    crate::services::monitor::events::P2P_DOWNLOAD_COMPLETE,
+                    database
+                        .get_task_birth(&gid)
+                        .await
+                        .map_err(|error| error.to_string())?,
+                );
+                database
+                    .add_record(&record)
+                    .await
+                    .map_err(|error| error.to_string())?;
+                crate::commands::aria2::remove_engine_task(&tasks, &gid)
+                    .await
+                    .map_err(|error| error.to_string())?;
+                return Ok(());
+            }
             let result = match action {
                 TaskAction::Pause => tasks.pause(&gid).await,
                 TaskAction::Unpause => tasks.unpause(&gid).await,
@@ -208,6 +322,7 @@ impl Backend for TaskBackend {
                     Ok(value) => Ok(value),
                     Err(error) => tasks.remove_download_result(&gid).await.map_err(|_| error),
                 },
+                TaskAction::StopSeeding => unreachable!(),
             };
             result.map_err(|error| error.to_string())?;
             Ok(())

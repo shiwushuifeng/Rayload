@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, h, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NDataTable, NSelect } from 'naive-ui'
+import { NButton, NDataTable, NDropdown, NIcon, NSelect } from 'naive-ui'
+import { EllipsisHorizontal } from '@vicons/ionicons5'
+import { useMediaQuery } from '@vueuse/core'
 import { bytesToSize } from '@shared/utils'
 import { calcColumnWidth } from '@shared/utils/calcColumnWidth'
 import type { Aria2File, BtFilePriority } from '@shared/types'
@@ -22,6 +24,7 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+const isNarrow = useMediaQuery('(max-width: 768px)')
 const message = useAppMessage()
 const priorityOverrides = ref<Record<number, BtFilePriority>>({})
 const pendingPriority = ref<number | null>(null)
@@ -53,6 +56,22 @@ async function updatePriority(row: FileDetailRow, priority: BtFilePriority) {
   } finally {
     pendingPriority.value = null
   }
+}
+
+function filePath(row: FileDetailRow): string {
+  return props.files.find((file) => Number(file.index) === row.idx)?.path ?? ''
+}
+
+function fileMenu(row: FileDetailRow) {
+  return [
+    { label: t('task.copy-file-name'), key: 'name' },
+    { label: t('task.copy-file-path'), key: 'path', disabled: !filePath(row) },
+  ]
+}
+
+function onFileMenu(row: FileDetailRow, key: string) {
+  if (key === 'name') props.onCopy(row.name, t('task.copy-file-name'))
+  if (key === 'path') props.onCopy(filePath(row), t('task.copy-file-path'))
 }
 
 const columns = computed(() => {
@@ -148,6 +167,7 @@ const tableWidth = computed(() =>
 
 <template>
   <NDataTable
+    v-if="!isNarrow"
     :columns="columns"
     :data="rows"
     :row-key="(row: FileDetailRow) => row.idx"
@@ -160,4 +180,82 @@ const tableWidth = computed(() =>
     :min-row-height="34"
     striped
   />
+  <!-- shortcut: renders every file; move to virtual scrolling if huge torrents lag. -->
+  <div v-else class="file-cards">
+    <div v-for="row in rows" :key="row.idx" class="file-card">
+      <div class="file-card-main">
+        <button type="button" class="file-card-name" @click="onFileMenu(row, 'name')">{{ row.name }}</button>
+        <div class="file-card-meta">{{ bytesToSize(String(row.length)) }} · {{ row.percent }}%</div>
+      </div>
+      <NSelect
+        v-if="!terminal"
+        class="file-card-priority"
+        :value="priorityOverrides[row.idx] ?? row.priority"
+        :options="priorityOptions"
+        size="small"
+        :disabled="!editable || pendingPriority !== null"
+        :loading="pendingPriority === row.idx"
+        @update:value="(value: BtFilePriority) => void updatePriority(row, value)"
+      />
+      <NDropdown
+        trigger="click"
+        :options="fileMenu(row)"
+        @select="(key: string | number) => onFileMenu(row, String(key))"
+      >
+        <NButton quaternary circle size="small" class="file-card-menu" :aria-label="t('task.file-actions')">
+          <template #icon>
+            <NIcon><EllipsisHorizontal /></NIcon>
+          </template>
+        </NButton>
+      </NDropdown>
+    </div>
+  </div>
 </template>
+
+<style scoped>
+.file-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.file-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--task-item-bg);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--radius-sm);
+}
+.file-card-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.file-card-name {
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  color: var(--m3-on-surface);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.file-card-meta {
+  color: var(--m3-on-surface-variant);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+.file-card-priority {
+  flex: 0 0 88px;
+  width: 88px;
+}
+.file-card-menu {
+  flex: 0 0 auto;
+}
+</style>
