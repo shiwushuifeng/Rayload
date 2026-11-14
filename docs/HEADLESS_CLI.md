@@ -18,6 +18,9 @@ curl -fsSL https://raw.githubusercontent.com/shiwushuifeng/Rayload/main/scripts/
 
 无需 root，下载发行版并安装到 `~/.local/bin`。也可从源码构建：
 
+If `github.com` is unreachable, set `RAYLOAD_CLI_BASE` to a mirror that proxies
+the same release URL. Checksums are still verified.
+
 ```bash
 cargo build --release --manifest-path src-tauri/Cargo.toml --features cli --bin ray --bin rayload
 ```

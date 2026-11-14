@@ -32,7 +32,7 @@ if [ -z "$version" ]; then
 fi
 
 asset="rayload-cli-v$version-linux-x86_64.tar.gz"
-base="https://github.com/$repo/releases/download/v$version"
+base="${RAYLOAD_CLI_BASE:-https://github.com/$repo/releases/download/v$version}"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
