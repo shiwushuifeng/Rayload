@@ -582,6 +582,29 @@ pub fn stop(_overrides: &Overrides) -> Result<(), String> {
     Err("stop is only supported on Unix systems".into())
 }
 
+pub fn off(overrides: &Overrides) -> Result<(), String> {
+    #[cfg(target_os = "linux")]
+    {
+        let home = std::env::var_os("HOME")
+            .map(PathBuf::from)
+            .ok_or_else(|| "cannot resolve HOME".to_string())?;
+        if home.join(".config/systemd/user/rayload.service").exists() {
+            run_systemctl_user(&["stop", "rayload.service"])?;
+            println!("Stopped user service rayload.");
+            return Ok(());
+        }
+        if Path::new("/etc/systemd/system/rayload.service").exists() {
+            if !crate::security::running_as_root() {
+                return Err("ray off needs root for the system service (try sudo ray off)".into());
+            }
+            run_systemctl(&["stop", "rayload.service"])?;
+            println!("Stopped system service rayload.");
+            return Ok(());
+        }
+    }
+    stop(overrides)
+}
+
 pub fn security_check(overrides: &Overrides, json_output: bool) -> Result<(), String> {
     let settings = settings(overrides)?;
     let checks = crate::security::audit(&crate::security::SecuritySettings {
@@ -915,20 +938,23 @@ pub fn device_revoke(overrides: &Overrides, id: &str) -> Result<(), String> {
     }
 }
 
-pub fn install(overrides: &Overrides) -> Result<(), String> {
+pub fn install(overrides: &Overrides, user: bool) -> Result<(), String> {
     #[cfg(target_os = "linux")]
     {
-        install_systemd(overrides)
+        install_systemd(overrides, user)
     }
     #[cfg(not(target_os = "linux"))]
     {
-        let _ = overrides;
+        let _ = (overrides, user);
         Err("systemd installation is only supported on Linux".into())
     }
 }
 
 #[cfg(target_os = "linux")]
-fn install_systemd(overrides: &Overrides) -> Result<(), String> {
+fn install_systemd(overrides: &Overrides, user_mode: bool) -> Result<(), String> {
+    if user_mode {
+        return install_user_systemd(overrides);
+    }
     if !crate::security::running_as_root() {
         return Err("ray install must run as root (try sudo ray install)".into());
     }
@@ -986,6 +1012,62 @@ fn install_systemd(overrides: &Overrides) -> Result<(), String> {
 }
 
 #[cfg(target_os = "linux")]
+fn install_user_systemd(overrides: &Overrides) -> Result<(), String> {
+    let home = std::env::var_os("HOME")
+        .map(PathBuf::from)
+        .ok_or_else(|| "cannot resolve HOME".to_string())?;
+    let config_path = overrides
+        .config
+        .clone()
+        .unwrap_or_else(|| home.join(".config/rayload/config.yml"));
+    if !config_path.exists() {
+        return Err(format!(
+            "{} does not exist; run ray init first",
+            config_path.display()
+        ));
+    }
+    let _ = stop(overrides);
+    let exe = std::env::current_exe().map_err(|error| error.to_string())?;
+    let bin_dir = home.join(".local/bin");
+    fs::create_dir_all(&bin_dir).map_err(|error| format!("{}: {error}", bin_dir.display()))?;
+    let target = bin_dir.join("ray");
+    if exe != target {
+        fs::copy(&exe, &target).map_err(|error| format!("{}: {error}", target.display()))?;
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&target, fs::Permissions::from_mode(0o755))
+            .map_err(|error| error.to_string())?;
+    }
+    let link = bin_dir.join("rayload");
+    if !link.exists() {
+        std::os::unix::fs::symlink(&target, &link)
+            .map_err(|error| format!("{}: {error}", link.display()))?;
+    }
+    let unit_dir = home.join(".config/systemd/user");
+    fs::create_dir_all(&unit_dir).map_err(|error| format!("{}: {error}", unit_dir.display()))?;
+    let unit = format!(
+        "[Unit]\nDescription=Rayload headless downloader\nAfter=network-online.target\nWants=network-online.target\n\n[Service]\nType=simple\nExecStart=\"{}\" --config \"{}\" start\nRestart=on-failure\nRestartSec=3\n\n[Install]\nWantedBy=default.target\n",
+        target.display(),
+        config_path.display()
+    );
+    let unit_path = unit_dir.join("rayload.service");
+    fs::write(&unit_path, unit).map_err(|error| format!("{}: {error}", unit_path.display()))?;
+    run_systemctl_user(&["daemon-reload"])?;
+    run_systemctl_user(&["enable", "--now", "rayload.service"])?;
+    if let Ok(user) = std::env::var("USER") {
+        let linger = Command::new("loginctl")
+            .args(["enable-linger", &user])
+            .status();
+        if !matches!(linger, Ok(status) if status.success()) {
+            eprintln!("warning: enable boot start manually: loginctl enable-linger {user}");
+        }
+    }
+    println!("Installed {}", unit_path.display());
+    println!("Status: systemctl --user status rayload");
+    println!("Logs:   journalctl --user -u rayload -f");
+    Ok(())
+}
+
+#[cfg(target_os = "linux")]
 fn run_systemctl(args: &[&str]) -> Result<(), String> {
     let status = Command::new("systemctl")
         .args(args)
@@ -995,6 +1077,23 @@ fn run_systemctl(args: &[&str]) -> Result<(), String> {
         Ok(())
     } else {
         Err(format!("systemctl {} failed ({status})", args.join(" ")))
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn run_systemctl_user(args: &[&str]) -> Result<(), String> {
+    let status = Command::new("systemctl")
+        .arg("--user")
+        .args(args)
+        .status()
+        .map_err(|error| format!("systemctl --user: {error}"))?;
+    if status.success() {
+        Ok(())
+    } else {
+        Err(format!(
+            "systemctl --user {} failed ({status})",
+            args.join(" ")
+        ))
     }
 }
 

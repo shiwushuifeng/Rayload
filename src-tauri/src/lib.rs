@@ -331,13 +331,14 @@ fn setup_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         app.manage(services::lan_api::LanAuthState(std::sync::Arc::clone(
             &lan_auth,
         )));
+        let lan_name = lan_auth.device_name();
         services::lan_api::spawn(
             handle,
             std::sync::Arc::clone(&aria2_state.0),
             lan_auth,
             database,
         );
-        lan_discovery::spawn(lan_client::API_PORT);
+        lan_discovery::spawn(lan_client::API_PORT, lan_name);
     }
     app.manage(aria2_state);
 

@@ -144,6 +144,8 @@ running process to pick them up.
 | `ray device`, `ray -d` | Device commands (below) |
 | `ray plugin list` | List JSON plugin manifests |
 | `ray install` | Install and enable the systemd unit |
+| `ray install --user` | Install and enable a user-level systemd unit |
+| `ray off` | Stop the installed service (or a manual background instance) |
 
 ### Security audit / 安全体检
 
@@ -278,6 +280,16 @@ ray list --json | jq '.tasks[] | select(.status == "active")'
 sudo ray install
 systemctl status rayload
 journalctl -u rayload -f
+```
+
+For a user-level service without root, then enable boot start with linger:
+
+```bash
+ray install --user
+loginctl enable-linger "$USER"
+systemctl --user status rayload
+journalctl --user -u rayload -f
+ray off                 # stop the user service
 ```
 
 The command must run as root. It copies the current binary to

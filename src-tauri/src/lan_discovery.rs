@@ -47,14 +47,14 @@ pub fn current() -> Vec<DiscoveredPeer> {
 }
 
 /// Starts the beacon listener once per process.
-pub fn spawn(api_port: u16) {
+pub fn spawn(api_port: u16, name: String) {
     static STARTED: OnceLock<()> = OnceLock::new();
     if STARTED.set(()).is_err() {
         return;
     }
     std::thread::Builder::new()
         .name("rayload-lan-discovery".into())
-        .spawn(move || run(api_port))
+        .spawn(move || run(api_port, &name))
         .ok();
 }
 
@@ -90,7 +90,7 @@ pub fn local_ipv4() -> Option<Ipv4Addr> {
     }
 }
 
-fn run(api_port: u16) {
+fn run(api_port: u16, name: &str) {
     let Ok(socket) = UdpSocket::bind(("0.0.0.0", DISCOVERY_PORT)) else {
         log::warn!("lan_discovery: could not bind UDP {DISCOVERY_PORT}");
         return;
@@ -99,7 +99,6 @@ fn run(api_port: u16) {
     let _ = socket.join_multicast_v4(&MULTICAST_ADDR, &Ipv4Addr::UNSPECIFIED);
     let _ = socket.set_read_timeout(Some(Duration::from_secs(1)));
 
-    let name = crate::api_server::device_name();
     let mut last_beacon = Instant::now() - BEACON_INTERVAL;
     let mut own_addresses = Vec::new();
     let mut buffer = [0u8; 2048];

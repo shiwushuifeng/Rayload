@@ -266,8 +266,10 @@ security check, environment variables and the non-root Docker image:
 curl -fsSL https://raw.githubusercontent.com/shiwushuifeng/Rayload/main/scripts/install-cli.sh | sh
 ```
 
-This installs `ray` and `rayload` into `~/.local/bin` without `sudo`. To build
-from source instead:
+This installs `ray` and `rayload` into `~/.local/bin` without `sudo`. The
+installer asks whether to install for the current user (default) or
+system-wide, offers first-time `ray init`, and can enable start on boot. To
+build from source instead:
 
 ```bash
 cargo build --release --manifest-path src-tauri/Cargo.toml --features cli --bin ray

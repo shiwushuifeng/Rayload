@@ -222,7 +222,7 @@ pub async fn serve_lan(
     let listeners = api_server::bind_listeners(options.api_port)
         .await
         .map_err(|error| format!("LAN API port {}: {error}", options.api_port))?;
-    crate::lan_discovery::spawn(options.api_port);
+    crate::lan_discovery::spawn(options.api_port, options.device_name.clone());
     let mut tasks = Vec::new();
     for listener in listeners {
         let backend = Arc::clone(&backend);

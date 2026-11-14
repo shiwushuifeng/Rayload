@@ -123,8 +123,14 @@ enum Command {
     },
     /// Stop a background instance.
     Stop,
+    /// Stop the installed service (or a manual background instance).
+    Off,
     /// Install and enable the systemd service.
-    Install,
+    Install {
+        /// Install a user-level service instead of a system-wide one.
+        #[arg(long)]
+        user: bool,
+    },
     /// Audit the runtime environment.
     SecurityCheck {
         #[arg(long)]
@@ -250,7 +256,8 @@ fn dispatch(command: Command, overrides: &Overrides) -> Result<(), String> {
             }
         },
         Command::Stop => commands::stop(overrides),
-        Command::Install => commands::install(overrides),
+        Command::Off => commands::off(overrides),
+        Command::Install { user } => commands::install(overrides, user),
         Command::SecurityCheck { json } => commands::security_check(overrides, json),
         Command::Status { json } => commands::status(overrides, json),
         Command::Auth => commands::auth(overrides),
