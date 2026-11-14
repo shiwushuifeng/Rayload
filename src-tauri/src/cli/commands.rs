@@ -194,10 +194,16 @@ fn run_foreground(settings: Settings) -> Result<(), String> {
         rpc_port: settings.rpc_port,
         extra_options: settings.aria2_options.clone(),
     });
+    if io::stderr().is_terminal() {
+        eprintln!("Starting Aria2...");
+    }
     let mut process = service.start().map_err(|error| error.to_string())?;
     process
         .wait_until_ready()
         .map_err(|error| error.to_string())?;
+    if io::stderr().is_terminal() {
+        eprintln!("Aria2 ready.");
+    }
     write_pid(&settings, process.pid())?;
     let _guard = PidGuard {
         path: settings.pid_path(),

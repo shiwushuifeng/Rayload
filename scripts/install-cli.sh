@@ -36,7 +36,12 @@ base="${RAYLOAD_CLI_BASE:-https://github.com/$repo/releases/download/v$version}"
 tmp="$(mktemp -d)"
 trap 'rm -rf "$tmp"' EXIT
 
-curl -fsSL "$base/$asset" -o "$tmp/$asset"
+curl_opts="-fsSL"
+if [ -t 2 ]; then
+  curl_opts="-fL --progress-bar"
+  echo "Downloading Rayload CLI $version..."
+fi
+curl $curl_opts "$base/$asset" -o "$tmp/$asset"
 curl -fsSL "$base/SHA256SUMS-v$version.txt" -o "$tmp/SHA256SUMS.txt"
 (cd "$tmp" && grep "  $asset\$" SHA256SUMS.txt | sha256sum -c -)
 
