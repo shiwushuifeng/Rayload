@@ -53,6 +53,7 @@ class MainActivity : TauriActivity() {
     private const val ACTION_NEW_DOWNLOAD = "com.shiwushuifeng.rayload.action.NEW_DOWNLOAD"
     private const val REQUEST_NOTIFICATION_PERMISSION = 4102
     private const val REQUEST_LEGACY_STORAGE_PERMISSION = 4103
+    private const val REQUEST_LOCAL_NETWORK_PERMISSION = 4104
     private const val WAKE_LOCK_TAG = "Rayload:active-downloads"
     private const val LAUNCHER_ICON_PREFS = "rayload-launcher-icon"
     private const val CLIPBOARD_PREFS = "rayload-permissions"
@@ -315,7 +316,8 @@ class MainActivity : TauriActivity() {
     super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     if (
       requestCode == REQUEST_NOTIFICATION_PERMISSION ||
-      requestCode == REQUEST_LEGACY_STORAGE_PERMISSION
+      requestCode == REQUEST_LEGACY_STORAGE_PERMISSION ||
+      requestCode == REQUEST_LOCAL_NETWORK_PERMISSION
     ) {
       dispatchNativeEvent("rayload-permission-state-changed")
     }
@@ -376,6 +378,14 @@ class MainActivity : TauriActivity() {
     @JavascriptInterface
     fun requestNotificationPermission() {
       runOnUiThread { this@MainActivity.requestNotificationPermission() }
+    }
+
+    @JavascriptInterface
+    fun localNetworkPermissionStatus(): String = currentLocalNetworkPermissionStatus()
+
+    @JavascriptInterface
+    fun requestLocalNetworkPermission() {
+      runOnUiThread { this@MainActivity.requestLocalNetworkPermission() }
     }
 
     @JavascriptInterface
@@ -552,6 +562,33 @@ class MainActivity : TauriActivity() {
     requestPermissions(
       arrayOf(Manifest.permission.POST_NOTIFICATIONS),
       REQUEST_NOTIFICATION_PERMISSION,
+    )
+  }
+
+  /** Android 17 gates LAN discovery and peer sockets behind this runtime grant. */
+  private fun currentLocalNetworkPermissionStatus(): String {
+    if (Build.VERSION.SDK_INT < 37) return "granted"
+    return if (
+      checkSelfPermission(Manifest.permission.ACCESS_LOCAL_NETWORK) ==
+      PackageManager.PERMISSION_GRANTED
+    ) {
+      "granted"
+    } else {
+      "denied"
+    }
+  }
+
+  private fun requestLocalNetworkPermission() {
+    if (
+      Build.VERSION.SDK_INT < 37 ||
+      currentLocalNetworkPermissionStatus() == "granted"
+    ) {
+      dispatchNativeEvent("rayload-permission-state-changed")
+      return
+    }
+    requestPermissions(
+      arrayOf(Manifest.permission.ACCESS_LOCAL_NETWORK),
+      REQUEST_LOCAL_NETWORK_PERMISSION,
     )
   }
 

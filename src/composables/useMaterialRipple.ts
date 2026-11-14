@@ -15,17 +15,29 @@ function resolveHost(target: EventTarget | null): HTMLElement | null {
 
 function spawnRipple(host: HTMLElement, event: PointerEvent) {
   if (document.documentElement.classList.contains('reduce-motion')) return
-  const rect = host.getBoundingClientRect()
-  if (rect.width === 0 || rect.height === 0) return
+  const hostStyle = getComputedStyle(host)
+  // Inline hosts position an absolute child against their first line box,
+  // which puts the circle at the top instead of the tap point.
+  if (hostStyle.display === 'inline') return
 
   host.classList.add('ripple-host')
+  // A static host would anchor the wave to the page instead of itself.
+  if (getComputedStyle(host).position === 'static') host.style.position = 'relative'
+
+  const rect = host.getBoundingClientRect()
+  // Scale from screen space (getBoundingClientRect) back to the host's own
+  // pixels so transformed controls keep the circle under the pointer.
+  const scaleX = host.offsetWidth > 0 ? rect.width / host.offsetWidth : 1
+  const scaleY = host.offsetHeight > 0 ? rect.height / host.offsetHeight : 1
+  if (rect.width === 0 || rect.height === 0) return
+
   const wave = document.createElement('span')
-  const diameter = Math.hypot(rect.width, rect.height) * 1.15
+  const diameter = Math.hypot(host.offsetWidth, host.offsetHeight) * 1.15
   wave.className = 'material-ripple-wave'
   wave.style.width = `${diameter}px`
   wave.style.height = `${diameter}px`
-  wave.style.left = `${event.clientX - rect.left - diameter / 2}px`
-  wave.style.top = `${event.clientY - rect.top - diameter / 2}px`
+  wave.style.left = `${(event.clientX - rect.left) / scaleX - diameter / 2}px`
+  wave.style.top = `${(event.clientY - rect.top) / scaleY - diameter / 2}px`
   host.appendChild(wave)
   wave.addEventListener('animationend', () => wave.remove(), { once: true })
 }

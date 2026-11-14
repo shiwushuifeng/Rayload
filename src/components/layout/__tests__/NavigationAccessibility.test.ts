@@ -13,6 +13,12 @@ vi.mock('@/stores/task', () => ({
   useTaskStore: () => ({ taskCounts: { all: 8, progress: 3, failed: 1, completed: 4 } }),
 }))
 vi.mock('@/stores/preference', () => ({ usePreferenceStore: () => preferences }))
+vi.mock('@/stores/build', () => ({
+  useBuildInfoStore: () => ({
+    info: { variant: 'lite', lan: false, pluginEngine: false, fdroid: false },
+    load: vi.fn(),
+  }),
+}))
 vi.mock('@/stores/app', () => ({
   useAppStore: () => ({ keepAwakeVisible: false, showKeepAwake: vi.fn(), hideKeepAwake: vi.fn() }),
 }))

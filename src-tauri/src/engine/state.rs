@@ -1,8 +1,8 @@
+use aria2_service::EngineProcess;
 use std::collections::VecDeque;
 use std::sync::atomic::{AtomicU16, AtomicU32, Ordering};
 use std::sync::{Condvar, Mutex, MutexGuard, PoisonError};
 use std::time::Duration;
-use tauri_plugin_shell::process::CommandChild;
 
 /// Converts a [`Path`] to a string safe for passing to external processes.
 ///
@@ -37,7 +37,7 @@ const STDERR_TAIL_LINES: usize = 24;
 /// until the process monitor observes the exit, so callers can wait for the
 /// process to be gone rather than for the handle to be dropped.
 pub struct EngineState {
-    child: Mutex<Option<CommandChild>>,
+    child: Mutex<Option<EngineProcess>>,
     live_pid: Mutex<Option<u32>>,
     exited: Condvar,
     stderr_tail: Mutex<VecDeque<String>>,
@@ -77,7 +77,7 @@ impl EngineState {
         self.next_generation();
     }
 
-    pub(crate) fn attach(&self, child: CommandChild, rpc_port: u16) {
+    pub(crate) fn attach(&self, child: EngineProcess, rpc_port: u16) {
         let pid = child.pid();
         self.rpc_port.store(rpc_port, Ordering::SeqCst);
         *lock(&self.child) = Some(child);
@@ -101,7 +101,7 @@ impl EngineState {
     /// Records the exit reported by the process monitor.
     pub(crate) fn mark_exited(&self, pid: u32) {
         let mut child = lock(&self.child);
-        if child.as_ref().map(CommandChild::pid) == Some(pid) {
+        if child.as_ref().map(EngineProcess::pid) == Some(pid) {
             *child = None;
         }
         let mut live = lock(&self.live_pid);

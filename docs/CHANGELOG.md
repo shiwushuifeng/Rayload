@@ -21,6 +21,80 @@ this file.
 - Normalized license and sponsor links across all translated README editions.
 - Documented the v0.9.0-beta through v1.0.1 milestones in `ROADMAP.md`.
 
+## v1.0.4 - 2026-11-14
+
+### Added
+
+- Mutual LAN device pairing: both sides confirm the peer and fingerprint, store
+  each other, and can push tasks or read statistics in either direction.
+- QR-code pairing, subnet scanning and manual IP/password pairing, plus device
+  names, per-device notes and an explicit incoming pairing-request dialog.
+- Saved host credentials, a dedicated device-management page and online/offline
+  state for every paired peer.
+- Download handoff to any paired online device from the new-task dialog.
+- Remote task list showing paired-device downloads alongside local tasks, with
+  pause, resume and remove actions.
+- This-device and all-devices tabs on the statistics page, including per-peer
+  live speed and active-task counts.
+- Separate `lite`, `full` and `fdroid` build variants.
+- An `x86_64` release APK that always ships the `full` feature set.
+- Declarative JSON plugin sandbox with scoped permissions (`network`, `cookies`,
+  `modify_headers`, `read_clipboard`), risk-graded import review, per-request
+  domain allow-list checks, runtime header stripping, a public
+  `plugin.schema.json` and a bilingual development guide.
+- Templated plugin variables (`{{password}}` and other caller-supplied values)
+  with scoped cookie injection and no credential logging.
+- First-run User Agreement and Privacy Policy consent, About and README
+  disclaimers, and differentiated third-party plugin import warnings.
+- Historical all-device statistics, sparklines, merged Downloader settings and
+  in-wizard navigation customization with per-item descriptions.
+- Rebuilt `ray`/`rayload` CLI: YAML configuration, interactive `ray init`,
+  foreground and daemon startup, systemd installation, tree status, task
+  control (`add`, `list`, `pause`, `resume`, `rm`), log tailing, plugin listing,
+  device approval and `--json` automation output.
+- `rayload-cli security-check`, a startup credential fail-safe, download-root
+  containment for handoff requests, source-IP/URL handoff audit logging and a
+  non-root Docker image.
+
+### Changed
+
+- The F-Droid variant uses the `com.shiwushuifeng.rayload.fdroid` application ID
+  and its own launcher shortcuts.
+- Version bumped to `1.0.4`.
+- Release artifacts renamed to `Rayload-v1.0.4-{lite,full}-arm64.apk`,
+  `Rayload-v1.0.4-full-x86_64.apk`, `Rayload-v1.0.4-fdroid-arm64.apk` and
+  `rayload-cli-v1.0.4-linux-x86_64.tar.gz`.
+- README restructured into a documentation hub with bilingual navigation;
+  `QUICK_START.md`, `LAN_GUIDE.md` and `FAQ.md` were added and the plugin guide
+  moved under `docs/`.
+
+### Fixed
+
+- F-Droid builds no longer execute GitHub self-update checks or ship the updater
+  plugin; updates are left to the F-Droid client.
+- The headless CLI host now removes completed remote tasks instead of
+  returning an "active download not found" error.
+- LAN host credentials and the device name survive restarts again, and saving
+  the host form with an empty password no longer clears the account.
+- Unpairing revokes the peer on both sides, and cancelling a pairing request
+  invalidates its one-time ticket, so a rejected device can no longer push
+  tasks.
+- Sending a download to another device hides the advanced options instead of
+  dropping them silently, and pairing or polling failures now report an error.
+- Completed remote tasks can be removed by the CLI host without an
+  "active download not found" error.
+
+### Security
+
+- Pairing uses a one-time ticket and exchanges reverse public keys instead of
+  transmitting the admin password; cancelling or rejecting invalidates the ticket.
+- The receiver always shows the initiator name and key fingerprint before trust.
+- Plugin requests are checked against the declared/granted permission
+  intersection and `allowedDomains`; `Cookie`, `Host`, `Content-Length`,
+  `Connection`, `Transfer-Encoding` and `Proxy-Authorization` are stripped.
+- LAN handoff rejects paths outside the download root and records source IP,
+  URL and task metadata in the audit log.
+
 ## v1.0.3 - 2026-11-12
 
 ### Added

@@ -6,24 +6,23 @@ import { NButton } from 'naive-ui'
 withDefaults(defineProps<{ isDirty: boolean; isValid?: boolean }>(), { isValid: true })
 const emit = defineEmits<{ save: []; discard: [] }>()
 const { t } = useI18n()
-
-const ENTER_MS = 380
-const LEAVE_MS = 220
 </script>
 
 <template>
   <div class="form-actions">
-    <!-- Shown only with unsaved changes: greyed-out buttons read as broken text (#723). -->
-    <Transition name="dirty-actions" :duration="{ enter: ENTER_MS, leave: LEAVE_MS }">
-      <div v-if="isDirty" class="dirty-actions">
-        <NButton :type="isValid ? 'primary' : 'default'" :disabled="!isValid" @click="emit('save')">{{
-          t('preferences.save')
-        }}</NButton>
-        <NButton class="secondary-action" type="error" ghost @click="emit('discard')">{{
-          t('preferences.discard')
-        }}</NButton>
-      </div>
-    </Transition>
+    <!-- Always visible so the actions do not jump in and out; disabled until
+         the form has unsaved changes. -->
+    <div class="dirty-actions">
+      <NButton
+        :type="isDirty && isValid ? 'primary' : 'default'"
+        :disabled="!isDirty || !isValid"
+        @click="emit('save')"
+        >{{ t('preferences.save') }}</NButton
+      >
+      <NButton class="secondary-action" type="error" ghost :disabled="!isDirty" @click="emit('discard')">{{
+        t('preferences.discard')
+      }}</NButton>
+    </div>
   </div>
 </template>
 
@@ -52,21 +51,6 @@ const LEAVE_MS = 220
   display: block;
   overflow: clip visible;
   text-overflow: ellipsis;
-}
-.dirty-actions-enter-active {
-  transition:
-    opacity 380ms cubic-bezier(0.2, 0, 0, 1),
-    transform 380ms cubic-bezier(0.2, 0, 0, 1);
-}
-.dirty-actions-leave-active {
-  transition:
-    opacity 220ms var(--dialog-ease-leave),
-    transform 220ms var(--dialog-ease-leave);
-}
-.dirty-actions-enter-from,
-.dirty-actions-leave-to {
-  opacity: 0;
-  transform: translateX(-16px);
 }
 @container footer (max-width: 640px) {
   .form-actions {

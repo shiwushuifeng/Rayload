@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher_gold"
+        android:shortcutId="new_download"
+        android:shortcutLongLabel="@string/shortcut_new_download_long"
+        android:shortcutShortLabel="@string/shortcut_new_download">
+        <intent
+            android:action="com.shiwushuifeng.rayload.action.NEW_DOWNLOAD"
+            android:targetClass="com.shiwushuifeng.rayload.MainActivity"
+            android:targetPackage="com.shiwushuifeng.rayload.fdroid" />
+    </shortcut>
+</shortcuts>

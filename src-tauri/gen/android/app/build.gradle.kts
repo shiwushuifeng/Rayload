@@ -16,13 +16,20 @@ val tauriProperties = Properties().apply {
 
 val includeSmokeX86_64Engine =
     providers.environmentVariable("RAYLOAD_SMOKE_X86_64").orNull == "1"
+val fdroidBuild = providers.environmentVariable("RAYLOAD_FDROID").orNull == "1"
 
 android {
     compileSdk = 37
+    // The Kotlin namespace stays stable so the committed sources and JNI
+    // entry points do not move between distributions.
     namespace = "com.shiwushuifeng.rayload"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "true"
-        applicationId = "com.shiwushuifeng.rayload"
+        applicationId = if (fdroidBuild) {
+            "com.shiwushuifeng.rayload.fdroid"
+        } else {
+            "com.shiwushuifeng.rayload"
+        }
         minSdk = 24
         targetSdk = 37
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
@@ -88,6 +95,15 @@ android {
     }
     buildFeatures {
         buildConfig = true
+    }
+    sourceSets {
+        // Static launcher shortcuts name the installed package explicitly.
+        getByName("debug") {
+            if (fdroidBuild) res.srcDir("src/fdroid/res")
+        }
+        getByName("release") {
+            if (fdroidBuild) res.srcDir("src/fdroid/res")
+        }
     }
 }
 

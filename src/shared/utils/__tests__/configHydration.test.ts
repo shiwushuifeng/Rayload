@@ -229,6 +229,19 @@ describe('hydrateAppConfig', () => {
     expect(result.config.btTrackerAutoSync).toBe(DEFAULT_APP_CONFIG.btTrackerAutoSync)
   })
 
+  it('keeps the LAN host settings written by the Rust service', () => {
+    const result = hydrateAppConfig({
+      lanApiUsername: 'admin',
+      lanApiPassword: 'secret',
+      lanDeviceName: 'Desk tablet',
+    })
+
+    expect(result.config.lanApiUsername).toBe('admin')
+    expect(result.config.lanApiPassword).toBe('secret')
+    expect(result.config.lanDeviceName).toBe('Desk tablet')
+    expect(result.repairs).not.toContain('lanDeviceName')
+  })
+
   it('generates missing secrets and preserves intentionally cleared secrets', () => {
     const missing = hydrateAppConfig({})
     const cleared = hydrateAppConfig({

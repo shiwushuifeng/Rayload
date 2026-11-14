@@ -13,6 +13,20 @@ Rayload 是 Rayburst 的独立非官方 Android 移植版，仅专注于 Android
 项目使用 Tauri、Rust、Vue 3 和 Aria2 Next 构建，提供移动端界面、系统分享、
 后台下载、通知、公共下载目录集成以及本地 Aria2 JSON-RPC 服务。
 
+## 📚 文档导航 (Documentation)
+
+第一次使用 Rayload？先看快速上手，再按使用场景打开对应指南。
+
+| 文档 | 内容简介 |
+| --- | --- |
+| 🚀 [快速上手](QUICK_START.md) | 选择正确的安装包、授予权限并完成第一个下载。 |
+| 🌐 [局域网互联指南](LAN_GUIDE.md) | 双向配对、扫码与局域网发现、跨端任务推送与实时统计。 |
+| 🔌 [插件开发指南](PLUGIN_DEVELOPMENT_GUIDE.md) | JSON 解析规则、网络白名单、请求头改写与 `{{password}}` 变量。 |
+| 💻 [CLI 命令行手册](HEADLESS_CLI.md) | NAS/服务器无头部署、YAML 配置详解与 `ray` 命令全集。 |
+| ❓ [常见问题](FAQ.md) | 下载慢、配对失败、权限被拒与链接解析失败。 |
+| 📱 [Android 说明](ANDROID.md) | 构建变体、签名差异与 Android 平台特性。 |
+| 🗺️ [路线图](../ROADMAP.md) | 计划中的功能与工程方向。 |
+
 ## 项目愿景
 
 > 🚀 致力于打造 Android 平台最纯粹、极速、可定制的开源下载器。无广告，无遥测，由极客打造，为极客服务。
@@ -20,16 +34,16 @@ Rayload 是 Rayburst 的独立非官方 Android 移植版，仅专注于 Android
 坚持隐私优先，用一个引擎处理所有协议，提供原生移动端体验，并通过主题与插件
 持续扩展。未来计划见[路线图](../ROADMAP.md)。
 
-## v1.0.3 更新亮点
+## v1.0.4 更新亮点
 
-- 完成核心下载与任务管理：多行链接拆分、防盗链请求头、长按多选、滑动操作、
-  重复任务过滤、存储预警与 `MD5`/`SHA1`/`SHA256` 校验。
-- 新增可跳过的首次向导、集中式权限与通知管理、桌面快捷方式、GitHub 更新检查、
-  JSON 配置导入导出和局域网互联面板。
-- 新增主页概览与数据统计页：实时网速采样、7 天趋势、按活动时间计算的平均速率
-  与分类统计。
-- 打磨动效与可访问性：数字滚动、水波纹、弹性滑出、SVG 空状态、44px 热区与
-  暗色模式对比度。
+- 双向局域网配对：双方确认设备与指纹并互相保存，任意一方都能推送任务、
+  查看实时统计。
+- 任务列表汇总已配对设备的远程任务，支持暂停、继续与删除，并显示离线状态。
+- 数据统计页新增“本机”与“全部设备”两个 Tab，展示各设备实时速度与活动任务数。
+- JSON 插件权限沙箱：风险分级授权、域名白名单与请求头强制剥离。
+- `ray` CLI 支持 YAML 配置、守护进程、systemd 与终端任务控制。
+- 拆分为轻量版、完整版与 F-Droid 版；F-Droid 版使用独立包名，并彻底移除
+  GitHub 自更新。
 
 ## 平台要求
 
@@ -37,17 +51,19 @@ Rayload 是 Rayburst 的独立非官方 Android 移植版，仅专注于 Android
 | -------- | --------------------------- |
 | 最低系统 | Android 7.0 / API 24        |
 | 目标系统 | Android 17 / API 37         |
-| 生产架构 | `arm64-v8a`                 |
+| 生产架构 | `arm64-v8a`、`x86_64`（完整版） |
 | 应用包名 | `com.shiwushuifeng.rayload` |
 
 发布附件：
 
 | 附件 | 用途 |
 | --- | --- |
-| `Rayload-v1.0.3-android17-arm64-release.apk` | ARM64 正式发布包 |
-| `Rayload-v1.0.3-android17-arm64-debug.apk` | ARM64 调试/测试包 |
-| `Rayload-v1.0.3-x86_64-emulator.apk` | x86_64 模拟器包 |
-| `SHA256SUMS-v1.0.3.txt` | 全部 APK 的 SHA-256 校验值 |
+| `Rayload-v1.0.4-lite-arm64.apk` | ARM64 轻量包（核心下载功能） |
+| `Rayload-v1.0.4-full-arm64.apk` | 含局域网与插件引擎的 ARM64 完整包 |
+| `Rayload-v1.0.4-full-x86_64.apk` | x86_64 完整包（x86 设备与模拟器） |
+| `Rayload-v1.0.4-fdroid-arm64.apk` | F-Droid ARM64 包（由商店管理更新） |
+| `rayload-cli-v1.0.4-linux-x86_64.tar.gz` | Linux 无界面 CLI（含 YAML 示例） |
+| `SHA256SUMS-v1.0.4.txt` | 全部发行产物的 SHA-256 校验值 |
 
 Rayload 不支持桌面平台。标准 Google Chrome for Android 不能加载桌面扩展；
 需要浏览器联动时，请使用 Firefox Android 或支持扩展侧载的 Chromium 构建。
@@ -181,6 +197,8 @@ Chromium 构建，并填写**设置 → 高级**中的地址与 RPC Secret。
 ### 切换安装包时提示“应用未安装”
 
 Release 与 Debug APK 使用不同的签名证书。安装另一个版本前，请先卸载当前版本。
+
+更多问题与排查步骤见 [完整常见问题](FAQ.md)。
 
 ## 致谢与许可
 

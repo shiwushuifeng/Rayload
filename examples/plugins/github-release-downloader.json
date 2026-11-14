@@ -1,0 +1,30 @@
+{
+  "name": "GitHub Release Downloader",
+  "version": "1.0.0",
+  "description": "Turn a GitHub release page into a direct asset download and send it to Rayload.",
+  "type": "rule",
+  "runtime": "http",
+  "permissions": ["network", "modify_headers"],
+  "allowedDomains": ["api.github.com"],
+  "testUrl": "https://api.github.com/repos/shiwushuifeng/Rayload/releases/latest",
+  "headers": {
+    "Accept": "application/vnd.github+json",
+    "User-Agent": "Rayload-Plugin/1.0"
+  },
+  "rules": [
+    {
+      "match": "^https://github\\.com/([^/]+)/([^/]+)/releases/tag/(.+)$",
+      "request": {
+        "method": "GET",
+        "url": "https://api.github.com/repos/{1}/{2}/releases/tags/{3}",
+        "headers": {
+          "Accept": "application/vnd.github+json",
+          "User-Agent": "Rayload-Plugin/1.0"
+        }
+      },
+      "extract": {
+        "json": "assets.0.browser_download_url"
+      }
+    }
+  ]
+}

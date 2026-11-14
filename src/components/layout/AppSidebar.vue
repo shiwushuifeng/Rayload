@@ -7,14 +7,17 @@ import MTooltip from '@/components/common/MTooltip.vue'
 import { NIcon } from 'naive-ui'
 import {
   InformationCircleOutline,
+  ExtensionPuzzleOutline,
   SettingsOutline,
   StatsChartOutline,
   SunnyOutline,
   TrashOutline,
+  WifiOutline,
 } from '@vicons/ionicons5'
 import { useTaskStore } from '@/stores/task'
 import { usePreferenceStore } from '@/stores/preference'
 import { useAppStore } from '@/stores/app'
+import { useBuildInfoStore } from '@/stores/build'
 import SidebarCount from './SidebarCount.vue'
 import { useTaskDestinations } from './navigation'
 import { triggerHaptic } from '@/composables/useHaptics'
@@ -31,6 +34,7 @@ const taskDestinations = useTaskDestinations()
 const tasks = useTaskStore()
 const preferences = usePreferenceStore()
 const appStore = useAppStore()
+const buildInfo = useBuildInfoStore()
 const appMessage = useAppMessage()
 const { isAndroid } = usePlatform()
 const { isItemVisible } = useNavigationVisibility()
@@ -43,6 +47,10 @@ const trashVisible = computed(() => !props.compact || isItemVisible('trash'))
 const aboutVisible = computed(() => !props.compact || isItemVisible('about'))
 const keepAwakeVisible = computed(() => !props.compact || isItemVisible('keep-awake'))
 const statisticsVisible = computed(() => !props.compact || isItemVisible('statistics'))
+const isLanDevices = computed(() => route.name === 'lan-devices')
+const isPlugins = computed(() => route.name === 'plugins')
+const lanVisible = computed(() => buildInfo.info.lan && (!props.compact || isItemVisible('lan-devices')))
+const pluginsVisible = computed(() => buildInfo.info.pluginEngine && (!props.compact || isItemVisible('plugins')))
 
 function showAbout(): void {
   triggerHaptic()
@@ -103,6 +111,38 @@ function enterKeepAwake(): void {
           </button>
         </template>
         {{ t('navigation.keep-awake') }}
+      </MTooltip>
+      <MTooltip v-if="lanVisible" placement="right" :disabled="props.compact">
+        <template #trigger>
+          <RouterLink
+            :to="{ name: 'lan-devices' }"
+            class="sidebar-item"
+            :class="{ active: isLanDevices }"
+            :aria-label="t('navigation.lan-devices')"
+            :aria-current="isLanDevices ? 'page' : undefined"
+            @click="triggerHaptic"
+          >
+            <NIcon :size="18" aria-hidden="true"><WifiOutline /></NIcon>
+            <span class="sidebar-label">{{ t('navigation.lan-devices') }}</span>
+          </RouterLink>
+        </template>
+        {{ t('navigation.lan-devices') }}
+      </MTooltip>
+      <MTooltip v-if="pluginsVisible" placement="right" :disabled="props.compact">
+        <template #trigger>
+          <RouterLink
+            :to="{ name: 'plugins' }"
+            class="sidebar-item"
+            :class="{ active: isPlugins }"
+            :aria-label="t('navigation.plugins')"
+            :aria-current="isPlugins ? 'page' : undefined"
+            @click="triggerHaptic"
+          >
+            <NIcon :size="18" aria-hidden="true"><ExtensionPuzzleOutline /></NIcon>
+            <span class="sidebar-label">{{ t('navigation.plugins') }}</span>
+          </RouterLink>
+        </template>
+        {{ t('navigation.plugins') }}
       </MTooltip>
       <MTooltip v-if="statisticsVisible" placement="right" :disabled="props.compact">
         <template #trigger>

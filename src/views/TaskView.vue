@@ -1,10 +1,11 @@
 <script setup lang="ts">
 /** @fileoverview Task list view, task actions, and batch selection controls. */
-import { computed, h, ref, watch } from 'vue'
+import { computed, h, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useTaskStore } from '@/stores/task'
 import { useTaskSelectionStore } from '@/stores/taskSelection'
 import { usePreferenceStore } from '@/stores/preference'
+import { remoteTaskToAria2, useLanStore } from '@/stores/lan'
 
 import { useTaskActions } from '@/composables/useTaskActions'
 
@@ -27,7 +28,20 @@ const props = withDefaults(defineProps<{ status?: string }>(), { status: 'all' }
 const { t } = useI18n()
 const taskStore = useTaskStore()
 const preferenceStore = usePreferenceStore()
-const showEmptyState = computed(() => taskStore.isCurrentListEmpty)
+const lan = useLanStore()
+const remoteTasks = computed(() => {
+  const scope = props.status ?? 'all'
+  return lan.remoteTasks
+    .map(remoteTaskToAria2)
+    .filter((task) =>
+      scope === 'all'
+        ? true
+        : scope === 'progress'
+          ? ['active', 'waiting', 'paused'].includes(task.status)
+          : task.status === (scope === 'failed' ? 'error' : 'complete'),
+    )
+})
+const showEmptyState = computed(() => taskStore.isCurrentListEmpty && remoteTasks.value.length === 0)
 const dialog = useDialog()
 const message = useAppMessage()
 
@@ -175,6 +189,35 @@ watch(
   },
   { immediate: true },
 )
+
+onMounted(() => lan.startTaskPolling())
+onBeforeUnmount(() => lan.stopTaskPolling())
+
+async function remoteAction(task: Aria2Task, action: 'pause' | 'unpause' | 'remove'): Promise<void> {
+  if (!task.remote) return
+  try {
+    await lan.remoteAction(task.remote.deviceId, task.remote.gid, action)
+    if (action === 'remove') message.success(t('task.remote-removed'))
+  } catch (error) {
+    logger.warn('TaskView.remoteAction', getErrorMessage(error))
+    message.error(getErrorMessage(error))
+  }
+}
+
+function pauseTask(task: Aria2Task): void {
+  if (task.remote) void remoteAction(task, 'pause')
+  else handlePauseTask(task)
+}
+
+function resumeTask(task: Aria2Task): void {
+  if (task.remote) void remoteAction(task, 'unpause')
+  else handleResumeTask(task)
+}
+
+function deleteTask(task: Aria2Task): void {
+  if (task.remote) void remoteAction(task, 'remove')
+  else handleDeleteTask(task)
+}
 </script>
 
 <template>
@@ -206,13 +249,14 @@ watch(
       <div class="panel-content" :class="{ 'panel-content--selecting': taskStore.selectionMode }">
         <HomeStatsBar v-if="!showEmptyState && !taskStore.selectionMode" class="task-home-stats" />
         <TaskList
-          @pause="handlePauseTask"
-          @resume="handleResumeTask"
+          :remote-tasks="remoteTasks"
+          @pause="pauseTask"
+          @resume="resumeTask"
           @retry="handleRetryTask"
           @redownload="handleRedownloadTask"
           @finish-sharing="handleFinishSharing"
           @finish-media="handleFinishMedia"
-          @delete="handleDeleteTask"
+          @delete="deleteTask"
           @delete-record="handleDeleteRecord"
           @copy-link="handleCopyLink"
           @show-info="handleShowInfo"

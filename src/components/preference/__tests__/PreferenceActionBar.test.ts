@@ -16,9 +16,11 @@ describe('shared preference footer', () => {
     buttons[1].click()
     expect(wrapper.emitted('save')).toHaveLength(1)
     expect(wrapper.emitted('discard')).toHaveLength(1)
-    // Without changes the footer stays empty.
+    // Without changes the actions stay in place but are disabled.
     await wrapper.setProps({ isDirty: false })
-    expect(wrapper.findAll('button')).toHaveLength(0)
+    const idle = wrapper.findAll('button')
+    expect(idle).toHaveLength(2)
+    expect(idle.every((button) => button.attributes('disabled') !== undefined)).toBe(true)
     wrapper.unmount()
   })
 

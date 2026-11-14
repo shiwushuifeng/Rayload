@@ -49,8 +49,15 @@ const _platformLabel = computed(() => PLATFORM_LABELS[_platform.value] ?? _platf
 
 const ARCH_LABELS: Record<string, string> = {
   aarch64: 'ARM64',
+  arm64: 'ARM64',
   x86_64: 'x64',
   x86: 'x86',
+}
+
+/** Human-readable ABI label for a remote device, independent of this host. */
+export function deviceArchLabel(arch: string): string {
+  const key = arch.trim().toLowerCase()
+  return ARCH_LABELS[key] ?? arch
 }
 
 /**

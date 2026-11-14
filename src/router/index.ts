@@ -13,6 +13,16 @@ const router = createRouter({
           redirect: '/task/all',
         },
         {
+          path: '/lan',
+          name: 'lan-devices',
+          component: () => import('@/views/LanDevicesView.vue'),
+        },
+        {
+          path: '/plugins',
+          name: 'plugins',
+          component: () => import('@/views/PluginsView.vue'),
+        },
+        {
           path: '/statistics',
           name: 'statistics',
           component: () => import('@/views/StatisticsView.vue'),
@@ -35,9 +45,30 @@ const router = createRouter({
               component: () => import('@/components/preference/General.vue'),
             },
             {
+              path: 'downloader',
+              name: 'preference-downloader',
+              component: () => import('@/components/preference/Downloader.vue'),
+            },
+            {
+              path: 'categories',
+              name: 'preference-categories',
+              component: () => import('@/components/preference/Categories.vue'),
+            },
+            {
               path: 'downloads',
-              name: 'preference-downloads',
-              component: () => import('@/components/preference/Downloads.vue'),
+              redirect: { name: 'preference-downloader', query: { section: 'downloads' } },
+            },
+            {
+              path: 'bt',
+              redirect: { name: 'preference-downloader', query: { section: 'bt' } },
+            },
+            {
+              path: 'ed2k',
+              redirect: { name: 'preference-downloader', query: { section: 'ed2k' } },
+            },
+            {
+              path: 'network',
+              redirect: { name: 'preference-downloader', query: { section: 'network' } },
             },
             {
               path: 'permissions',
@@ -45,24 +76,14 @@ const router = createRouter({
               component: () => import('@/components/preference/Permissions.vue'),
             },
             {
-              path: 'bt',
-              name: 'preference-bt',
-              component: () => import('@/components/preference/BitTorrent.vue'),
-            },
-            {
-              path: 'ed2k',
-              name: 'preference-ed2k',
-              component: () => import('@/components/preference/Ed2k.vue'),
-            },
-            {
-              path: 'network',
-              name: 'preference-network',
-              component: () => import('@/components/preference/Network.vue'),
-            },
-            {
               path: 'lan',
               name: 'preference-lan',
-              component: () => import('@/components/preference/LanLinks.vue'),
+              component: () => import('@/views/LanDevicesView.vue'),
+            },
+            {
+              path: 'plugins',
+              name: 'preference-plugins',
+              component: () => import('@/views/PluginsView.vue'),
             },
             {
               path: 'advanced',

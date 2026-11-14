@@ -2,6 +2,7 @@ pub mod android_share;
 pub mod aria2;
 pub mod autostart;
 pub mod bt_blocklist;
+pub mod build_info;
 pub mod checksum;
 pub mod config;
 pub mod database;
@@ -12,8 +13,10 @@ pub mod geoip;
 pub mod history;
 pub mod http_api;
 pub mod http_auth;
+pub mod lan;
 pub mod logging;
 pub mod notification;
+pub mod plugins;
 pub mod power;
 pub mod protocol;
 pub mod proxy;
@@ -21,6 +24,10 @@ pub mod remote_file;
 pub mod runtime_config;
 pub mod tracker;
 pub mod ui;
+#[cfg(feature = "fdroid")]
+#[path = "updater_stub.rs"]
+pub mod updater;
+#[cfg(not(feature = "fdroid"))]
 pub mod updater;
 pub mod webview;
 
@@ -28,6 +35,7 @@ pub use android_share::*;
 pub use aria2::*;
 pub use autostart::*;
 pub use bt_blocklist::*;
+pub use build_info::*;
 pub use checksum::*;
 pub use config::*;
 pub use database::*;
@@ -38,8 +46,10 @@ pub use geoip::*;
 pub use history::*;
 pub use http_api::*;
 pub use http_auth::*;
+pub use lan::*;
 pub use logging::*;
 pub use notification::*;
+pub use plugins::*;
 pub use power::*;
 pub use protocol::*;
 pub use proxy::*;

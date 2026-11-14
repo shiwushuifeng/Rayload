@@ -1,0 +1,62 @@
+# F-Droid metadata for Rayload.
+#
+# The F-Droid build sets RAYLOAD_FDROID=1, so the resulting applicationId is
+# com.shiwushuifeng.rayload.fdroid. fdroiddata requires the metadata filename
+# to match that applicationId: rename this file to
+# com.shiwushuifeng.rayload.fdroid.yml if you submit the separate-package build.
+#
+# `commit` uses the release tag so the metadata always points at the tagged
+# v1.0.4 source. Create and push the tag before opening the MR.
+
+Categories:
+  - Internet
+License: GPL-3.0-only
+AuthorName: shiwushuifeng
+WebSite: https://github.com/shiwushuifeng/Rayload
+SourceCode: https://github.com/shiwushuifeng/Rayload
+IssueTracker: https://github.com/shiwushuifeng/Rayload/issues
+Changelog: https://github.com/shiwushuifeng/Rayload/blob/main/docs/CHANGELOG.md
+
+AutoName: Rayload
+
+Description: |-
+  Rayload is a fast, private and customizable download manager for Android.
+  It supports HTTP, HTTPS, FTP, BitTorrent, Magnet, Metalink and ED2K through
+  a single Aria2 Next engine, with no ads, accounts or telemetry.
+
+  Features include a mobile-first task list, share-to-download, background
+  foreground service, speed limits, BitTorrent file selection, a floating
+  speed dashboard, keep-awake mode and a recoverable file trash.
+
+  Rayload 1.0.4 adds mutual LAN pairing with fingerprint verification,
+  cross-device task handoff, all-device statistics and a permission-checked
+  JSON plugin sandbox. A separate headless Linux CLI is available for NAS and
+  server deployments.
+
+  Rayload is an independent, unofficial Android port based on Rayburst by
+  AnInsomniacy and is licensed under GPL-3.0-only.
+
+RepoType: git
+Repo: https://github.com/shiwushuifeng/Rayload.git
+
+Builds:
+  - versionName: 1.0.4
+    versionCode: 10006
+    commit: v1.0.4
+    sudo:
+      - apt-get update
+      - apt-get install -y nodejs npm openjdk-21-jdk-headless
+    prebuild:
+      - npm install -g pnpm@11.5.2
+      - pnpm install --frozen-lockfile
+      - rustup target add aarch64-linux-android
+      - pnpm android:prepare
+    build:
+      - env RAYLOAD_FDROID=1 pnpm tauri android build --apk --target aarch64 --features fdroid
+    ndk: 29.0.14206865
+    output: src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^v[0-9.]+$
+CurrentVersion: 1.0.4
+CurrentVersionCode: 10006

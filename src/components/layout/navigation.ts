@@ -18,11 +18,10 @@ export function useTaskDestinations() {
 
 export const preferenceDestinations = [
   'general',
-  'permissions',
-  'downloads',
-  'bt',
-  'ed2k',
-  'network',
+  'downloader',
+  'categories',
   'lan',
+  'plugins',
+  'permissions',
   'advanced',
 ] as const

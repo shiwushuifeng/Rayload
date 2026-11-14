@@ -10,7 +10,6 @@ import {
   LogoGithub,
   HeartOutline,
   GlobeOutline,
-  QrCodeOutline,
   RocketOutline,
 } from '@vicons/ionicons5'
 import { useBrandLogo } from '@/composables/useBrandLogo'
@@ -23,8 +22,8 @@ import { exportDiagnosticLogs } from '@/composables/useDiagnosticLogExport'
 import { useAppMessage } from '@/composables/useAppMessage'
 import { logger } from '@shared/logger'
 import { writeAppClipboardText } from '@shared/utils'
-import ConfigTransfer from '@/components/preference/ConfigTransfer.vue'
 import { checkGithubUpdate } from '@/api/githubUpdate'
+import { useBuildInfoStore } from '@/stores/build'
 import { getErrorMessage } from '@shared/utils/errorMessage'
 import { friendlyErrorKind } from '@shared/utils/friendlyError'
 import { resolveAppProxyUrl } from '@shared/utils/proxy'
@@ -42,7 +41,6 @@ const appVersion = ref('')
 const archTag = ref('')
 const exportingLogs = ref(false)
 const checkingUpdate = ref(false)
-const showConfigTransfer = ref(false)
 const animate = ref(false)
 
 onMounted(async () => {
@@ -151,6 +149,12 @@ function openUrl(url: string) {
 }
 
 async function checkUpdates() {
+  const buildInfo = useBuildInfoStore()
+  await buildInfo.load()
+  if (buildInfo.info.fdroid) {
+    message.info(t('preferences.fdroid-update-hint'))
+    return
+  }
   if (checkingUpdate.value) return
   checkingUpdate.value = true
   try {
@@ -280,14 +284,7 @@ async function checkUpdates() {
           </template>
           {{ t('preferences.export-diagnostic-logs') }}
         </NButton>
-        <NButton size="small" secondary @click="showConfigTransfer = true">
-          <template #icon>
-            <NIcon :size="16"><QrCodeOutline /></NIcon>
-          </template>
-          {{ t('preferences.config-transfer-title') }}
-        </NButton>
       </div>
-      <ConfigTransfer :show="showConfigTransfer" @close="showConfigTransfer = false" />
 
       <!-- Footer -->
       <div class="about-footer stagger stagger-6">
@@ -301,6 +298,7 @@ async function checkUpdates() {
             <strong>{{ t('about.open-source-acknowledgement-label') }}</strong>
           </template>
         </i18n-t>
+        <p class="about-disclaimer">{{ t('about.disclaimer') }}</p>
       </div>
     </div>
   </NModal>
@@ -522,6 +520,9 @@ async function checkUpdates() {
 .about-footer p {
   margin: 0;
   text-wrap: pretty;
+}
+.about-disclaimer {
+  white-space: pre-line;
 }
 .about-footer strong {
   color: var(--m3-primary);

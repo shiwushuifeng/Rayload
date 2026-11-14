@@ -17,8 +17,10 @@ const METADATA_MAX_SIZE: u64 = 1024 * 1024;
 /// Largest accepted update package.
 const PACKAGE_MAX_SIZE: u64 = 1024 * 1024 * 1024;
 const UPDATER_BASE_URL: &str = "https://github.com/shiwushuifeng/Rayload/releases/download/updater";
-const GITHUB_LATEST_RELEASE_API: &str = "https://api.github.com/repos/shiwushuifeng/Rayload/releases/latest";
-const GITHUB_RELEASES_API: &str = "https://api.github.com/repos/shiwushuifeng/Rayload/releases?per_page=20";
+const GITHUB_LATEST_RELEASE_API: &str =
+    "https://api.github.com/repos/shiwushuifeng/Rayload/releases/latest";
+const GITHUB_RELEASES_API: &str =
+    "https://api.github.com/repos/shiwushuifeng/Rayload/releases?per_page=20";
 const GITHUB_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(12);
 
 /// Serializable update metadata returned to the frontend.
@@ -62,22 +64,24 @@ fn github_release_version(release: &GithubRelease) -> Option<Version> {
     parse_semver(&release.tag_name)
 }
 
-fn select_github_release(
-    releases: Vec<GithubRelease>,
-    stable_only: bool,
-) -> Option<GithubRelease> {
+fn select_github_release(releases: Vec<GithubRelease>, stable_only: bool) -> Option<GithubRelease> {
     releases
         .into_iter()
         .filter(|release| !release.draft && (!stable_only || !release.prerelease))
-        .max_by(|left, right| match (github_release_version(left), github_release_version(right)) {
-            (Some(left_version), Some(right_version)) => left_version.cmp(&right_version),
-            (Some(_), None) => Ordering::Greater,
-            (None, Some(_)) => Ordering::Less,
-            (None, None) => Ordering::Equal,
-        })
+        .max_by(
+            |left, right| match (github_release_version(left), github_release_version(right)) {
+                (Some(left_version), Some(right_version)) => left_version.cmp(&right_version),
+                (Some(_), None) => Ordering::Greater,
+                (None, Some(_)) => Ordering::Less,
+                (None, None) => Ordering::Equal,
+            },
+        )
 }
 
-fn build_github_client(current_version: &str, proxy: Option<String>) -> Result<reqwest::Client, AppError> {
+fn build_github_client(
+    current_version: &str,
+    proxy: Option<String>,
+) -> Result<reqwest::Client, AppError> {
     let mut builder = reqwest::Client::builder()
         .timeout(GITHUB_TIMEOUT)
         .user_agent(format!("Rayload/{current_version}"));
@@ -498,15 +502,16 @@ pub async fn check_github_update(
     }
 
     let releases = if stable_only {
-        vec![response
-            .json::<GithubRelease>()
-            .await
-            .map_err(|error| AppError::Updater(format!("Invalid GitHub release response: {error}")))?]
+        vec![response.json::<GithubRelease>().await.map_err(|error| {
+            AppError::Updater(format!("Invalid GitHub release response: {error}"))
+        })?]
     } else {
         response
             .json::<Vec<GithubRelease>>()
             .await
-            .map_err(|error| AppError::Updater(format!("Invalid GitHub releases response: {error}")))?
+            .map_err(|error| {
+                AppError::Updater(format!("Invalid GitHub releases response: {error}"))
+            })?
     };
     let release = select_github_release(releases, stable_only)
         .ok_or_else(|| AppError::NotFound("No public GitHub release found".into()))?;

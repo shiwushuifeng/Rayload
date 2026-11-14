@@ -32,6 +32,7 @@ const emit = defineEmits<{
   'select-files': [task: Aria2Task]
 }>()
 
+const props = withDefaults(defineProps<{ remoteTasks?: Aria2Task[] }>(), { remoteTasks: () => [] })
 const taskStore = useTaskStore()
 const preferenceStore = usePreferenceStore()
 const reduceMotion = useReducedMotion()
@@ -51,6 +52,7 @@ const taskList = computed(() => {
   }
   return [...ordered, ...tasks.values()]
 })
+const displayTasks = computed(() => [...taskList.value, ...props.remoteTasks])
 const listRef = ref<ListRefTarget>(null)
 const sorting = ref(false)
 const containerTransitioning = ref(false)
@@ -65,12 +67,12 @@ const pageSize = computed(() => taskStore.taskPagination.pageSize)
 /** How many cards are mounted; grows as the sentinel scrolls into view. */
 const renderLimit = ref(pageSize.value)
 const visibleTaskList = computed<Aria2Task[]>({
-  get: () => taskList.value.slice(0, renderLimit.value),
+  get: () => displayTasks.value.slice(0, renderLimit.value),
   set(nextPageList) {
-    dragOrder.value = [...nextPageList, ...taskList.value.slice(nextPageList.length)].map((task) => task.gid)
+    dragOrder.value = [...nextPageList, ...displayTasks.value.slice(nextPageList.length)].map((task) => task.gid)
   },
 })
-const hasMoreTasks = computed(() => renderLimit.value < taskList.value.length)
+const hasMoreTasks = computed(() => renderLimit.value < displayTasks.value.length)
 const sentinelRef = ref<HTMLElement | null>(null)
 let loadObserver: IntersectionObserver | null = null
 
@@ -187,7 +189,7 @@ watch(pageSize, (size, previous) => {
 })
 
 watch(
-  () => taskList.value.length,
+  () => displayTasks.value.length,
   (length) => {
     if (renderLimit.value > length) renderLimit.value = length
     void nextTick(observeSentinel)
@@ -206,7 +208,7 @@ watch(
 const sortableOptions: SortableOptions = {
   animation: reduceMotion.value ? 0 : 240,
   draggable: '.task-list-item',
-  filter: '.task-item-actions, button, a, input, textarea, select, [data-no-drag]',
+  filter: '.task-item-actions, button, a, input, textarea, select, [data-no-drag], .task-list-item--remote',
   handle: isAndroid.value ? '[data-task-drag-handle]' : undefined,
   delay: isAndroid.value ? 260 : 450,
   delayOnTouchOnly: true,
@@ -297,10 +299,12 @@ function handlePageSwapAfterEnter() {
 // Long press starts selection. While selecting, a tap toggles the card.
 // Ctrl/Cmd-click picks one task and Shift-click a range on desktop.
 function handleLongPress(task: Aria2Task) {
+  if (task.remote) return
   if (!taskStore.checkedGids.includes(task.gid)) taskStore.setChecked(task.gid, true)
 }
 
 function handleItemClick(event: MouseEvent, task: Aria2Task) {
+  if (task.remote) return
   if (taskStore.selectionMode) {
     event.preventDefault()
     event.stopPropagation()
@@ -369,7 +373,10 @@ function handleCardBeforeLeave(element: Element) {
           v-for="item in visibleTaskList"
           :key="item.gid"
           class="task-list-item"
-          :class="{ 'task-list-item--checked': taskStore.checkedGids.includes(item.gid) }"
+          :class="{
+            'task-list-item--checked': taskStore.checkedGids.includes(item.gid),
+            'task-list-item--remote': item.remote,
+          }"
         >
           <TaskSwipeRow
             :task="item"
@@ -381,7 +388,7 @@ function handleCardBeforeLeave(element: Element) {
             @swipe-delete="emit('delete', item)"
           >
             <component
-              :is="taskCardComponent"
+              :is="item.remote ? TaskItem : taskCardComponent"
               :task="item"
               :action-pending="taskStore.resubmittingGids.includes(item.gid)"
               @pause="emit('pause', item)"

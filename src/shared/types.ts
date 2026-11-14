@@ -257,6 +257,14 @@ export interface Aria2Media {
 }
 
 export interface Aria2Task {
+  /** Present when the task runs on a paired LAN device instead of this one. */
+  remote?: {
+    deviceId: string
+    deviceName: string
+    gid: string
+    online: boolean
+    error?: string
+  }
   selectionManaged?: boolean
   selectionPrompt?: boolean
   gid: string
@@ -592,6 +600,12 @@ export interface AppConfig {
   allowRemoteAccess: boolean
   /** Automatically switches locally bound ports when another process or OS reservation blocks them. */
   listenPort: number
+  /** LAN host admin account. Written by the Rust LAN service, never edited in the UI. */
+  lanApiUsername: string
+  /** LAN host admin password. Written by the Rust LAN service, never edited in the UI. */
+  lanApiPassword: string
+  /** Device name advertised on the LAN. Written by the Rust LAN service. */
+  lanDeviceName: string
   btExternalIp: string
   btExternalPort: number
   ed2kListenPort: number

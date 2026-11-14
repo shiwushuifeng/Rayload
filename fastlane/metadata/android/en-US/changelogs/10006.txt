@@ -1,0 +1,3 @@
+v1.0.4: mutual LAN pairing with fingerprint verification, remote tasks and
+all-device statistics; a permission-checked JSON plugin sandbox; a rebuilt ray
+CLI with YAML, daemon mode and systemd; Lite, Full, F-Droid and x86_64 builds.

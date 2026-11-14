@@ -318,6 +318,21 @@ export function useAdvancedActions(deps: AdvancedActionsDeps) {
 
   async function handleExportSettings() {
     try {
+      const appVersion = await getVersion()
+      const backup = buildSettingsBackup(preferenceStore.config, appVersion)
+      const content = `${JSON.stringify(backup, null, 2)}\n`
+      if (getRayloadNativeBridge()) {
+        exportingSettings.value = true
+        const stamp = new Date().toISOString().replace(/[:.]/g, '-')
+        const path = await join(await appCacheDir(), `rayload-settings-${stamp}.json`)
+        await invoke('write_settings_backup_file', { path, content })
+        if (!shareAndroidFile(path)) {
+          message.error(t('preferences.export-settings-failed'))
+          return
+        }
+        message.success(t('preferences.export-settings-shared'))
+        return
+      }
       const resolvedDir = await resolveUserVisibleDownloadDir({ configuredDir: preferenceStore.config.dir })
       const date = new Date().toISOString().slice(0, 10)
       const defaultPath = await join(resolvedDir.path, `rayload-settings-backup-${date}.json`)
@@ -329,9 +344,7 @@ export function useAdvancedActions(deps: AdvancedActionsDeps) {
       if (!savePath) return
 
       exportingSettings.value = true
-      const appVersion = await getVersion()
-      const backup = buildSettingsBackup(preferenceStore.config, appVersion)
-      await invoke('write_settings_backup_file', { path: savePath, content: `${JSON.stringify(backup, null, 2)}\n` })
+      await invoke('write_settings_backup_file', { path: savePath, content })
       message.success(t('preferences.export-settings-success', { path: savePath }))
     } catch (e) {
       logger.error('Advanced.exportSettings', e)
@@ -351,7 +364,10 @@ export function useAdvancedActions(deps: AdvancedActionsDeps) {
 
     let imported: AppConfig
     try {
-      imported = parseSettingsBackup(await invoke<string>('read_settings_backup_file', { path: selected }))
+      const content = selected.startsWith('content://')
+        ? await import('@tauri-apps/plugin-fs').then(({ readTextFile }) => readTextFile(selected))
+        : await invoke<string>('read_settings_backup_file', { path: selected })
+      imported = parseSettingsBackup(content)
     } catch (e) {
       logger.warn('Advanced.importSettings', e)
       message.error(t('preferences.import-settings-invalid'))

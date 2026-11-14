@@ -6,6 +6,8 @@ labels: ["bug"]
 assignees: ""
 ---
 
+请勿在此提交任何关于如何破解特定网盘 VIP 限速或下载盗版资源的提问，此类 Issue 将被直接关闭。
+
 ## Before you start
 
 - Search existing issues to avoid duplicates.

@@ -409,6 +409,11 @@ export const DEFAULT_APP_CONFIG = {
   // ── Task Sorting ─────────────────────────────────────────────
   taskSort: DEFAULT_TASK_SORT,
   taskManualOrder: DEFAULT_TASK_MANUAL_ORDER,
+
+  // ── LAN devices (owned by the Rust LAN service) ────────────────
+  lanApiUsername: '',
+  lanApiPassword: '',
+  lanDeviceName: '',
 }
 
 export const FILE_ALLOCATION_OPTIONS = ['none', 'trunc', 'prealloc', 'falloc'] as const

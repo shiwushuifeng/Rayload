@@ -45,6 +45,17 @@ vi.mock('@/stores/preference', () => ({
   usePreferenceStore: () => preferenceStore,
 }))
 
+vi.mock('@/stores/lan', () => ({
+  remoteTaskToAria2: (task: unknown) => task,
+  useLanStore: () => ({
+    remoteTasks: [],
+    devices: [],
+    startTaskPolling: vi.fn(),
+    stopTaskPolling: vi.fn(),
+    remoteAction: vi.fn(),
+  }),
+}))
+
 vi.mock('@/composables/useTaskActions', () => ({
   useTaskActions: () => ({
     handlePauseTask: vi.fn(),

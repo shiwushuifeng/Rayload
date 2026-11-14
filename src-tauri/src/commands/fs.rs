@@ -1117,12 +1117,15 @@ mod tests {
         let trashed = trash.join("1700000000000-report.pdf");
         std::fs::write(&trashed, "recover me").expect("write trashed file");
 
-        let items = list_trash_items(vec![root.path().to_string_lossy().into_owned()])
-            .expect("list trash");
+        let items =
+            list_trash_items(vec![root.path().to_string_lossy().into_owned()]).expect("list trash");
         assert_eq!(items.len(), 1);
         assert_eq!(items[0].name, "report.pdf");
         assert_eq!(items[0].trashed_at, Some(1_700_000_000_000));
-        assert_eq!(items[0].original_path, root.path().join("report.pdf").to_string_lossy());
+        assert_eq!(
+            items[0].original_path,
+            root.path().join("report.pdf").to_string_lossy()
+        );
         assert_eq!(items[0].size, 10);
 
         let restored = restore_trash_item(items[0].path.clone()).expect("restore trash item");
@@ -1140,10 +1143,12 @@ mod tests {
         let trashed = trash.join("1700000000000-2-archive.zip");
         std::fs::write(&trashed, "restored").expect("write trashed file");
 
-        let restored = restore_trash_item(trashed.to_string_lossy().into_owned())
-            .expect("restore trash item");
+        let restored =
+            restore_trash_item(trashed.to_string_lossy().into_owned()).expect("restore trash item");
         assert_eq!(
-            Path::new(&restored).file_name().and_then(|name| name.to_str()),
+            Path::new(&restored)
+                .file_name()
+                .and_then(|name| name.to_str()),
             Some("archive (restored).zip")
         );
         assert_eq!(

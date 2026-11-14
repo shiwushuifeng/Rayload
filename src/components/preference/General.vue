@@ -3,7 +3,7 @@
  * @fileoverview General preference tab: system info, language, how downloads arrive (browser
  * extension, clipboard), notifications, update, appearance, startup & tray, default programs.
  */
-import { ref, computed, watch, onMounted, h } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { usePreferenceStore } from '@/stores/preference'
 import { useAppStore } from '@/stores/app'
@@ -40,7 +40,7 @@ import {
   NRadioButton,
   NColorPicker,
   NIcon,
-  useDialog,
+  NModal,
 } from 'naive-ui'
 import PreferenceActionRegistration from './PreferenceActionRegistration.vue'
 import MTooltip from '@/components/common/MTooltip.vue'
@@ -56,7 +56,6 @@ import { UI_SCALE_STEPS } from '@/composables/useInterfaceScale'
 const { t, locale } = useI18n()
 const preferenceStore = usePreferenceStore()
 const appStore = useAppStore()
-const dialog = useDialog()
 const message = useAppMessage()
 const { isMac, isLinux, isAndroid, platformLabel, archLabel: getArchLabel } = usePlatform()
 
@@ -97,6 +96,15 @@ function buildForm() {
 
 const offerFloatWindowRelaunch = useFloatWindowRelaunch()
 
+const languagePrompt = ref<{ title: string; content: string; restart: string; later: string } | null>(null)
+
+async function dismissLanguagePrompt(restart: boolean): Promise<void> {
+  languagePrompt.value = null
+  if (!restart) return
+  await engineStore.stop('appRelaunch')
+  relaunch()
+}
+
 const { form, isDirty, handleSave, handleReset, patchSnapshot, resetSnapshot, commitInstant } = usePreferenceForm({
   buildForm,
   transformForStore: transformGeneralForStore,
@@ -113,33 +121,12 @@ const { form, isDirty, handleSave, handleReset, patchSnapshot, resetSnapshot, co
       // dialog can render in it (falls back to English if loading fails).
       if (!isEn) await loadLocale(targetLocale)
       const tt = (key: string) => t(key, {}, { locale: targetLocale })
-      dialog.info({
-        style: 'min-width: 520px',
-        title: isEn
-          ? tt('preferences.language-changed-title')
-          : () =>
-              h('div', { style: 'padding-left: 12px' }, [
-                h('div', tt('preferences.language-changed-title')),
-                h('div', 'Language Changed'),
-              ]),
-        content: isEn
-          ? tt('preferences.language-changed-content')
-          : () =>
-              h('div', { style: 'padding: 10px 0' }, [
-                h('p', { style: 'margin: 0' }, tt('preferences.language-changed-content')),
-                h('p', { style: 'margin: 0' }, 'Please restart the application to apply the new language.'),
-              ]),
-        positiveText: isEn
-          ? tt('preferences.language-changed-restart')
-          : `${tt('preferences.language-changed-restart')} · Restart Now`,
-        negativeText: isEn
-          ? tt('preferences.language-changed-later')
-          : `${tt('preferences.language-changed-later')} · Later`,
-        onPositiveClick: async () => {
-          await engineStore.stop('appRelaunch')
-          relaunch()
-        },
-      })
+      languagePrompt.value = {
+        title: tt('preferences.language-changed-title'),
+        content: tt('preferences.language-changed-content'),
+        restart: tt('preferences.language-changed-restart'),
+        later: tt('preferences.language-changed-later'),
+      }
     }
 
     // Sync autostart state immediately on save
@@ -654,10 +641,47 @@ onMounted(async () => {
       </NForm>
     </div>
     <PreferenceActionRegistration :is-dirty="isDirty" @save="handleSave" @discard="handleReset" />
+    <NModal :show="languagePrompt !== null" :mask-closable="false" :closable="false" :z-index="1500">
+      <section v-if="languagePrompt" class="language-dialog" role="alertdialog" aria-modal="true">
+        <h2>{{ languagePrompt.title }}</h2>
+        <p>{{ languagePrompt.content }}</p>
+        <div class="language-dialog__actions">
+          <NButton @click="dismissLanguagePrompt(false)">{{ languagePrompt.later }}</NButton>
+          <NButton type="primary" @click="dismissLanguagePrompt(true)">{{ languagePrompt.restart }}</NButton>
+        </div>
+      </section>
+    </NModal>
   </div>
 </template>
 
 <style scoped>
+.language-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(360px, calc(100vw - 32px));
+  padding: 20px;
+  color: var(--m3-on-surface);
+  background: var(--m3-surface-container-high);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 18px 60px var(--m3-shadow);
+}
+.language-dialog h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+.language-dialog p {
+  margin: 0;
+  color: var(--m3-on-surface-variant);
+  line-height: 1.5;
+}
+.language-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
 .pref-control-language {
   min-width: 260px;
 }

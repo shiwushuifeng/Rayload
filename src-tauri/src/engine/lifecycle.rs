@@ -1,7 +1,7 @@
-use tauri::async_runtime::Receiver;
+use std::sync::mpsc::Receiver;
+
+use aria2_service::{EngineEvent, SpawnedEngine};
 use tauri::Manager;
-use tauri_plugin_shell::process::{CommandChild, CommandEvent};
-use tauri_plugin_shell::ShellExt;
 
 use super::config::{generate_runtime_config, runtime_config_args, ManagedEngineConfig};
 use super::state::{path_to_safe_string, strip_ansi, EngineState};
@@ -202,23 +202,33 @@ fn prepare_engine_args(
     Ok(runtime_config_args(&runtime_config))
 }
 
-fn spawn_engine(
-    app: &tauri::AppHandle,
-    args: &[String],
-) -> Result<(Receiver<CommandEvent>, CommandChild), String> {
-    log::info!(target: "engine", event = "engine_spawn_started", argument_count = args.len(); "engine_spawn_started");
+fn spawn_engine(args: &[String]) -> Result<SpawnedEngine, String> {
     #[cfg(target_os = "android")]
-    let command = app.shell().command(android_engine_path()?);
+    let binary = android_engine_path()?;
     #[cfg(not(target_os = "android"))]
-    let command = app
-        .shell()
-        .sidecar(ENGINE_SIDECAR_NAME)
-        .map_err(|error| format!("Failed to create sidecar: {error}"))?;
-    command
-        .envs(sanitized_engine_proxy_env())
-        .args(args)
-        .spawn()
+    let binary = engine_binary_path()?;
+    log::info!(target: "engine", event = "engine_spawn_started", argument_count = args.len(); "engine_spawn_started");
+    aria2_service::spawn_engine(&binary, args, &sanitized_engine_proxy_env())
         .map_err(|error| format!("Failed to spawn Aria2 Next: {error}"))
+}
+
+/// Resolves the bundled sidecar the same way Tauri's shell plugin does:
+/// next to the application executable.
+#[cfg(not(target_os = "android"))]
+fn engine_binary_path() -> Result<std::path::PathBuf, String> {
+    let executable = std::env::current_exe()
+        .map_err(|error| format!("Failed to resolve current executable: {error}"))?;
+    let directory = executable
+        .parent()
+        .ok_or_else(|| "Current executable has no parent directory".to_string())?;
+    let path = directory.join(ENGINE_SIDECAR_NAME);
+    #[cfg(windows)]
+    let path = {
+        let mut path = path;
+        path.as_mut_os_string().push(".exe");
+        path
+    };
+    Ok(path)
 }
 
 #[cfg(target_os = "android")]
@@ -292,14 +302,16 @@ fn android_engine_path() -> Result<std::path::PathBuf, String> {
 
 fn monitor_engine(
     app: tauri::AppHandle,
-    mut receiver: Receiver<CommandEvent>,
+    receiver: Receiver<EngineEvent>,
     process_id: u32,
     generation: u32,
 ) {
-    tauri::async_runtime::spawn(async move {
-        while let Some(event) = receiver.recv().await {
+    std::thread::Builder::new()
+        .name("engine-monitor".into())
+        .spawn(move || {
+        for event in receiver {
             match event {
-                CommandEvent::Stdout(line) => {
+                EngineEvent::Stdout(line) => {
                     // Echoed to the terminal in debug builds only.
                     #[cfg_attr(not(debug_assertions), allow(unused_variables))]
                     let text = strip_ansi(&String::from_utf8_lossy(&line));
@@ -311,7 +323,7 @@ fn monitor_engine(
                         );
                     }
                 }
-                CommandEvent::Stderr(line) => {
+                EngineEvent::Stderr(line) => {
                     let text = String::from_utf8_lossy(&line);
                     let trimmed = text.trim();
                     if !trimmed.is_empty() {
@@ -321,8 +333,8 @@ fn monitor_engine(
                         }
                     }
                 }
-                CommandEvent::Terminated(payload) => {
-                    let exit_code = payload.code.unwrap_or(-1);
+                EngineEvent::Exited { code, signal } => {
+                    let exit_code = code.unwrap_or(-1);
                     if let Some(state) = app.try_state::<EngineState>() {
                         state.mark_exited(process_id);
                     }
@@ -357,7 +369,7 @@ fn monitor_engine(
                             pid = process_id,
                             generation,
                             exit_code,
-                            signal:? = payload.signal;
+                            signal:? = signal;
                             "engine_exited_during_startup"
                         );
                     } else if expected {
@@ -369,7 +381,7 @@ fn monitor_engine(
                             exit_code,
                             exit_code_unsigned = exit_code as u32,
                             reason = if shutdown_exit { "windows-session-end" } else { "expected" },
-                            signal:? = payload.signal;
+                            signal:? = signal;
                             "engine_stopped"
                         );
                     } else {
@@ -379,7 +391,7 @@ fn monitor_engine(
                             pid = process_id,
                             generation,
                             exit_code,
-                            signal:? = payload.signal;
+                            signal:? = signal;
                             "engine_crashed"
                         );
                     }
@@ -389,15 +401,15 @@ fn monitor_engine(
                             app.clone(),
                             generation,
                             exit_code,
-                            payload.signal,
+                            signal,
                         );
                     }
                     break;
                 }
-                _ => {}
             }
         }
-    });
+        })
+        .ok();
 }
 
 /// Spawns Aria2 Next from the current persisted system configuration.
@@ -446,15 +458,16 @@ pub fn start_engine(app: &tauri::AppHandle) -> Result<StartEngineOutcome, crate:
     if !process_spawn_allowed(app) {
         return Ok(StartEngineOutcome::Cancelled);
     }
-    let (receiver, child) = spawn_engine(app, &args).map_err(AppError::Engine)?;
+    let spawned = spawn_engine(&args).map_err(AppError::Engine)?;
+    let spawned_pid = spawned.pid();
 
-    log::info!(target: "engine", event = "engine_started", pid = child.pid(); "engine_started");
+    log::info!(target: "engine", event = "engine_started", pid = spawned_pid; "engine_started");
 
-    let spawned_pid = child.pid();
-    state.attach(child, rpc_port);
+    let (process, events) = spawned.into_parts();
+    state.attach(process, rpc_port);
     state.clear_stderr();
     let my_gen = state.next_generation();
-    monitor_engine(app.clone(), receiver, spawned_pid, my_gen);
+    monitor_engine(app.clone(), events, spawned_pid, my_gen);
 
     Ok(StartEngineOutcome::Started)
 }

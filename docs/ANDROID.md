@@ -5,7 +5,7 @@ API level 37 (Android 17) and supports API level 24 (Android 7) and later.
 
 ## Install
 
-1. Install `release/current/Rayload-v1.0.2-android17-arm64-release.apk`.
+1. Install `release/current/Rayload-v1.0.4-full-arm64.apk`.
 2. On first launch, allow **All files access** so Rayload can write to the
    public `Download/Rayload` directory.
 3. Allow notifications and battery optimization exemption when prompted.
@@ -34,6 +34,12 @@ pnpm install
 pnpm android:prepare
 pnpm tauri android build --apk --target aarch64
 pnpm tauri android build --apk --target aarch64 --debug
+```
+
+The x86_64 release build always uses the full feature set:
+
+```bash
+./scripts/android/build-x86_64.sh
 ```
 
 `scripts/configure-android.mjs` re-applies the API 37 manifest, deep links,

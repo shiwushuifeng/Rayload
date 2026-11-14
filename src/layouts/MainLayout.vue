@@ -51,6 +51,10 @@ import UpdateDialog from '@/components/preference/UpdateDialog.vue'
 import TaskSelectionHost from '@/components/task/TaskSelectionHost.vue'
 import AddTask from '@/components/task/AddTask.vue'
 import AndroidPermissionWelcome from '@/components/onboarding/AndroidPermissionWelcome.vue'
+import WhatsNewDialog from '@/components/whatsNew/WhatsNewDialog.vue'
+import PairRequestDialog from '@/components/lan/PairRequestDialog.vue'
+import { getVersion } from '@tauri-apps/api/app'
+import { markWhatsNewSeen, readWhatsNewSeen } from '@shared/whatsNew'
 import { useTaskStore } from '@/stores/task'
 import { usePreferenceStore } from '@/stores/preference'
 import { useAppMessage } from '@/composables/useAppMessage'
@@ -90,6 +94,11 @@ declare global {
 }
 
 function handleAndroidBack(): boolean {
+  if (whatsNewVisible.value) {
+    whatsNewVisible.value = false
+    markWhatsNewSeen(whatsNewVersion.value)
+    return true
+  }
   if (appStore.keepAwakeVisible) {
     appStore.hideKeepAwake()
     return true
@@ -914,6 +923,31 @@ onMounted(async () => {
   }
 })
 
+const whatsNewVisible = ref(false)
+const whatsNewVersion = ref('')
+
+onMounted(async () => {
+  try {
+    const version = await getVersion()
+    if (!version || readWhatsNewSeen() === version) return
+    if (isAndroid.value) {
+      let onboardingComplete = false
+      try {
+        onboardingComplete = window.localStorage.getItem('rayload-onboarding-v3') === 'complete'
+      } catch {
+        // Hardened WebViews can reject storage; skip the update dialog.
+      }
+      if (!onboardingComplete) return
+    }
+    whatsNewVersion.value = version
+    window.setTimeout(() => {
+      whatsNewVisible.value = true
+    }, 900)
+  } catch (error) {
+    logger.debug('MainLayout.whatsNew', error)
+  }
+})
+
 onUnmounted(() => {
   document.documentElement.classList.remove('rayload-main-window')
   document.documentElement.style.removeProperty('--app-header-bottom')
@@ -1020,6 +1054,8 @@ onUnmounted(() => {
     <KeepAwakeOverlay />
     <AboutPanel :show="showAbout" @close="showAbout = false" />
     <AndroidPermissionWelcome />
+    <PairRequestDialog />
+    <WhatsNewDialog v-model:show="whatsNewVisible" :version="whatsNewVersion" />
     <ExtensionPanel :show="showExtensions" @close="closeExtensionPanel" />
     <TrashPanel :show="showTrash" @close="showTrash = false" />
     <UpdateDialog ref="updateDialogRef" />

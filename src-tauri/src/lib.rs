@@ -2,22 +2,33 @@ rust_i18n::i18n!("locales", fallback = "en-US");
 
 pub(crate) const APP_ID: &str = env!("DESKTOP_APP_ID");
 
+pub mod api_auth;
+pub mod api_server;
 mod appimage;
 mod aria2;
+#[cfg(feature = "cli")]
+pub mod cli;
 mod commands;
 mod database;
 mod diagnostics;
 mod engine;
 mod error;
+pub mod headless;
 mod i18n;
+pub mod lan_client;
+pub mod lan_discovery;
 mod log_policy;
 #[cfg(target_os = "macos")]
 mod menu;
 #[cfg(desktop)]
 mod native_messaging;
 mod navigation;
+#[cfg(feature = "plugin_engine")]
+pub mod plugin_host;
+pub mod plugin_policy;
 mod proxy_bypass;
 mod resources;
+pub mod security;
 mod services;
 #[cfg(desktop)]
 mod tray;
@@ -33,6 +44,7 @@ pub use engine::windows_process::prepare_install;
 mod association_cleanup;
 
 use crate::commands::power::ShutdownCancelState;
+#[cfg(not(feature = "fdroid"))]
 use crate::commands::updater::{DownloadedUpdate, UpdateCancelState};
 use engine::EngineState;
 use engine::DEFAULT_RPC_PORT;
@@ -310,6 +322,23 @@ fn setup_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let aria2_state = services::tasks::TaskServiceState(std::sync::Arc::new(
         services::tasks::TaskService::new(DEFAULT_RPC_PORT, String::new()),
     ));
+    // Database failures must not prevent the window from opening.
+    let database = std::sync::Arc::new(database::Database::unavailable());
+    app.manage(database::DatabaseState(std::sync::Arc::clone(&database)));
+    #[cfg(feature = "plugin_engine")]
+    {
+        let lan_auth = services::lan_api::init_auth(handle);
+        app.manage(services::lan_api::LanAuthState(std::sync::Arc::clone(
+            &lan_auth,
+        )));
+        services::lan_api::spawn(
+            handle,
+            std::sync::Arc::clone(&aria2_state.0),
+            lan_auth,
+            database,
+        );
+        lan_discovery::spawn(lan_client::API_PORT);
+    }
     app.manage(aria2_state);
 
     // Runtime config cache — refreshed by frontend after each config save.
@@ -336,10 +365,6 @@ fn setup_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     // visibility decisions.  See AppLifecycleState doc and issue #206.
     app.manage(AppLifecycleState::new());
 
-    // Database failures must not prevent the window from opening.
-    app.manage(database::DatabaseState(std::sync::Arc::new(
-        database::Database::unavailable(),
-    )));
     #[cfg(desktop)]
     services::clipboard_watch::spawn(app.handle().clone());
     let database_app = app.handle().clone();
@@ -707,8 +732,20 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_clipboard_manager::init())
-        .plugin(tauri_plugin_updater::Builder::new().build());
+        .plugin(tauri_plugin_clipboard_manager::init());
+
+    #[cfg(target_os = "android")]
+    {
+        builder = builder.on_permission_request(|_, kind| match kind {
+            tauri::webview::PermissionKind::Camera => tauri::webview::PermissionResponse::Allow,
+            _ => tauri::webview::PermissionResponse::Default,
+        });
+    }
+
+    #[cfg(not(feature = "fdroid"))]
+    {
+        builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
+    }
 
     #[cfg(desktop)]
     {
@@ -759,12 +796,17 @@ pub fn run() {
         );
     }
 
+    #[cfg(not(feature = "fdroid"))]
+    {
+        builder = builder
+            .manage(std::sync::Arc::new(UpdateCancelState::new()))
+            .manage(std::sync::Arc::new(DownloadedUpdate::new()));
+    }
+
     builder
         .manage(EngineState::new())
         .manage(services::media::MediaState::new())
         .manage(engine::supervisor::EngineSupervisor::new())
-        .manage(std::sync::Arc::new(UpdateCancelState::new()))
-        .manage(std::sync::Arc::new(DownloadedUpdate::new()))
         .manage(std::sync::Arc::new(ShutdownCancelState::new()))
         .invoke_handler(tauri::generate_handler![
             commands::replace_system_config,
@@ -792,6 +834,36 @@ pub fn run() {
             commands::download_update,
             commands::apply_update,
             commands::cancel_update,
+            commands::build_info,
+            commands::lan_pair,
+            commands::lan_pair_discovered,
+            commands::lan_pair_requests,
+            commands::lan_pair_approve,
+            commands::lan_pair_reject,
+            commands::lan_confirm_device,
+            commands::lan_forget_device,
+            commands::lan_devices,
+            commands::lan_device_statuses,
+            commands::lan_device_history_stats,
+            commands::lan_handoff,
+            commands::lan_remote_tasks,
+            commands::lan_remote_action,
+            commands::lan_credentials,
+            commands::lan_set_credentials,
+            commands::lan_set_device_name,
+            commands::lan_rename_device,
+            commands::lan_set_device_note,
+            commands::lan_pairing_info,
+            commands::lan_scan,
+            commands::lan_discovered,
+            commands::plugin_list,
+            commands::plugin_save,
+            commands::plugin_save_script,
+            commands::plugin_remove,
+            commands::plugin_sample_manifest,
+            commands::plugin_test,
+            commands::plugin_resolve,
+            commands::plugin_read_clipboard,
             commands::get_ed2k_bootstrap_status,
             commands::sync_ed2k_bootstrap_files,
             commands::get_bt_peer_blocklist_status,

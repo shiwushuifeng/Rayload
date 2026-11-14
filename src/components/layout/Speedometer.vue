@@ -49,6 +49,8 @@ import { useAppMessage } from '@/composables/useAppMessage'
 import { useEngineRestart } from '@/composables/useEngineRestart'
 import { useEngineStore } from '@/stores/engine'
 import { useTaskStore } from '@/stores/task'
+import { useLanStore } from '@/stores/lan'
+import { useBuildInfoStore } from '@/stores/build'
 import { logger } from '@shared/logger'
 
 interface NetworkInformationLike {
@@ -64,11 +66,14 @@ const preferenceStore = usePreferenceStore()
 const message = useAppMessage()
 const engineStore = useEngineStore()
 const taskStore = useTaskStore()
+const lan = useLanStore()
+const buildInfo = useBuildInfoStore()
 const { confirmManualRestart } = useEngineRestart()
 const online = useOnline()
 
 const stat = computed(() => appStore.stat)
 const isIdle = computed(() => stat.value.numActive === 0)
+const onlinePeers = computed(() => lan.statuses.filter((peer) => peer.online))
 const isLimited = computed(() => !!preferenceStore.config.speedLimitEnabled)
 const isScheduleActive = computed(() => !!preferenceStore.config.speedScheduleEnabled)
 const shutdownWhenComplete = computed(() => !!preferenceStore.config.shutdownWhenComplete)
@@ -463,6 +468,9 @@ function handleDocumentPointerDown(event: PointerEvent) {
 
 watch(showPopover, (open) => {
   if (open) {
+    if (buildInfo.info.lan) {
+      void lan.refreshStatuses()
+    }
     document.addEventListener('pointerdown', handleDocumentPointerDown, true)
   } else {
     limitExpanded.value = false
@@ -754,6 +762,22 @@ function handleRestartEngine() {
                   {{ connectionQuality.label }}
                 </span>
               </div>
+            </div>
+
+            <div v-if="buildInfo.info.lan" class="lan-peers">
+              <div class="lan-peers__head">
+                <span class="status-label">{{ t('app.speedometer-lan-devices') }}</span>
+                <span>{{ onlinePeers.length }}</span>
+              </div>
+              <div v-if="onlinePeers.length" class="lan-peers__list">
+                <div v-for="peer in onlinePeers" :key="peer.id" class="lan-peers__row">
+                  <span class="lan-peer-dot" aria-hidden="true" />
+                  <strong>{{ peer.name }}</strong>
+                  <span>{{ formatSpeed(peer.downloadSpeed) }}/s</span>
+                  <span>{{ t('app.speedometer-lan-tasks', { count: peer.activeTasks }) }}</span>
+                </div>
+              </div>
+              <span v-else class="lan-peers__empty">{{ t('app.speedometer-lan-none') }}</span>
             </div>
 
             <div class="quick-actions">
@@ -1533,6 +1557,64 @@ function handleRestartEngine() {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.lan-peers {
+  display: grid;
+  gap: 4px;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--m3-surface-container);
+}
+
+.lan-peers__head,
+.lan-peers__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lan-peers__head {
+  justify-content: space-between;
+  color: var(--m3-on-surface-variant);
+  font-size: var(--font-size-2xs);
+}
+
+.lan-peers__list {
+  display: grid;
+  gap: 4px;
+}
+
+.lan-peers__row {
+  min-width: 0;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.lan-peers__row strong,
+.lan-peers__row span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lan-peers__row span:not(:first-child) {
+  margin-left: auto;
+  color: var(--m3-on-surface-variant);
+}
+
+.lan-peer-dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  background: color-mix(in srgb, var(--m3-primary) 62%, var(--m3-outline));
+  border-radius: 50%;
+}
+
+.lan-peers__empty {
+  color: var(--m3-on-surface-variant);
+  font-size: 11px;
 }
 
 .status-value {

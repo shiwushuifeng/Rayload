@@ -1,0 +1,1 @@
+Fast, private Android downloader for HTTP, BT, Magnet and ED2K.

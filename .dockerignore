@@ -1,0 +1,7 @@
+node_modules
+release
+src-tauri/target
+src-tauri/gen
+.toolchains
+.tools
+.git

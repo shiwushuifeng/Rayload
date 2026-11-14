@@ -83,3 +83,6 @@ upload/
 # Local Android signing material
 signing/*.jks
 signing/keystore.properties
+
+# Local DingTalk webhook helper (points outside the repo; never commit)
+notify_dingtalk.sh

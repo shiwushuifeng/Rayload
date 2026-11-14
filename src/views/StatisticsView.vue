@@ -1,14 +1,13 @@
 <script setup lang="ts">
 /** @fileoverview Data dashboard with live session totals and local history aggregation. */
-import { computed, onActivated, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onActivated, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { RouterLink } from 'vue-router'
-import { NCard, NIcon, NSpin, NTag } from 'naive-ui'
+import { NCard, NIcon, NSpin, NTab, NTabs, NTag } from 'naive-ui'
 import {
   ArchiveOutline,
   BarChartOutline,
   ChevronDownOutline,
-  CloudOutline,
   CloudDownloadOutline,
   CubeOutline,
   DocumentTextOutline,
@@ -21,9 +20,14 @@ import {
   WifiOutline,
 } from '@vicons/ionicons5'
 import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
+import HistoryCategoryCard from '@/components/statistics/HistoryCategoryCard.vue'
+import HistoryTrendCard from '@/components/statistics/HistoryTrendCard.vue'
+import StatSparkline from '@/components/statistics/StatSparkline.vue'
 import { useTaskStore } from '@/stores/task'
 import { useHistoryStore } from '@/stores/history'
 import { usePreferenceStore } from '@/stores/preference'
+import { useLanStore } from '@/stores/lan'
+import { deviceArchLabel } from '@/composables/usePlatform'
 import { getGlobalStat } from '@/api/aria2'
 import { bytesToSize } from '@shared/utils/format'
 import { buildDefaultCategories, BUILTIN_CATEGORY_TEMPLATES } from '@shared/constants'
@@ -36,6 +40,7 @@ const { t } = useI18n()
 const taskStore = useTaskStore()
 const historyStore = useHistoryStore()
 const preferenceStore = usePreferenceStore()
+const lan = useLanStore()
 const speedTrend = useSpeedTrend()
 
 const historyBytes = ref(0)
@@ -44,6 +49,9 @@ const records = ref<HistoryRecord[]>([])
 const globalStat = ref<Aria2GlobalStat | null>(null)
 const loading = ref(true)
 const showShortcuts = ref(false)
+const activeTab = ref<'local' | 'all'>('local')
+
+const allSpeedSamples = ref<number[]>([])
 
 const sessionBytes = computed(() =>
   taskStore.taskList.reduce((total, task) => total + Math.max(0, Number(task.completedLength) || 0), 0),
@@ -52,6 +60,44 @@ const cumulativeBytes = computed(() => historyBytes.value + sessionBytes.value)
 const liveSpeed = computed(() => globalStat.value?.downloadSpeed ?? 0)
 const sessionActive = computed(() => globalStat.value?.numActive ?? 0)
 const sessionWaiting = computed(() => globalStat.value?.numWaiting ?? 0)
+
+const remoteHistory = computed(() => new Map(lan.historyStats.map((item) => [item.id, item])))
+
+const allDevices = computed(() => [
+  {
+    id: 'local',
+    name: t('statistics.this-device'),
+    online: true,
+    downloadSpeed: liveSpeed.value,
+    activeTasks: sessionActive.value,
+    arch: '',
+    address: '',
+    historyBytes: historyBytes.value,
+    historyTasks: historyTasks.value,
+  },
+  ...lan.statuses.map((status) => {
+    const device = lan.devices.find((item) => item.id === status.id)
+    const history = remoteHistory.value.get(status.id)
+    return {
+      ...status,
+      arch: device?.arch ?? '',
+      address: device?.address ?? '',
+      historyBytes: history?.totalBytes ?? 0,
+      historyTasks: history?.totalTasks ?? 0,
+    }
+  }),
+])
+const onlineDeviceCount = computed(() => allDevices.value.filter((device) => device.online).length)
+const allDeviceSpeed = computed(() =>
+  allDevices.value.reduce((total, device) => total + (device.online ? device.downloadSpeed : 0), 0),
+)
+const allDeviceTasks = computed(() =>
+  allDevices.value.reduce((total, device) => total + (device.online ? device.activeTasks : 0), 0),
+)
+const allHistoryBytes = computed(() => allDevices.value.reduce((total, device) => total + device.historyBytes, 0))
+const allHistoryTasks = computed(() => allDevices.value.reduce((total, device) => total + device.historyTasks, 0))
+const localSpeedSpark = computed(() => speedTrend.samples.value.map((sample) => sample.bytesPerSecond))
+const peakDeviceSpeed = computed(() => Math.max(1, ...allDevices.value.map((device) => device.downloadSpeed)))
 
 const categoryIcons: Record<string, typeof FilmOutline> = {
   'file-category-videos': FilmOutline,
@@ -73,6 +119,22 @@ function recordBytes(record: HistoryRecord): number {
 function extensionOf(name: string): string {
   const dot = name.lastIndexOf('.')
   return dot >= 0 ? name.slice(dot + 1).toLowerCase() : ''
+}
+
+function localDayKey(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${date.getFullYear()}-${month}-${day}`
+}
+
+function recentDayKeys(): string[] {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(today)
+    date.setDate(date.getDate() - (6 - index))
+    return localDayKey(date)
+  })
 }
 
 /** Last seven calendar days, oldest first, in the user's local timezone. */
@@ -98,29 +160,17 @@ const trendValues = computed<number[]>(() => {
   return days
 })
 
-const trendMax = computed(() => Math.max(...trendValues.value, 1))
-const trendHasData = computed(() => trendValues.value.some((value) => value > 0))
-
-const chartGeometry = computed(() => {
-  const width = 320
-  const height = 136
-  const left = 46
-  const right = width - 12
-  const top = 12
-  const baseline = height - 24
-  const step = (right - left) / 6
-  const points = trendValues.value.map((value, index) => {
-    const x = left + index * step
-    const y = baseline - ((baseline - top) * value) / trendMax.value
-    return { x, y, value }
-  })
-  const line = points.map((point) => `${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(' ')
-  const area = `${left.toFixed(1)},${baseline} ${line} ${right.toFixed(1)},${baseline}`
-  const gridLines = [0, 0.33, 0.66, 1].map((ratio) => ({
-    y: baseline - (baseline - top) * ratio,
-    label: bytesToSize(trendMax.value * ratio, 1),
-  }))
-  return { width, height, baseline, points, line, area, gridLines }
+/** Adds paired-device daily bytes to the local seven-day series. */
+const allTrendValues = computed<number[]>(() => {
+  const values = [...trendValues.value]
+  const keys = recentDayKeys()
+  const remoteDays = new Map<string, number>()
+  for (const history of lan.historyStats) {
+    for (const day of history.days) {
+      remoteDays.set(day.date, (remoteDays.get(day.date) ?? 0) + day.bytes)
+    }
+  }
+  return values.map((value, index) => value + (remoteDays.get(keys[index]) ?? 0))
 })
 
 const SPEED_WINDOW_MINUTES = Math.round(((SPEED_SAMPLE_LIMIT - 1) * SPEED_SAMPLE_INTERVAL_MS) / 60000)
@@ -205,6 +255,11 @@ const countLabel = (value: number): string => String(Math.round(value))
 let liveTimer: number | undefined
 let historyTimer: number | undefined
 
+watch(activeTab, (tab) => {
+  if (tab === 'all') lan.startStatusPolling()
+  else lan.stopStatusPolling()
+})
+
 function startLiveRefresh(): void {
   stopLiveRefresh()
   liveTimer = window.setInterval(() => void loadGlobalStat(), SPEED_SAMPLE_INTERVAL_MS)
@@ -228,24 +283,66 @@ function trendDayLabel(index: number): string {
   return `${date.getMonth() + 1}/${date.getDate()}`
 }
 
-const categories = computed(() => {
+interface ExtensionAggregate {
+  bytes: number
+  tasks: number
+}
+
+function extensionStatsFromRecords(source: HistoryRecord[]): Map<string, ExtensionAggregate> {
+  const stats = new Map<string, ExtensionAggregate>()
+  for (const record of source) {
+    if (record.status !== 'complete') continue
+    const extension = extensionOf(record.name)
+    const aggregate = stats.get(extension) ?? { bytes: 0, tasks: 0 }
+    aggregate.bytes += recordBytes(record)
+    aggregate.tasks += 1
+    stats.set(extension, aggregate)
+  }
+  return stats
+}
+
+function mergeExtensionStats(
+  left: Map<string, ExtensionAggregate>,
+  right: Map<string, ExtensionAggregate>,
+): Map<string, ExtensionAggregate> {
+  const merged = new Map([...left].map(([extension, aggregate]) => [extension, { ...aggregate }]))
+  for (const [extension, aggregate] of right) {
+    const current = merged.get(extension) ?? { bytes: 0, tasks: 0 }
+    current.bytes += aggregate.bytes
+    current.tasks += aggregate.tasks
+    merged.set(extension, current)
+  }
+  return merged
+}
+
+const localExtensionStats = computed(() => extensionStatsFromRecords(records.value))
+const allExtensionStats = computed(() => {
+  const remote = new Map<string, ExtensionAggregate>()
+  for (const history of lan.historyStats) {
+    for (const extension of history.extensions) {
+      const aggregate = remote.get(extension.extension) ?? { bytes: 0, tasks: 0 }
+      aggregate.bytes += extension.bytes
+      aggregate.tasks += extension.tasks
+      remote.set(extension.extension, aggregate)
+    }
+  }
+  return mergeExtensionStats(localExtensionStats.value, remote)
+})
+
+function buildCategoryRows(stats: Map<string, ExtensionAggregate>) {
   const rules = categoryRules.value
   const totals = new Map<string, number>()
   const counts = new Map<string, number>()
-  for (const record of records.value) {
-    if (record.status !== 'complete') continue
-    const extension = extensionOf(record.name)
+  for (const [extension, aggregate] of stats) {
     const rule = rules.find((category) => category.extensions.includes(extension))
     if (!rule) continue
-    totals.set(rule.label, (totals.get(rule.label) ?? 0) + recordBytes(record))
-    counts.set(rule.label, (counts.get(rule.label) ?? 0) + 1)
+    totals.set(rule.label, (totals.get(rule.label) ?? 0) + aggregate.bytes)
+    counts.set(rule.label, (counts.get(rule.label) ?? 0) + aggregate.tasks)
   }
   const knownBytes = [...totals.values()].reduce((sum, value) => sum + value, 0)
   const knownCount = [...counts.values()].reduce((sum, value) => sum + value, 0)
-  const totalBytes = records.value
-    .filter((record) => record.status === 'complete')
-    .reduce((sum, record) => sum + recordBytes(record), 0)
-  const totalCount = records.value.filter((record) => record.status === 'complete').length
+  const totalBytes = [...stats.values()].reduce((sum, value) => sum + value.bytes, 0)
+  const totalCount = [...stats.values()].reduce((sum, value) => sum + value.tasks, 0)
   const otherValue = Math.max(0, totalBytes - knownBytes)
   const otherCount = Math.max(0, totalCount - knownCount)
   const max = Math.max(...totals.values(), otherValue, 1)
@@ -276,7 +373,10 @@ const categories = computed(() => {
     share: otherValue > 0 ? Math.max(4, Math.round((otherValue / max) * 100)) : 0,
   })
   return rows.sort((a, b) => b.value - a.value)
-})
+}
+
+const categories = computed(() => buildCategoryRows(localExtensionStats.value))
+const allCategories = computed(() => buildCategoryRows(allExtensionStats.value))
 
 onMounted(async () => {
   await Promise.all([loadHistory(), loadGlobalStat(), ensureStatisticsHistoryFile()])
@@ -289,7 +389,10 @@ onActivated(() => {
   startLiveRefresh()
 })
 
-onBeforeUnmount(stopLiveRefresh)
+onBeforeUnmount(() => {
+  stopLiveRefresh()
+  lan.stopStatusPolling()
+})
 
 async function loadHistory(): Promise<void> {
   try {
@@ -321,6 +424,8 @@ async function loadGlobalStat(): Promise<void> {
       numStoppedTotal: Number(stat.numStoppedTotal) || 0,
     }
     speedTrend.recordSpeed(globalStat.value.downloadSpeed)
+    const next = [...allSpeedSamples.value, allDeviceSpeed.value]
+    allSpeedSamples.value = next.slice(-SPEED_SAMPLE_LIMIT)
   } catch (error) {
     logger.debug('StatisticsView.globalStat', error)
   }
@@ -329,27 +434,219 @@ async function loadGlobalStat(): Promise<void> {
 
 <template>
   <div class="statistics-view">
-    <NSpin :show="loading">
+    <NTabs v-model:value="activeTab" class="statistics-tabs" type="segment" animated :tabs-padding="8">
+      <NTab name="local">{{ t('statistics.tab-this-device') }}</NTab>
+      <NTab name="all">{{ t('statistics.tab-all-devices') }}</NTab>
+    </NTabs>
+
+    <template v-if="activeTab === 'local'">
+      <NSpin :show="loading">
+        <section class="statistics-cards">
+          <NCard class="stat-card" :bordered="false">
+            <div class="stat-card__head">
+              <span class="stat-card__icon"
+                ><NIcon :size="18"><CloudDownloadOutline /></NIcon
+              ></span>
+              <span class="stat-card__label">{{ t('statistics.live-speed') }}</span>
+            </div>
+            <strong class="stat-card__value"><AnimatedNumber :value="liveSpeed" :formatter="speedLabel" /></strong>
+            <StatSparkline :values="localSpeedSpark" :label="t('statistics.live-speed')" />
+            <span class="stat-card__hint">{{ t('statistics.live-speed-hint') }}</span>
+          </NCard>
+          <NCard class="stat-card" :bordered="false">
+            <div class="stat-card__head">
+              <span class="stat-card__icon"
+                ><NIcon :size="18"><CloudDownloadOutline /></NIcon
+              ></span>
+              <span class="stat-card__label">{{ t('statistics.total-cumulative') }}</span>
+            </div>
+            <strong class="stat-card__value"
+              ><AnimatedNumber :value="cumulativeBytes" :formatter="totalLabel"
+            /></strong>
+            <StatSparkline :values="trendValues" :label="t('statistics.total-cumulative')" />
+            <span class="stat-card__hint">{{ t('statistics.total-cumulative-hint') }}</span>
+          </NCard>
+          <NCard class="stat-card" :bordered="false">
+            <div class="stat-card__head">
+              <span class="stat-card__icon"
+                ><NIcon :size="18"><LayersOutline /></NIcon
+              ></span>
+              <span class="stat-card__label">{{ t('statistics.total-tasks') }}</span>
+            </div>
+            <strong class="stat-card__value"><AnimatedNumber :value="historyTasks" :formatter="countLabel" /></strong>
+            <span class="stat-card__hint">{{ t('statistics.total-tasks-hint') }}</span>
+          </NCard>
+          <NCard class="stat-card stat-card--accent" :bordered="false">
+            <div class="stat-card__head">
+              <span class="stat-card__icon"
+                ><NIcon :size="18"><BarChartOutline /></NIcon
+              ></span>
+              <span class="stat-card__label">{{ t('statistics.session-downloaded') }}</span>
+            </div>
+            <strong class="stat-card__value"><AnimatedNumber :value="sessionBytes" :formatter="totalLabel" /></strong>
+            <span class="stat-card__hint">
+              {{ t('statistics.session-hint', { active: sessionActive, waiting: sessionWaiting }) }}
+            </span>
+          </NCard>
+        </section>
+      </NSpin>
+
+      <HistoryTrendCard
+        :values="trendValues"
+        :title="t('statistics.trend-title')"
+        :hint="t('statistics.trend-hint')"
+        :empty-text="t('statistics.trend-empty')"
+        :day-label="trendDayLabel"
+        :tag-text="t('statistics.placeholder-tag')"
+      />
+
+      <NCard class="statistics-chart statistics-speed-trend" :bordered="false">
+        <div class="statistics-section-heading">
+          <div>
+            <h2>{{ t('statistics.speed-trend-title') }}</h2>
+            <p>{{ t('statistics.speed-trend-hint', { minutes: SPEED_WINDOW_MINUTES }) }}</p>
+          </div>
+          <NTag size="small" :bordered="false" type="info">
+            {{ t('statistics.speed-trend-peak', { speed: speedLabel(speedChart.peak) }) }}
+          </NTag>
+        </div>
+        <svg
+          v-if="speedTrendReady"
+          class="statistics-chart__svg statistics-speed-trend__svg"
+          :viewBox="`0 0 ${speedChart.width} ${speedChart.height}`"
+          role="img"
+          :aria-label="t('statistics.speed-trend-title')"
+        >
+          <defs>
+            <linearGradient id="rayload-speed-fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="currentColor" stop-opacity="0.24" />
+              <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+          <g class="statistics-chart__grid">
+            <line
+              v-for="line in speedChart.gridLines"
+              :key="`speed-grid-${line.y}`"
+              :x1="speedChart.left"
+              :y1="line.y"
+              :x2="speedChart.right"
+              :y2="line.y"
+            />
+          </g>
+          <g class="statistics-speed-trend__axis">
+            <text v-for="line in speedChart.gridLines" :key="`speed-label-${line.y}`" x="6" :y="line.y + 3">
+              {{ line.label }}
+            </text>
+            <text :x="speedChart.left" :y="speedChart.height - 6">{{ speedChart.windowLabel }}</text>
+            <text :x="speedChart.right" :y="speedChart.height - 6" text-anchor="end">
+              {{ t('statistics.speed-trend-now') }}
+            </text>
+          </g>
+          <line
+            v-if="speedChart.average > 0"
+            class="statistics-speed-trend__avg"
+            :x1="speedChart.left"
+            :x2="speedChart.right"
+            :y1="speedChart.averageY"
+            :y2="speedChart.averageY"
+          />
+          <text
+            v-if="speedChart.average > 0"
+            class="statistics-speed-trend__avg-label"
+            :x="speedChart.left + 2"
+            :y="Math.max(12, speedChart.averageY - 5)"
+            text-anchor="start"
+          >
+            {{ t('statistics.speed-trend-average', { speed: speedLabel(speedChart.average) }) }}
+          </text>
+          <path :d="speedChart.area" fill="url(#rayload-speed-fill)" />
+          <path
+            :d="speedChart.line"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <circle v-if="speedChart.last" class="is-live" :cx="speedChart.last.x" :cy="speedChart.last.y" r="3.6" />
+        </svg>
+        <p v-else class="statistics-chart__empty">{{ t('statistics.speed-trend-empty') }}</p>
+      </NCard>
+
+      <HistoryCategoryCard
+        :rows="categories"
+        :title="t('statistics.categories-title')"
+        :hint="t('statistics.categories-hint')"
+      />
+
+      <section class="statistics-shortcuts">
+        <button
+          type="button"
+          class="statistics-shortcuts__toggle"
+          :aria-expanded="showShortcuts"
+          @click="showShortcuts = !showShortcuts"
+        >
+          <span>{{ t('statistics.shortcuts-title') }}</span>
+          <NIcon :size="18" :class="{ 'is-open': showShortcuts }"><ChevronDownOutline /></NIcon>
+        </button>
+        <Transition name="shortcuts">
+          <div v-if="showShortcuts" class="statistics-links">
+            <RouterLink :to="{ name: 'lan-devices' }" class="statistics-link">
+              <NIcon :size="20"><WifiOutline /></NIcon>
+              <span>{{ t('statistics.open-lan') }}</span>
+            </RouterLink>
+            <RouterLink :to="{ name: 'task', params: { status: 'completed' } }" class="statistics-link">
+              <NIcon :size="20"><TimeOutline /></NIcon>
+              <span>{{ t('statistics.open-history') }}</span>
+            </RouterLink>
+          </div>
+        </Transition>
+      </section>
+    </template>
+
+    <template v-else>
       <section class="statistics-cards">
         <NCard class="stat-card" :bordered="false">
           <div class="stat-card__head">
             <span class="stat-card__icon"
-              ><NIcon :size="18"><CloudDownloadOutline /></NIcon
+              ><NIcon :size="18"><WifiOutline /></NIcon
             ></span>
-            <span class="stat-card__label">{{ t('statistics.live-speed') }}</span>
+            <span class="stat-card__label">{{ t('statistics.all-devices-online') }}</span>
           </div>
-          <strong class="stat-card__value"><AnimatedNumber :value="liveSpeed" :formatter="speedLabel" /></strong>
-          <span class="stat-card__hint">{{ t('statistics.live-speed-hint') }}</span>
+          <strong class="stat-card__value">{{ onlineDeviceCount }} / {{ allDevices.length }}</strong>
+          <span class="stat-card__hint">{{ t('statistics.all-devices-hint') }}</span>
         </NCard>
         <NCard class="stat-card" :bordered="false">
           <div class="stat-card__head">
             <span class="stat-card__icon"
               ><NIcon :size="18"><CloudDownloadOutline /></NIcon
             ></span>
+            <span class="stat-card__label">{{ t('statistics.all-devices-speed') }}</span>
+          </div>
+          <strong class="stat-card__value"><AnimatedNumber :value="allDeviceSpeed" :formatter="speedLabel" /></strong>
+          <StatSparkline :values="allSpeedSamples" :label="t('statistics.all-devices-speed')" />
+          <span class="stat-card__hint">{{ t('statistics.live-speed-hint') }}</span>
+        </NCard>
+        <NCard class="stat-card" :bordered="false">
+          <div class="stat-card__head">
+            <span class="stat-card__icon"
+              ><NIcon :size="18"><LayersOutline /></NIcon
+            ></span>
+            <span class="stat-card__label">{{ t('statistics.all-devices-active') }}</span>
+          </div>
+          <strong class="stat-card__value"><AnimatedNumber :value="allDeviceTasks" :formatter="countLabel" /></strong>
+          <span class="stat-card__hint">{{ t('statistics.all-devices-hint') }}</span>
+        </NCard>
+        <NCard class="stat-card" :bordered="false">
+          <div class="stat-card__head">
+            <span class="stat-card__icon"
+              ><NIcon :size="18"><ArchiveOutline /></NIcon
+            ></span>
             <span class="stat-card__label">{{ t('statistics.total-cumulative') }}</span>
           </div>
-          <strong class="stat-card__value"><AnimatedNumber :value="cumulativeBytes" :formatter="totalLabel" /></strong>
-          <span class="stat-card__hint">{{ t('statistics.total-cumulative-hint') }}</span>
+          <strong class="stat-card__value"><AnimatedNumber :value="allHistoryBytes" :formatter="totalLabel" /></strong>
+          <StatSparkline :values="allTrendValues" :label="t('statistics.total-cumulative')" />
+          <span class="stat-card__hint">{{ t('statistics.all-history-hint') }}</span>
         </NCard>
         <NCard class="stat-card" :bordered="false">
           <div class="stat-card__head">
@@ -358,214 +655,74 @@ async function loadGlobalStat(): Promise<void> {
             ></span>
             <span class="stat-card__label">{{ t('statistics.total-tasks') }}</span>
           </div>
-          <strong class="stat-card__value"><AnimatedNumber :value="historyTasks" :formatter="countLabel" /></strong>
-          <span class="stat-card__hint">{{ t('statistics.total-tasks-hint') }}</span>
-        </NCard>
-        <NCard class="stat-card stat-card--accent" :bordered="false">
-          <div class="stat-card__head">
-            <span class="stat-card__icon"
-              ><NIcon :size="18"><BarChartOutline /></NIcon
-            ></span>
-            <span class="stat-card__label">{{ t('statistics.session-downloaded') }}</span>
-          </div>
-          <strong class="stat-card__value"><AnimatedNumber :value="sessionBytes" :formatter="totalLabel" /></strong>
-          <span class="stat-card__hint">
-            {{ t('statistics.session-hint', { active: sessionActive, waiting: sessionWaiting }) }}
-          </span>
+          <strong class="stat-card__value"><AnimatedNumber :value="allHistoryTasks" :formatter="countLabel" /></strong>
+          <span class="stat-card__hint">{{ t('statistics.all-history-hint') }}</span>
         </NCard>
       </section>
-    </NSpin>
 
-    <NCard class="statistics-chart" :bordered="false">
-      <div class="statistics-section-heading">
-        <div>
-          <h2>{{ t('statistics.trend-title') }}</h2>
-          <p>{{ t('statistics.trend-hint') }}</p>
+      <HistoryTrendCard
+        :values="allTrendValues"
+        :title="t('statistics.trend-title')"
+        :hint="t('statistics.all-trend-hint')"
+        :empty-text="t('statistics.trend-empty')"
+        :day-label="trendDayLabel"
+      />
+
+      <HistoryCategoryCard
+        :rows="allCategories"
+        :title="t('statistics.categories-title')"
+        :hint="t('statistics.all-categories-hint')"
+      />
+
+      <NCard class="statistics-all-devices" :bordered="false">
+        <div class="statistics-section-heading">
+          <div>
+            <h2>{{ t('statistics.all-devices-title') }}</h2>
+            <p>{{ t('statistics.all-devices-hint') }}</p>
+          </div>
         </div>
-        <NTag size="small" :bordered="false" type="success">{{ t('statistics.placeholder-tag') }}</NTag>
-      </div>
-      <svg
-        class="statistics-chart__svg"
-        :viewBox="`0 0 ${chartGeometry.width} ${chartGeometry.height}`"
-        role="img"
-        :aria-label="t('statistics.trend-title')"
-      >
-        <defs>
-          <linearGradient id="rayload-trend-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="currentColor" stop-opacity="0.28" />
-            <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
-          </linearGradient>
-        </defs>
-        <g class="statistics-chart__grid">
-          <line
-            v-for="ratio in [0, 0.33, 0.66, 1]"
-            :key="ratio"
-            x1="14"
-            :y1="chartGeometry.baseline - (chartGeometry.baseline - 12) * ratio"
-            :x2="chartGeometry.width - 12"
-            :y2="chartGeometry.baseline - (chartGeometry.baseline - 12) * ratio"
-          />
-        </g>
-        <polygon :points="chartGeometry.area" fill="url(#rayload-trend-fill)" />
-        <polyline
-          :points="chartGeometry.line"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-        <g class="statistics-chart__dots">
-          <circle
-            v-for="(point, index) in chartGeometry.points"
-            :key="index"
-            :cx="point.x"
-            :cy="point.y"
-            :r="point.value > 0 ? 3 : 2"
-            :class="{ 'is-empty': point.value === 0 }"
-          />
-        </g>
-        <g class="statistics-chart__labels">
-          <text
-            v-for="index in 7"
-            :key="index"
-            :x="index === 7 ? chartGeometry.width - 12 : 14 + (index - 1) * ((chartGeometry.width - 26) / 6)"
-            y="132"
-            :text-anchor="index === 1 ? 'start' : index === 7 ? 'end' : 'middle'"
+        <div class="statistics-device-grid">
+          <article
+            v-for="device in allDevices"
+            :key="device.id"
+            class="statistics-device"
+            :class="{ offline: !device.online }"
           >
-            {{ trendDayLabel(index - 1) }}
-          </text>
-        </g>
-      </svg>
-      <p v-if="!trendHasData" class="statistics-chart__empty">{{ t('statistics.trend-empty') }}</p>
-    </NCard>
-
-    <NCard class="statistics-chart statistics-speed-trend" :bordered="false">
-      <div class="statistics-section-heading">
-        <div>
-          <h2>{{ t('statistics.speed-trend-title') }}</h2>
-          <p>{{ t('statistics.speed-trend-hint', { minutes: SPEED_WINDOW_MINUTES }) }}</p>
-        </div>
-        <NTag size="small" :bordered="false" type="info">
-          {{ t('statistics.speed-trend-peak', { speed: speedLabel(speedChart.peak) }) }}
-        </NTag>
-      </div>
-      <svg
-        v-if="speedTrendReady"
-        class="statistics-chart__svg statistics-speed-trend__svg"
-        :viewBox="`0 0 ${speedChart.width} ${speedChart.height}`"
-        role="img"
-        :aria-label="t('statistics.speed-trend-title')"
-      >
-        <defs>
-          <linearGradient id="rayload-speed-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="currentColor" stop-opacity="0.24" />
-            <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
-          </linearGradient>
-        </defs>
-        <g class="statistics-chart__grid">
-          <line
-            v-for="line in speedChart.gridLines"
-            :key="`speed-grid-${line.y}`"
-            :x1="speedChart.left"
-            :y1="line.y"
-            :x2="speedChart.right"
-            :y2="line.y"
-          />
-        </g>
-        <g class="statistics-speed-trend__axis">
-          <text v-for="line in speedChart.gridLines" :key="`speed-label-${line.y}`" x="6" :y="line.y + 3">
-            {{ line.label }}
-          </text>
-          <text :x="speedChart.left" :y="speedChart.height - 6">{{ speedChart.windowLabel }}</text>
-          <text :x="speedChart.right" :y="speedChart.height - 6" text-anchor="end">
-            {{ t('statistics.speed-trend-now') }}
-          </text>
-        </g>
-        <line
-          v-if="speedChart.average > 0"
-          class="statistics-speed-trend__avg"
-          :x1="speedChart.left"
-          :x2="speedChart.right"
-          :y1="speedChart.averageY"
-          :y2="speedChart.averageY"
-        />
-        <text
-          v-if="speedChart.average > 0"
-          class="statistics-speed-trend__avg-label"
-          :x="speedChart.left + 2"
-          :y="Math.max(12, speedChart.averageY - 5)"
-          text-anchor="start"
-        >
-          {{ t('statistics.speed-trend-average', { speed: speedLabel(speedChart.average) }) }}
-        </text>
-        <path :d="speedChart.area" fill="url(#rayload-speed-fill)" />
-        <path
-          :d="speedChart.line"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-        />
-        <circle v-if="speedChart.last" class="is-live" :cx="speedChart.last.x" :cy="speedChart.last.y" r="3.6" />
-      </svg>
-      <p v-else class="statistics-chart__empty">{{ t('statistics.speed-trend-empty') }}</p>
-    </NCard>
-
-    <NCard class="statistics-categories" :bordered="false">
-      <div class="statistics-section-heading">
-        <div>
-          <h2>{{ t('statistics.categories-title') }}</h2>
-          <p>{{ t('statistics.categories-hint') }}</p>
-        </div>
-      </div>
-      <div class="statistics-category-grid">
-        <div v-for="category in categories" :key="category.key" class="statistics-category">
-          <div class="statistics-category__icon">
-            <NIcon :size="19"><component :is="category.icon" /></NIcon>
-          </div>
-          <div class="statistics-category__copy">
-            <strong>{{ category.label }}</strong>
-            <span
-              >{{ bytesToSize(category.value) }} · {{ t('statistics.category-tasks', { count: category.count }) }}</span
+            <div class="statistics-device__head">
+              <span class="statistics-device-dot" :class="{ offline: !device.online }" aria-hidden="true" />
+              <strong>{{ device.name }}</strong>
+              <NTag size="small" :bordered="false" :type="device.online ? 'success' : 'default'">
+                {{ device.online ? t('lan-devices.online') : t('lan-devices.offline') }}
+              </NTag>
+            </div>
+            <div class="statistics-device__metrics">
+              <div>
+                <span>{{ t('statistics.live-speed') }}</span>
+                <strong>{{ speedLabel(device.downloadSpeed) }}</strong>
+              </div>
+              <div>
+                <span>{{ t('statistics.all-devices-active') }}</span>
+                <strong>{{ device.activeTasks }}</strong>
+              </div>
+              <div>
+                <span>{{ t('statistics.total-cumulative') }}</span>
+                <strong>{{ totalLabel(device.historyBytes) }}</strong>
+              </div>
+              <div>
+                <span>{{ t('statistics.total-tasks') }}</span>
+                <strong>{{ device.historyTasks }}</strong>
+              </div>
+            </div>
+            <div class="statistics-device__meter" aria-hidden="true">
+              <i :style="{ width: `${Math.min(100, (device.downloadSpeed / peakDeviceSpeed) * 100)}%` }" />
+            </div>
+            <code v-if="device.arch || device.address"
+              >{{ deviceArchLabel(device.arch) || '—' }} · {{ device.address || '—' }}</code
             >
-          </div>
-          <span class="statistics-category__bar">
-            <span :style="{ width: `${category.share}%` }" />
-          </span>
+          </article>
         </div>
-      </div>
-    </NCard>
-
-    <section class="statistics-shortcuts">
-      <button
-        type="button"
-        class="statistics-shortcuts__toggle"
-        :aria-expanded="showShortcuts"
-        @click="showShortcuts = !showShortcuts"
-      >
-        <span>{{ t('statistics.shortcuts-title') }}</span>
-        <NIcon :size="18" :class="{ 'is-open': showShortcuts }"><ChevronDownOutline /></NIcon>
-      </button>
-      <Transition name="shortcuts">
-        <div v-if="showShortcuts" class="statistics-links">
-          <RouterLink :to="{ name: 'preference-lan' }" class="statistics-link">
-            <NIcon :size="20"><WifiOutline /></NIcon>
-            <span>{{ t('statistics.open-lan') }}</span>
-          </RouterLink>
-          <RouterLink :to="{ name: 'task', params: { status: 'completed' } }" class="statistics-link">
-            <NIcon :size="20"><TimeOutline /></NIcon>
-            <span>{{ t('statistics.open-history') }}</span>
-          </RouterLink>
-          <span class="statistics-link statistics-link--disabled" aria-disabled="true">
-            <NIcon :size="20"><CloudOutline /></NIcon>
-            <span>{{ t('statistics.open-extensions') }}</span>
-            <NTag size="tiny" :bordered="false">{{ t('statistics.coming-soon') }}</NTag>
-          </span>
-        </div>
-      </Transition>
-    </section>
+      </NCard>
+    </template>
   </div>
 </template>
 
@@ -583,6 +740,91 @@ async function loadGlobalStat(): Promise<void> {
 }
 .statistics-view > * {
   flex: 0 0 auto;
+}
+.statistics-tabs {
+  max-width: 420px;
+}
+.statistics-all-devices {
+  overflow: hidden;
+  background: var(--m3-surface-container);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--radius-lg);
+}
+.statistics-device-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+.statistics-device {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  background: var(--m3-surface-container-low);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--radius-md, 12px);
+}
+.statistics-device.offline {
+  opacity: 0.62;
+}
+.statistics-device__head {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+}
+.statistics-device__head strong {
+  overflow: hidden;
+  flex: 1;
+  font-size: var(--font-size-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.statistics-device__metrics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.statistics-device__metrics div {
+  display: grid;
+  gap: 2px;
+}
+.statistics-device__metrics span {
+  color: var(--m3-on-surface-variant);
+  font-size: 11px;
+}
+.statistics-device__metrics strong {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+.statistics-device__meter {
+  overflow: hidden;
+  height: 4px;
+  background: var(--m3-surface-container-high);
+  border-radius: 999px;
+}
+.statistics-device__meter i {
+  display: block;
+  height: 100%;
+  background: color-mix(in srgb, var(--m3-primary) 66%, var(--m3-outline));
+  border-radius: inherit;
+  transition: width 0.25s ease;
+}
+.statistics-device code {
+  overflow: hidden;
+  color: var(--m3-on-surface-variant);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.statistics-device-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  background: var(--m3-status-success);
+  border-radius: 50%;
+}
+.statistics-device-dot.offline {
+  background: var(--m3-outline);
 }
 .statistics-cards {
   display: grid;
@@ -822,11 +1064,6 @@ async function loadGlobalStat(): Promise<void> {
   border: 1px solid var(--m3-outline-variant);
   border-radius: var(--radius-lg);
   font-size: var(--font-size-sm);
-}
-.statistics-link--disabled {
-  color: var(--m3-on-surface-variant);
-  cursor: not-allowed;
-  opacity: 0.55;
 }
 .shortcuts-enter-active,
 .shortcuts-leave-active {

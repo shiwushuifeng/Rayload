@@ -1,10 +1,11 @@
 <script setup lang="ts">
-/** @fileoverview Advanced preference tab: extension API, RPC, engine, log, history, diagnostics. */
+/** @fileoverview Advanced preference tab: engine/RPC/extension or log, history and diagnostics. */
 import { ref, computed, onMounted } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { open as openDialog } from '@tauri-apps/plugin-dialog'
 import { usePlatform } from '@/composables/usePlatform'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { usePreferenceStore } from '@/stores/preference'
 import { usePreferenceForm } from '@/composables/usePreferenceForm'
 import { usePreferenceNumericValidation } from '@/composables/usePreferenceNumericValidation'
@@ -39,6 +40,7 @@ import {
 } from 'naive-ui'
 import { useAppMessage } from '@/composables/useAppMessage'
 import { useExtensionPanel } from '@/composables/useExtensionPanel'
+import { useBuildInfoStore } from '@/stores/build'
 import {
   CloudDownloadOutline,
   CloudUploadOutline,
@@ -48,11 +50,13 @@ import {
   TrashOutline,
   CopyOutline,
   ExtensionPuzzleOutline,
+  WifiOutline,
 } from '@vicons/ionicons5'
 import { logger } from '@shared/logger'
 import PreferenceActionRegistration from './PreferenceActionRegistration.vue'
-import ConfigTransfer from './ConfigTransfer.vue'
 import PreferenceHintLabel from './PreferenceHintLabel.vue'
+
+const props = defineProps<{ variant?: 'engine' | 'maintenance' }>()
 
 const engineStore = useEngineStore()
 const { restartEngine } = useEngineRestart()
@@ -65,7 +69,8 @@ const { constraint, configFieldProps, areConfigFieldsValid } = usePreferenceNume
 const dialog = useDialog()
 const { isLinux, isAndroid } = usePlatform()
 const { openExtensionPanel } = useExtensionPanel()
-const showConfigTransfer = ref(false)
+const router = useRouter()
+const buildInfo = useBuildInfoStore()
 
 import { diffConfig, checkIsNeedRestart } from '@shared/utils/config'
 import { writeAppClipboardText } from '@shared/utils'
@@ -323,6 +328,7 @@ const {
 const gpuAccelerationUnstable = ref(false)
 
 onMounted(async () => {
+  void buildInfo.load()
   loadForm()
   resetSnapshot()
   loadPaths()
@@ -336,364 +342,376 @@ onMounted(async () => {
   <div class="preference-form-wrapper">
     <div class="preference-form-scroll">
       <NForm label-placement="left" label-align="left" label-width="260px" size="small" class="form-preference">
-        <NDivider title-placement="left">{{ t('preferences.extension-section') }}</NDivider>
-        <NFormItem :label="t('preferences.extension-download-behavior')">
-          <NSelect
-            v-model:value="form.extensionDownloadBehavior"
-            :options="extensionDownloadBehaviorOptions"
-            class="pref-control-auto"
-          />
-        </NFormItem>
-        <NFormItem>
-          <template #label>
-            <PreferenceHintLabel
-              :label="t('preferences.extension-torrent-action')"
-              :hint="t('preferences.extension-torrent-action-hint')"
+        <template v-if="props.variant === 'engine'">
+          <NDivider title-placement="left">{{ t('preferences.extension-section') }}</NDivider>
+          <NFormItem :label="t('preferences.extension-download-behavior')">
+            <NSelect
+              v-model:value="form.extensionDownloadBehavior"
+              :options="extensionDownloadBehaviorOptions"
+              class="pref-control-auto"
             />
-          </template>
-          <NSelect
-            v-model:value="form.extensionTorrentAction"
-            :options="extensionTorrentActionOptions"
-            class="pref-control-auto"
-          />
-        </NFormItem>
-        <NFormItem
-          :label="t('preferences.extension-api-port')"
-          v-bind="configFieldProps('extensionApiPort', form.extensionApiPort)"
-        >
-          <NInputNumber
-            v-model:value="form.extensionApiPort"
-            :min="constraint('extensionApiPort').min"
-            :max="constraint('extensionApiPort').max"
-            class="pref-port"
-          />
-        </NFormItem>
-        <NFormItem :validation-status="form.extensionApiSecret ? undefined : 'warning'">
-          <template #label>
-            <PreferenceHintLabel
-              :label="t('preferences.extension-api-secret')"
-              :hint="t('preferences.extension-api-secret-tip')"
-            />
-          </template>
-          <NInputGroup>
-            <NInput
-              v-model:value="form.extensionApiSecret"
-              type="password"
-              show-password-on="click"
-              :placeholder="t('preferences.extension-api-secret')"
-              class="pref-control-full"
-              :status="form.extensionApiSecret ? undefined : 'warning'"
-            />
-            <NButton
-              :title="t('app.menu-copy')"
-              class="pref-icon-button"
-              @click="copyToClipboard(form.extensionApiSecret, t('preferences.extension-api-secret'))"
-            >
-              <template #icon>
-                <NIcon :size="14"><CopyOutline /></NIcon>
-              </template>
-            </NButton>
-            <NButton :title="t('app.generate-random')" class="pref-icon-button" @click="onApiSecretDice">
-              <template #icon>
-                <NIcon :size="14"><DiceOutline /></NIcon>
-              </template>
-            </NButton>
-          </NInputGroup>
-        </NFormItem>
-        <NFormItem :label="t('navigation.extensions')">
-          <NButton class="pref-action-button" @click="openExtensionPanel">
-            <template #icon>
-              <NIcon :size="16"><ExtensionPuzzleOutline /></NIcon>
+          </NFormItem>
+          <NFormItem>
+            <template #label>
+              <PreferenceHintLabel
+                :label="t('preferences.extension-torrent-action')"
+                :hint="t('preferences.extension-torrent-action-hint')"
+              />
             </template>
-            {{ t('navigation.extensions') }}
-          </NButton>
-        </NFormItem>
-
-        <NDivider title-placement="left">{{ t('preferences.rpc') }}</NDivider>
-        <NFormItem
-          :label="t('preferences.rpc-listen-port')"
-          v-bind="configFieldProps('rpcListenPort', form.rpcListenPort)"
-        >
-          <NInputGroup>
+            <NSelect
+              v-model:value="form.extensionTorrentAction"
+              :options="extensionTorrentActionOptions"
+              class="pref-control-auto"
+            />
+          </NFormItem>
+          <NFormItem
+            :label="t('preferences.extension-api-port')"
+            v-bind="configFieldProps('extensionApiPort', form.extensionApiPort)"
+          >
             <NInputNumber
-              v-model:value="form.rpcListenPort"
-              :min="constraint('rpcListenPort').min"
-              :max="constraint('rpcListenPort').max"
-              :disabled="isAndroid"
+              v-model:value="form.extensionApiPort"
+              :min="constraint('extensionApiPort').min"
+              :max="constraint('extensionApiPort').max"
               class="pref-port"
             />
-            <NButton
-              :title="t('app.menu-copy')"
-              class="pref-icon-button"
-              @click="copyToClipboard(String(form.rpcListenPort), t('preferences.rpc-listen-port'))"
-            >
-              <template #icon>
-                <NIcon :size="14"><CopyOutline /></NIcon>
-              </template>
-            </NButton>
-            <NButton
-              v-if="!isAndroid"
-              :title="t('app.generate-random')"
-              class="pref-icon-button"
-              @click="onRpcPortDice"
-            >
-              <template #icon>
-                <NIcon :size="14"><DiceOutline /></NIcon>
-              </template>
-            </NButton>
-          </NInputGroup>
-          <NText v-if="isAndroid" depth="3" class="pref-inline-note">
-            {{ t('preferences.rpc-port-locked-android') }}
-          </NText>
-        </NFormItem>
-        <NFormItem :label="t('preferences.rpc-secret')" :validation-status="form.rpcSecret ? undefined : 'warning'">
-          <NInputGroup>
-            <NInput
-              v-model:value="form.rpcSecret"
-              type="password"
-              show-password-on="click"
-              :placeholder="t('preferences.rpc-secret')"
-              class="pref-control-full"
-              :status="form.rpcSecret ? undefined : 'warning'"
-            />
-            <NButton
-              :title="t('app.menu-copy')"
-              class="pref-icon-button"
-              @click="copyToClipboard(form.rpcSecret, t('preferences.rpc-secret'))"
-            >
-              <template #icon>
-                <NIcon :size="14"><CopyOutline /></NIcon>
-              </template>
-            </NButton>
-            <NButton :title="t('app.generate-random')" class="pref-icon-button" @click="onRpcSecretDice">
-              <template #icon>
-                <NIcon :size="14"><DiceOutline /></NIcon>
-              </template>
-            </NButton>
-          </NInputGroup>
-        </NFormItem>
-        <NFormItem v-if="isAndroid">
-          <NButton secondary type="primary" @click="copyToClipboard(form.rpcSecret, t('preferences.rpc-secret'))">
-            <template #icon
-              ><NIcon :size="16"><CopyOutline /></NIcon
-            ></template>
-            {{ t('extension.android-copy-rpc-secret') }}
-          </NButton>
-        </NFormItem>
-
-        <NDivider title-placement="left">{{ t('preferences.engine-section') }}</NDivider>
-        <NFormItem :label="t('preferences.allow-remote-access')">
-          <NSwitch v-model:value="form.allowRemoteAccess" />
-        </NFormItem>
-        <NFormItem :label="t('preferences.temp-files-dir')">
-          <NInputGroup>
-            <NInput
-              :value="form.tempFilesDir || defaultTempPath"
-              readonly
-              class="pref-control-full"
-              :placeholder="defaultTempPath"
-            />
-            <NButton
-              :title="t('app.menu-copy')"
-              class="pref-icon-button"
-              @click="copyToClipboard(form.tempFilesDir || defaultTempPath, t('preferences.temp-files-dir'))"
-            >
-              <template #icon>
-                <NIcon :size="14"><CopyOutline /></NIcon>
-              </template>
-            </NButton>
-            <NButton :title="t('app.choose-folder')" class="pref-icon-button" @click="handleSelectTempDir">
-              <template #icon>
-                <NIcon :size="14"><FolderOpenOutline /></NIcon>
-              </template>
-            </NButton>
-            <NButton v-if="form.tempFilesDir" quaternary class="pref-icon-button" @click="handleClearTempDir">
-              {{ t('preferences.ua-reset') }}
-            </NButton>
-          </NInputGroup>
-        </NFormItem>
-        <NFormItem :label="t('preferences.aria2-conf-path')">
-          <NInputGroup>
-            <NInput :value="aria2ConfPath" readonly class="pref-control-full" />
-            <NButton
-              :title="t('app.menu-copy')"
-              class="pref-icon-button"
-              @click="copyToClipboard(aria2ConfPath, t('preferences.aria2-conf-path'))"
-            >
-              <template #icon>
-                <NIcon :size="14"><CopyOutline /></NIcon>
-              </template>
-            </NButton>
-            <NButton
-              :title="t('task.show-in-folder')"
-              class="pref-icon-button"
-              @click="handleRevealPath(aria2ConfPath)"
-            >
-              <template #icon>
-                <NIcon :size="14"><FolderOpenOutline /></NIcon>
-              </template>
-            </NButton>
-          </NInputGroup>
-        </NFormItem>
-        <NFormItem :label="t('preferences.engine-state-path')">
-          <NInputGroup>
-            <NInput :value="engineStatePath" readonly class="pref-control-full" />
-            <NButton
-              :title="t('app.menu-copy')"
-              class="pref-icon-button"
-              @click="copyToClipboard(engineStatePath, t('preferences.engine-state-path'))"
-            >
-              <template #icon>
-                <NIcon :size="14"><CopyOutline /></NIcon>
-              </template>
-            </NButton>
-            <NButton
-              :title="t('task.show-in-folder')"
-              class="pref-icon-button"
-              @click="handleRevealPath(engineStatePath)"
-            >
-              <template #icon>
-                <NIcon :size="14"><FolderOpenOutline /></NIcon>
-              </template>
-            </NButton>
-          </NInputGroup>
-        </NFormItem>
-        <NFormItem label=" ">
-          <NButton type="error" ghost @click="handleEngineStateReset">
-            {{ t('preferences.reset-engine-state') }}
-          </NButton>
-        </NFormItem>
-
-        <NDivider title-placement="left">{{ t('preferences.log-section') }}</NDivider>
-        <NFormItem :label="t('preferences.log-path')">
-          <NInputGroup>
-            <NInput :value="logPath" readonly class="pref-control-full" />
-            <NButton
-              :title="t('app.menu-copy')"
-              class="pref-icon-button"
-              @click="copyToClipboard(logPath, t('preferences.log-path'))"
-            >
-              <template #icon>
-                <NIcon :size="14"><CopyOutline /></NIcon>
-              </template>
-            </NButton>
-            <NButton :title="t('task.show-in-folder')" class="pref-icon-button" @click="handleRevealPath(logPath)">
-              <template #icon>
-                <NIcon :size="14"><FolderOpenOutline /></NIcon>
-              </template>
-            </NButton>
-          </NInputGroup>
-        </NFormItem>
-        <NFormItem :label="t('preferences.log-level')">
-          <div class="log-level-row">
-            <div class="log-level-control">
-              <span class="log-level-control__label">{{ t('preferences.rayburst') }}</span>
-              <NSelect
-                v-model:value="form.logLevel"
-                :options="appLogLevelOptions"
-                class="pref-control-auto pref-control-log-level"
+          </NFormItem>
+          <NFormItem :validation-status="form.extensionApiSecret ? undefined : 'warning'">
+            <template #label>
+              <PreferenceHintLabel
+                :label="t('preferences.extension-api-secret')"
+                :hint="t('preferences.extension-api-secret-tip')"
               />
-            </div>
-            <div class="log-level-control">
-              <span class="log-level-control__label">{{ t('preferences.aria2-next') }}</span>
-              <NSelect
-                v-model:value="form.aria2LogLevel"
-                :options="aria2LogLevelOptions"
-                class="pref-control-auto pref-control-log-level"
+            </template>
+            <NInputGroup>
+              <NInput
+                v-model:value="form.extensionApiSecret"
+                type="password"
+                show-password-on="click"
+                :placeholder="t('preferences.extension-api-secret')"
+                class="pref-control-full"
+                :status="form.extensionApiSecret ? undefined : 'warning'"
               />
-            </div>
-          </div>
-        </NFormItem>
-        <NFormItem label=" ">
-          <div class="log-action-row">
-            <NButton type="primary" ghost :loading="exportingLogs" @click="handleExportLogs">
+              <NButton
+                :title="t('app.menu-copy')"
+                class="pref-icon-button"
+                @click="copyToClipboard(form.extensionApiSecret, t('preferences.extension-api-secret'))"
+              >
+                <template #icon>
+                  <NIcon :size="14"><CopyOutline /></NIcon>
+                </template>
+              </NButton>
+              <NButton :title="t('app.generate-random')" class="pref-icon-button" @click="onApiSecretDice">
+                <template #icon>
+                  <NIcon :size="14"><DiceOutline /></NIcon>
+                </template>
+              </NButton>
+            </NInputGroup>
+          </NFormItem>
+          <NFormItem :label="t('navigation.extensions')">
+            <NButton class="pref-action-button" @click="openExtensionPanel">
               <template #icon>
-                <NIcon><DownloadOutline /></NIcon>
+                <NIcon :size="16"><ExtensionPuzzleOutline /></NIcon>
               </template>
-              {{ t('preferences.export-diagnostic-logs') }}
+              {{ t('navigation.extensions') }}
             </NButton>
-            <NButton type="error" ghost @click="handleClearLog">
-              <template #icon>
-                <NIcon><TrashOutline /></NIcon>
-              </template>
-              {{ t('preferences.clear-log') }}
-            </NButton>
-          </div>
-        </NFormItem>
-
-        <NDivider title-placement="left">{{ t('preferences.maintenance-section') }}</NDivider>
-        <NFormItem v-if="isLinux">
-          <template #label>
-            <PreferenceHintLabel
-              :label="t('preferences.gpu-acceleration')"
-              :hint="t('preferences.gpu-acceleration-hint')"
-            />
-          </template>
-          <div class="gpu-acceleration">
-            <NSwitch v-model:value="form.hardwareRendering" />
-            <span v-if="gpuAccelerationUnstable" class="gpu-acceleration__warning">
-              {{ t('preferences.gpu-acceleration-nvidia') }}
-            </span>
-          </div>
-        </NFormItem>
-        <NFormItem :label="t('preferences.history-section')">
-          <NSpace>
-            <NButton class="db-integrity-check-btn" @click="handleDbIntegrityCheck">
-              {{ t('preferences.db-integrity-check') }}
-            </NButton>
-            <NButton class="db-browse-btn" @click="handleDbBrowse">
-              {{ t('preferences.db-browse') }}
-            </NButton>
-            <NButton type="error" ghost @click="handleDbReset">
-              {{ t('preferences.db-reset') }}
-            </NButton>
-          </NSpace>
-        </NFormItem>
-
-        <NFormItem :label="t('preferences.configuration-section')">
-          <NSpace>
-            <NButton v-if="!isAndroid" class="open-config-folder-btn" @click="handleOpenConfigFolder">
-              <template #icon>
-                <NIcon :size="14"><FolderOpenOutline /></NIcon>
-              </template>
-              {{ t('preferences.open-config-folder') }}
-            </NButton>
-            <NButton type="error" ghost @click="handleRestoreDefaults">
-              {{ t('preferences.restore-defaults') }}
-            </NButton>
-            <NButton type="error" ghost @click="handleFactoryReset">
-              {{ t('preferences.factory-reset') }}
-            </NButton>
-          </NSpace>
-        </NFormItem>
-        <NFormItem :label="t('preferences.settings-backup')">
-          <div class="settings-backup-row">
+          </NFormItem>
+          <NFormItem v-if="buildInfo.info.pluginEngine" :label="t('navigation.plugins')">
             <NSpace>
-              <NButton type="primary" ghost :loading="exportingSettings" @click="handleExportSettings">
+              <NButton class="pref-action-button" @click="router.push({ name: 'plugins' })">
                 <template #icon>
-                  <NIcon><CloudDownloadOutline /></NIcon>
+                  <NIcon :size="16"><ExtensionPuzzleOutline /></NIcon>
                 </template>
-                {{ t('preferences.export-settings') }}
+                {{ t('plugins.manage') }}
               </NButton>
-              <NButton type="warning" ghost :loading="importingSettings" @click="handleImportSettings">
+              <NButton v-if="buildInfo.info.lan" @click="router.push({ name: 'lan-devices' })">
                 <template #icon>
-                  <NIcon><CloudUploadOutline /></NIcon>
+                  <NIcon :size="16"><WifiOutline /></NIcon>
                 </template>
-                {{ t('preferences.import-settings') }}
-              </NButton>
-              <NButton @click="showConfigTransfer = true">
-                <template #icon>
-                  <NIcon><CopyOutline /></NIcon>
-                </template>
-                {{ t('preferences.config-transfer-button') }}
+                {{ t('navigation.lan-devices') }}
               </NButton>
             </NSpace>
-          </div>
-        </NFormItem>
+          </NFormItem>
+
+          <NDivider title-placement="left">{{ t('preferences.rpc') }}</NDivider>
+          <NFormItem
+            :label="t('preferences.rpc-listen-port')"
+            v-bind="configFieldProps('rpcListenPort', form.rpcListenPort)"
+          >
+            <NInputGroup>
+              <NInputNumber
+                v-model:value="form.rpcListenPort"
+                :min="constraint('rpcListenPort').min"
+                :max="constraint('rpcListenPort').max"
+                :disabled="isAndroid"
+                class="pref-port"
+              />
+              <NButton
+                :title="t('app.menu-copy')"
+                class="pref-icon-button"
+                @click="copyToClipboard(String(form.rpcListenPort), t('preferences.rpc-listen-port'))"
+              >
+                <template #icon>
+                  <NIcon :size="14"><CopyOutline /></NIcon>
+                </template>
+              </NButton>
+              <NButton
+                v-if="!isAndroid"
+                :title="t('app.generate-random')"
+                class="pref-icon-button"
+                @click="onRpcPortDice"
+              >
+                <template #icon>
+                  <NIcon :size="14"><DiceOutline /></NIcon>
+                </template>
+              </NButton>
+            </NInputGroup>
+            <NText v-if="isAndroid" depth="3" class="pref-inline-note">
+              {{ t('preferences.rpc-port-locked-android') }}
+            </NText>
+          </NFormItem>
+          <NFormItem :label="t('preferences.rpc-secret')" :validation-status="form.rpcSecret ? undefined : 'warning'">
+            <NInputGroup>
+              <NInput
+                v-model:value="form.rpcSecret"
+                type="password"
+                show-password-on="click"
+                :placeholder="t('preferences.rpc-secret')"
+                class="pref-control-full"
+                :status="form.rpcSecret ? undefined : 'warning'"
+              />
+              <NButton
+                :title="t('app.menu-copy')"
+                class="pref-icon-button"
+                @click="copyToClipboard(form.rpcSecret, t('preferences.rpc-secret'))"
+              >
+                <template #icon>
+                  <NIcon :size="14"><CopyOutline /></NIcon>
+                </template>
+              </NButton>
+              <NButton :title="t('app.generate-random')" class="pref-icon-button" @click="onRpcSecretDice">
+                <template #icon>
+                  <NIcon :size="14"><DiceOutline /></NIcon>
+                </template>
+              </NButton>
+            </NInputGroup>
+          </NFormItem>
+          <NFormItem v-if="isAndroid">
+            <NButton secondary type="primary" @click="copyToClipboard(form.rpcSecret, t('preferences.rpc-secret'))">
+              <template #icon
+                ><NIcon :size="16"><CopyOutline /></NIcon
+              ></template>
+              {{ t('extension.android-copy-rpc-secret') }}
+            </NButton>
+          </NFormItem>
+
+          <NDivider title-placement="left">{{ t('preferences.engine-section') }}</NDivider>
+          <NFormItem :label="t('preferences.allow-remote-access')">
+            <NSwitch v-model:value="form.allowRemoteAccess" />
+          </NFormItem>
+          <NFormItem :label="t('preferences.temp-files-dir')">
+            <NInputGroup>
+              <NInput
+                :value="form.tempFilesDir || defaultTempPath"
+                readonly
+                class="pref-control-full"
+                :placeholder="defaultTempPath"
+              />
+              <NButton
+                :title="t('app.menu-copy')"
+                class="pref-icon-button"
+                @click="copyToClipboard(form.tempFilesDir || defaultTempPath, t('preferences.temp-files-dir'))"
+              >
+                <template #icon>
+                  <NIcon :size="14"><CopyOutline /></NIcon>
+                </template>
+              </NButton>
+              <NButton :title="t('app.choose-folder')" class="pref-icon-button" @click="handleSelectTempDir">
+                <template #icon>
+                  <NIcon :size="14"><FolderOpenOutline /></NIcon>
+                </template>
+              </NButton>
+              <NButton v-if="form.tempFilesDir" quaternary class="pref-icon-button" @click="handleClearTempDir">
+                {{ t('preferences.ua-reset') }}
+              </NButton>
+            </NInputGroup>
+          </NFormItem>
+          <NFormItem :label="t('preferences.aria2-conf-path')">
+            <NInputGroup>
+              <NInput :value="aria2ConfPath" readonly class="pref-control-full" />
+              <NButton
+                :title="t('app.menu-copy')"
+                class="pref-icon-button"
+                @click="copyToClipboard(aria2ConfPath, t('preferences.aria2-conf-path'))"
+              >
+                <template #icon>
+                  <NIcon :size="14"><CopyOutline /></NIcon>
+                </template>
+              </NButton>
+              <NButton
+                :title="t('task.show-in-folder')"
+                class="pref-icon-button"
+                @click="handleRevealPath(aria2ConfPath)"
+              >
+                <template #icon>
+                  <NIcon :size="14"><FolderOpenOutline /></NIcon>
+                </template>
+              </NButton>
+            </NInputGroup>
+          </NFormItem>
+          <NFormItem :label="t('preferences.engine-state-path')">
+            <NInputGroup>
+              <NInput :value="engineStatePath" readonly class="pref-control-full" />
+              <NButton
+                :title="t('app.menu-copy')"
+                class="pref-icon-button"
+                @click="copyToClipboard(engineStatePath, t('preferences.engine-state-path'))"
+              >
+                <template #icon>
+                  <NIcon :size="14"><CopyOutline /></NIcon>
+                </template>
+              </NButton>
+              <NButton
+                :title="t('task.show-in-folder')"
+                class="pref-icon-button"
+                @click="handleRevealPath(engineStatePath)"
+              >
+                <template #icon>
+                  <NIcon :size="14"><FolderOpenOutline /></NIcon>
+                </template>
+              </NButton>
+            </NInputGroup>
+          </NFormItem>
+          <NFormItem label=" ">
+            <NButton type="error" ghost @click="handleEngineStateReset">
+              {{ t('preferences.reset-engine-state') }}
+            </NButton>
+          </NFormItem>
+        </template>
+
+        <template v-else>
+          <NDivider title-placement="left">{{ t('preferences.log-section') }}</NDivider>
+          <NFormItem :label="t('preferences.log-path')">
+            <NInputGroup>
+              <NInput :value="logPath" readonly class="pref-control-full" />
+              <NButton
+                :title="t('app.menu-copy')"
+                class="pref-icon-button"
+                @click="copyToClipboard(logPath, t('preferences.log-path'))"
+              >
+                <template #icon>
+                  <NIcon :size="14"><CopyOutline /></NIcon>
+                </template>
+              </NButton>
+              <NButton :title="t('task.show-in-folder')" class="pref-icon-button" @click="handleRevealPath(logPath)">
+                <template #icon>
+                  <NIcon :size="14"><FolderOpenOutline /></NIcon>
+                </template>
+              </NButton>
+            </NInputGroup>
+          </NFormItem>
+          <NFormItem :label="t('preferences.log-level')">
+            <div class="log-level-row">
+              <div class="log-level-control">
+                <span class="log-level-control__label">{{ t('preferences.rayburst') }}</span>
+                <NSelect
+                  v-model:value="form.logLevel"
+                  :options="appLogLevelOptions"
+                  class="pref-control-auto pref-control-log-level"
+                />
+              </div>
+              <div class="log-level-control">
+                <span class="log-level-control__label">{{ t('preferences.aria2-next') }}</span>
+                <NSelect
+                  v-model:value="form.aria2LogLevel"
+                  :options="aria2LogLevelOptions"
+                  class="pref-control-auto pref-control-log-level"
+                />
+              </div>
+            </div>
+          </NFormItem>
+          <NFormItem label=" ">
+            <div class="log-action-row">
+              <NButton type="primary" ghost :loading="exportingLogs" @click="handleExportLogs">
+                <template #icon>
+                  <NIcon><DownloadOutline /></NIcon>
+                </template>
+                {{ t('preferences.export-diagnostic-logs') }}
+              </NButton>
+              <NButton type="error" ghost @click="handleClearLog">
+                <template #icon>
+                  <NIcon><TrashOutline /></NIcon>
+                </template>
+                {{ t('preferences.clear-log') }}
+              </NButton>
+            </div>
+          </NFormItem>
+
+          <NDivider title-placement="left">{{ t('preferences.maintenance-section') }}</NDivider>
+          <NFormItem v-if="isLinux">
+            <template #label>
+              <PreferenceHintLabel
+                :label="t('preferences.gpu-acceleration')"
+                :hint="t('preferences.gpu-acceleration-hint')"
+              />
+            </template>
+            <div class="gpu-acceleration">
+              <NSwitch v-model:value="form.hardwareRendering" />
+              <span v-if="gpuAccelerationUnstable" class="gpu-acceleration__warning">
+                {{ t('preferences.gpu-acceleration-nvidia') }}
+              </span>
+            </div>
+          </NFormItem>
+          <NFormItem :label="t('preferences.history-section')">
+            <NSpace>
+              <NButton class="db-integrity-check-btn" @click="handleDbIntegrityCheck">
+                {{ t('preferences.db-integrity-check') }}
+              </NButton>
+              <NButton class="db-browse-btn" @click="handleDbBrowse">
+                {{ t('preferences.db-browse') }}
+              </NButton>
+              <NButton type="error" ghost @click="handleDbReset">
+                {{ t('preferences.db-reset') }}
+              </NButton>
+            </NSpace>
+          </NFormItem>
+
+          <NFormItem :label="t('preferences.configuration-section')">
+            <NSpace>
+              <NButton v-if="!isAndroid" class="open-config-folder-btn" @click="handleOpenConfigFolder">
+                <template #icon>
+                  <NIcon :size="14"><FolderOpenOutline /></NIcon>
+                </template>
+                {{ t('preferences.open-config-folder') }}
+              </NButton>
+              <NButton type="error" ghost @click="handleRestoreDefaults">
+                {{ t('preferences.restore-defaults') }}
+              </NButton>
+              <NButton type="error" ghost @click="handleFactoryReset">
+                {{ t('preferences.factory-reset') }}
+              </NButton>
+            </NSpace>
+          </NFormItem>
+          <NFormItem :label="t('preferences.settings-backup')">
+            <div class="settings-backup-row">
+              <NSpace>
+                <NButton type="primary" ghost :loading="exportingSettings" @click="handleExportSettings">
+                  <template #icon>
+                    <NIcon><CloudDownloadOutline /></NIcon>
+                  </template>
+                  {{ t('preferences.export-settings') }}
+                </NButton>
+                <NButton type="warning" ghost :loading="importingSettings" @click="handleImportSettings">
+                  <template #icon>
+                    <NIcon><CloudUploadOutline /></NIcon>
+                  </template>
+                  {{ t('preferences.import-settings') }}
+                </NButton>
+              </NSpace>
+            </div>
+          </NFormItem>
+        </template>
       </NForm>
     </div>
-
-    <ConfigTransfer :show="showConfigTransfer" @close="showConfigTransfer = false" />
 
     <!-- Database records viewer modal -->
     <NModal v-model:show="showDbBrowse" :mask-closable="true" transform-origin="center">

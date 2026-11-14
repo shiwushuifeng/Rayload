@@ -11,7 +11,7 @@ release.
 - Android package: `com.shiwushuifeng.rayload`
 - Target API: 37 (Android 17)
 - Minimum API: 24 (Android 7)
-- Supported production ABI: `arm64-v8a`
+- Supported production ABIs: `arm64-v8a` (primary) and `x86_64` (full build)
 - Work on the current branch. Do not spawn agents unless the user explicitly
   requests them.
 
@@ -112,3 +112,16 @@ the user.
 - Preserve the MIT license and a concise attribution to the original Rayburst
   author in README and in-app notices.
 - Local verification never publishes to a store or starts release automation.
+
+## Reporting discipline (mandatory)
+
+Every phase completion, fatal error that stops work, and finished package build
+MUST be reported through the DingTalk helper:
+
+```bash
+printf '%s\n' "### 【心跳】..." | ./notify_dingtalk.sh
+```
+
+The helper reads markdown from stdin (it does not take a message argument).
+Never skip this step; include what changed, what was verified, and what is
+still pending in the report.

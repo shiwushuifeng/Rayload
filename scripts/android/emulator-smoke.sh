@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Headless emulator smoke test for the x86_64 debug-side build of Rayload.
-# The production APK remains ARM64-only; this script builds a separate
-# emulator APK and never touches release/current/Rayload-*-arm64-v8a.apk.
+# Headless emulator smoke test for the lite x86_64 build. Release x86_64
+# artifacts are built separately by scripts/android/build-x86_64.sh.
 
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 ANDROID_HOME=${ANDROID_HOME:-"$ROOT/.toolchains/android-sdk"}
@@ -84,7 +83,7 @@ if [ "${BOOTED:-}" != "1" ]; then
 fi
 
 VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' "$ROOT/src-tauri/Cargo.toml" | head -n 1)
-DEFAULT_APK="$ROOT/release/current/Rayload-v${VERSION}-x86_64-emulator.apk"
+DEFAULT_APK="$ROOT/release/current/Rayload-v${VERSION}-x86_64-smoke.apk"
 
 if [ "$BUILD" = "1" ]; then
   ln -sfn ../../.toolchains/binaries/aria2-next-android-x86_64 \

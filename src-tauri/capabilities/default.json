@@ -27,6 +27,7 @@
     "os:default",
     "fs:allow-remove",
     "fs:allow-exists",
+    "fs:allow-read-text-file",
     {
       "identifier": "fs:scope",
       "allow": [

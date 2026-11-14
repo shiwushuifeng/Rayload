@@ -1,12 +1,13 @@
 <script setup lang="ts">
 /** @fileoverview Settings block for checking GitHub releases on Android. */
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { getVersion } from '@tauri-apps/api/app'
 import { openUrl } from '@tauri-apps/plugin-opener'
 import { NButton, NDivider, NFormItem, NIcon, NSwitch, NTag } from 'naive-ui'
 import { CloudDownloadOutline, OpenOutline } from '@vicons/ionicons5'
 import { usePreferenceStore } from '@/stores/preference'
+import { useBuildInfoStore } from '@/stores/build'
 import { useAppMessage } from '@/composables/useAppMessage'
 import { checkGithubUpdate, type GithubUpdateInfo } from '@/api/githubUpdate'
 import { getErrorMessage } from '@shared/utils/errorMessage'
@@ -21,6 +22,7 @@ const emit = defineEmits<{ 'update:stableOnly': [value: boolean] }>()
 
 const { t } = useI18n()
 const preferenceStore = usePreferenceStore()
+const buildInfo = useBuildInfoStore()
 const message = useAppMessage()
 const checking = ref(false)
 const currentVersion = ref('')
@@ -34,6 +36,10 @@ const errorSummary = computed(() =>
 )
 
 async function check(): Promise<void> {
+  if (buildInfo.info.fdroid) {
+    message.info(t('preferences.fdroid-update-hint'))
+    return
+  }
   if (checking.value) return
   checking.value = true
   result.value = null
@@ -51,6 +57,8 @@ async function check(): Promise<void> {
   }
 }
 
+onMounted(() => void buildInfo.load())
+
 async function openRelease(): Promise<void> {
   if (!result.value?.releaseUrl) return
   try {
@@ -63,53 +71,60 @@ async function openRelease(): Promise<void> {
 
 <template>
   <NDivider title-placement="left">{{ t('preferences.auto-update') }}</NDivider>
-  <NFormItem>
-    <template #label>
-      <span class="android-update__label">{{ t('preferences.update-stable-only') }}</span>
-    </template>
-    <NSwitch :value="stableOnly" @update:value="(value: boolean) => emit('update:stableOnly', value)" />
-  </NFormItem>
-  <NFormItem :label="t('preferences.check-update')">
-    <div class="android-update__actions">
-      <NButton :loading="checking" @click="check">
-        <template #icon>
-          <NIcon :size="14"><CloudDownloadOutline /></NIcon>
-        </template>
-        {{ checking ? t('preferences.checking-update') : t('preferences.check-update-now') }}
-      </NButton>
-      <span v-if="currentVersion" class="android-update__current">
-        {{ t('preferences.current-version', { version: currentVersion }) }}
-      </span>
-    </div>
-  </NFormItem>
-  <NFormItem :show-label="false">
-    <div class="android-update__result">
-      <div v-if="result" class="android-update__card">
-        <div class="android-update__card-heading">
-          <strong v-if="result.updateAvailable">
-            {{ t('preferences.update-available', { version: result.version }) }}
-          </strong>
-          <strong v-else>{{ t('preferences.update-up-to-date') }}</strong>
-          <NTag v-if="result.prerelease" size="small" type="warning">Beta / Pre-release</NTag>
-        </div>
-        <p v-if="result.updateAvailable">{{ t('preferences.update-release-hint', { version: result.version }) }}</p>
-        <p v-else>{{ t('preferences.update-up-to-date-hint', { version: currentVersion }) }}</p>
-        <NButton v-if="result.updateAvailable" size="small" type="primary" @click="openRelease">
+  <template v-if="buildInfo.info.fdroid">
+    <NFormItem :label="t('preferences.check-update')">
+      <span class="android-update__current">{{ t('preferences.fdroid-update-hint') }}</span>
+    </NFormItem>
+  </template>
+  <template v-else>
+    <NFormItem>
+      <template #label>
+        <span class="android-update__label">{{ t('preferences.update-stable-only') }}</span>
+      </template>
+      <NSwitch :value="stableOnly" @update:value="(value: boolean) => emit('update:stableOnly', value)" />
+    </NFormItem>
+    <NFormItem :label="t('preferences.check-update')">
+      <div class="android-update__actions">
+        <NButton :loading="checking" @click="check">
           <template #icon>
-            <NIcon :size="14"><OpenOutline /></NIcon>
+            <NIcon :size="14"><CloudDownloadOutline /></NIcon>
           </template>
-          {{ t('preferences.update-open-release') }}
+          {{ checking ? t('preferences.checking-update') : t('preferences.check-update-now') }}
         </NButton>
+        <span v-if="currentVersion" class="android-update__current">
+          {{ t('preferences.current-version', { version: currentVersion }) }}
+        </span>
       </div>
-      <FriendlyErrorNotice
-        v-if="errorRaw"
-        :raw="errorRaw"
-        source="github-update-check"
-        :extra="{ stableOnly: String(stableOnly) }"
-        :summary="errorSummary"
-      />
-    </div>
-  </NFormItem>
+    </NFormItem>
+    <NFormItem :show-label="false">
+      <div class="android-update__result">
+        <div v-if="result" class="android-update__card">
+          <div class="android-update__card-heading">
+            <strong v-if="result.updateAvailable">
+              {{ t('preferences.update-available', { version: result.version }) }}
+            </strong>
+            <strong v-else>{{ t('preferences.update-up-to-date') }}</strong>
+            <NTag v-if="result.prerelease" size="small" type="warning">Beta / Pre-release</NTag>
+          </div>
+          <p v-if="result.updateAvailable">{{ t('preferences.update-release-hint', { version: result.version }) }}</p>
+          <p v-else>{{ t('preferences.update-up-to-date-hint', { version: currentVersion }) }}</p>
+          <NButton v-if="result.updateAvailable" size="small" type="primary" @click="openRelease">
+            <template #icon>
+              <NIcon :size="14"><OpenOutline /></NIcon>
+            </template>
+            {{ t('preferences.update-open-release') }}
+          </NButton>
+        </div>
+        <FriendlyErrorNotice
+          v-if="errorRaw"
+          :raw="errorRaw"
+          source="github-update-check"
+          :extra="{ stableOnly: String(stableOnly) }"
+          :summary="errorSummary"
+        />
+      </div>
+    </NFormItem>
+  </template>
 </template>
 
 <style scoped>

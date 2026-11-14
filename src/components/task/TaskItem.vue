@@ -3,7 +3,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { TASK_STATUS } from '@shared/constants'
-import { NIcon } from 'naive-ui'
+import { NButton, NIcon } from 'naive-ui'
 import LinearProgress from '@/components/common/LinearProgress.vue'
 import MTooltip from '@/components/common/MTooltip.vue'
 import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
@@ -19,6 +19,7 @@ import {
   TimeOutline,
   ListOutline,
   PauseOutline,
+  PlayOutline,
 } from '@vicons/ionicons5'
 import { useTaskCardModel } from '@/composables/useTaskCardModel'
 import { useTaskFileIcon } from '@/composables/useTaskFileIcon'
@@ -91,7 +92,9 @@ const displayErrorMessage = computed(() => props.task.errorMessage || props.task
 const friendlyErrorMessage = computed(() =>
   displayErrorMessage.value ? t(`task.error-friendly-${friendlyErrorKind(displayErrorMessage.value)}`) : '',
 )
+const remoteOffline = computed(() => Boolean(props.task.remote && !props.task.remote.online))
 const displayStatus = computed(() => {
+  if (remoteOffline.value) return t('task.remote-offline')
   if (fileMissing.value)
     return fileState.value === 'inaccessible' ? t('task.file-inaccessible') : t('task.file-missing')
   if (statusBadge.value) return statusBadge.value.label
@@ -111,6 +114,7 @@ const displayStatus = computed(() => {
   }
 })
 const statusTextStyle = computed(() => {
+  if (remoteOffline.value) return { color: 'var(--m3-on-surface-variant)' }
   if (fileMissing.value) return { color: 'var(--m3-error)' }
   switch (statusBadge.value?.tone) {
     case 'success':
@@ -184,6 +188,7 @@ const { fileMissing, fileState } = useTaskFileMissing(taskRef)
 // The rail orders the list; the rest of a finished card drags its file out.
 const contentDraggable = computed(
   () =>
+    !props.task.remote &&
     !isAndroid.value &&
     !fileMissing.value &&
     !props.actionPending &&
@@ -196,8 +201,11 @@ const contentDraggable = computed(
     class="task-item"
     :class="{
       'is-sharing': isSharing,
+      'is-remote-offline': remoteOffline,
     }"
-    @dblclick="!fileMissing && !actionPending && canOpenTaskContent(task, $event) && emit('open-file', task)"
+    @dblclick="
+      !task.remote && !fileMissing && !actionPending && canOpenTaskContent(task, $event) && emit('open-file', task)
+    "
   >
     <div class="task-body" :draggable="contentDraggable" @dragstart="dragTaskContent(task, $event)">
       <div class="task-primary">
@@ -210,6 +218,9 @@ const contentDraggable = computed(
           <NIcon :size="18"><component :is="fileIcon.icon" /></NIcon>
         </span>
         <div class="task-heading">
+          <span v-if="task.remote" class="remote-badge">{{
+            t('task.remote-badge', { name: task.remote.deviceName })
+          }}</span>
           <MTooltip placement="bottom-start">
             <template #trigger>
               <div class="task-name">
@@ -252,7 +263,26 @@ const contentDraggable = computed(
           <span>{{ displayStatus }}</span>
         </span>
       </div>
-      <div class="task-actions-row">
+      <div v-if="task.remote" class="task-actions-row remote-actions">
+        <NButton
+          size="small"
+          secondary
+          :disabled="remoteOffline || actionPending"
+          @click="task.status === TASK_STATUS.PAUSED ? emit('resume', task) : emit('pause', task)"
+        >
+          <template #icon>
+            <NIcon><component :is="task.status === TASK_STATUS.PAUSED ? PlayOutline : PauseOutline" /></NIcon>
+          </template>
+          {{ task.status === TASK_STATUS.PAUSED ? t('task.resume-task') : t('task.pause-task') }}
+        </NButton>
+        <NButton size="small" secondary type="error" :disabled="actionPending" @click="emit('delete', task)">
+          <template #icon>
+            <NIcon><TrashOutline /></NIcon>
+          </template>
+          {{ t('task.delete-task') }}
+        </NButton>
+      </div>
+      <div v-else class="task-actions-row">
         <TaskItemActions
           :task="task"
           :file-missing="fileMissing"
@@ -312,6 +342,25 @@ const contentDraggable = computed(
 }
 .task-item.is-sharing::before {
   opacity: 1;
+}
+.task-item.is-remote-offline {
+  opacity: 0.55;
+  border-left-color: var(--m3-outline);
+}
+.remote-badge {
+  display: inline-block;
+  margin-bottom: 2px;
+  padding: 1px 7px;
+  color: var(--m3-on-tertiary-container);
+  background: var(--m3-tertiary-container);
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 17px;
+}
+.remote-actions {
+  display: flex;
+  gap: 8px;
 }
 .task-body {
   display: flex;

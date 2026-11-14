@@ -3,18 +3,31 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NDivider, NIcon, NSwitch } from 'naive-ui'
-import { InformationCircleOutline, StatsChartOutline, SunnyOutline, TrashOutline } from '@vicons/ionicons5'
+import {
+  ExtensionPuzzleOutline,
+  InformationCircleOutline,
+  StatsChartOutline,
+  SunnyOutline,
+  TrashOutline,
+  WifiOutline,
+} from '@vicons/ionicons5'
 import { useTaskDestinations } from '@/components/layout/navigation'
+import { useBuildInfoStore } from '@/stores/build'
 import { type NavigationItemKey, useNavigationVisibility } from '@/composables/useNavigationVisibility'
 
 const { t } = useI18n()
 const taskDestinations = useTaskDestinations()
+const buildInfo = useBuildInfoStore()
 const { visibility, setItemVisible } = useNavigationVisibility()
 
 const items = computed(() => [
   ...taskDestinations.value,
   { key: 'keep-awake' as const, label: t('navigation.keep-awake'), icon: SunnyOutline },
   { key: 'statistics' as const, label: t('navigation.statistics'), icon: StatsChartOutline },
+  { key: 'lan-devices' as const, label: t('navigation.lan-devices'), icon: WifiOutline },
+  ...(buildInfo.info.pluginEngine
+    ? [{ key: 'plugins' as const, label: t('navigation.plugins'), icon: ExtensionPuzzleOutline }]
+    : []),
   { key: 'trash' as const, label: t('navigation.trash'), icon: TrashOutline },
   { key: 'about' as const, label: t('navigation.about'), icon: InformationCircleOutline },
 ])

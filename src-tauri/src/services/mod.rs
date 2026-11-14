@@ -25,6 +25,8 @@ pub mod external_input;
 pub mod float_window;
 pub mod frontend_action;
 pub mod http_api;
+#[cfg_attr(not(feature = "plugin_engine"), allow(dead_code))]
+pub mod lan_api;
 pub mod media;
 pub mod monitor;
 pub mod notification;

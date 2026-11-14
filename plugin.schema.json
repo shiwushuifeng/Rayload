@@ -1,0 +1,278 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/shiwushuifeng/Rayload/plugin.schema.json",
+  "title": "Rayload plugin manifest",
+  "description": "JSON manifest for Rayload rule and script plugins.",
+  "type": "object",
+  "required": ["name", "type", "runtime"],
+  "additionalProperties": true,
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120,
+      "description": "Human-readable plugin name."
+    },
+    "version": {
+      "type": "string",
+      "description": "Plugin version, preferably SemVer."
+    },
+    "description": {
+      "type": "string",
+      "description": "Short description shown in the plugin list."
+    },
+    "author": {
+      "type": "string"
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["rule", "script"],
+      "description": "Rule plugins are executed by Rust. Script plugins run in a child shell process."
+    },
+    "runtime": {
+      "type": "string",
+      "enum": ["http", "download", "script", "echo"],
+      "description": "http: rule request runner; download: hand a trusted release URL to Aria2; script: child shell plugin; echo: host protocol probe."
+    },
+    "permissions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/permission"
+      },
+      "default": [],
+      "description": "Capabilities the plugin declares. The user grants a subset during import."
+    },
+    "allowedDomains": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^(\\*\\.)?[A-Za-z0-9](?:[A-Za-z0-9.-]*[A-Za-z0-9])?$"
+      },
+      "default": [],
+      "description": "Exact hosts or wildcard subdomains such as *.example.com. Schemes, ports, paths and IP literals are rejected."
+    },
+    "grantedPermissions": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/permission"
+      },
+      "readOnly": true,
+      "description": "Written by Rayload after the user approves the import. Must be a subset of permissions."
+    },
+    "entry": {
+      "type": "string",
+      "pattern": "^[^/\\\\]+\\.sh$",
+      "description": "Required for script plugins. A .sh file stored beside the manifest."
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://github\\.com/[^/]+/[^/]+/releases/download/",
+      "description": "Direct Rayload release URL for runtime=download."
+    },
+    "repository": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$",
+      "description": "For runtime=download without url: owner/repo whose latest GitHub release is resolved at test time."
+    },
+    "asset": {
+      "type": "string",
+      "description": "For runtime=download with repository: substring used to pick the APK asset from the latest release."
+    },
+    "testUrl": {
+      "type": "string",
+      "format": "uri",
+      "description": "Optional URL used by the Test button for runtime=http."
+    },
+    "headers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Optional test headers. Cookie is always stripped unless cookies is granted."
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/rule"
+      },
+      "description": "Ordered rule list for runtime=http rule plugins."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "permissions": {
+            "contains": {
+              "const": "network"
+            }
+          }
+        },
+        "required": ["permissions"]
+      },
+      "then": {
+        "required": ["allowedDomains"],
+        "properties": {
+          "allowedDomains": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "permissions": {
+            "contains": {
+              "const": "cookies"
+            }
+          }
+        },
+        "required": ["permissions"]
+      },
+      "then": {
+        "properties": {
+          "permissions": {
+            "contains": {
+              "const": "network"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "type": {
+            "const": "script"
+          }
+        },
+        "required": ["type"]
+      },
+      "then": {
+        "required": ["entry"]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "runtime": {
+            "const": "download"
+          }
+        },
+        "required": ["runtime"]
+      },
+      "then": {
+        "required": ["url"]
+      }
+    }
+  ],
+  "$defs": {
+    "permission": {
+      "type": "string",
+      "enum": ["network", "cookies", "modify_headers", "read_clipboard"]
+    },
+    "rule": {
+      "type": "object",
+      "required": ["match", "request", "extract"],
+      "additionalProperties": false,
+      "properties": {
+        "match": {
+          "type": "string",
+          "description": "Rust regex matched against the submitted share URL."
+        },
+        "request": {
+          "type": "object",
+          "required": ["url"],
+          "additionalProperties": false,
+          "properties": {
+            "method": {
+              "type": "string",
+              "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"],
+              "default": "GET"
+            },
+            "url": {
+              "type": "string",
+              "description": "Supports {1} capture placeholders and {{variable}} placeholders."
+            },
+            "headers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "body": {
+              "type": "string",
+              "description": "Request body with the same placeholders as url."
+            }
+          }
+        },
+        "extract": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "json": {
+              "type": "string",
+              "description": "Dot path such as data.list.0.url."
+            },
+            "regex": {
+              "type": "string"
+            },
+            "group": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 1
+            }
+          },
+          "oneOf": [
+            {
+              "required": ["json"]
+            },
+            {
+              "required": ["regex"]
+            }
+          ]
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "name": "Example cloud share parser",
+      "version": "1.0.0",
+      "description": "POSTs an extraction code and reads the download URL from JSON.",
+      "type": "rule",
+      "runtime": "http",
+      "permissions": ["network", "cookies", "modify_headers"],
+      "allowedDomains": ["pan.example.com", "*.example-cdn.com"],
+      "grantedPermissions": ["network", "cookies", "modify_headers"],
+      "testUrl": "https://pan.example.com/s/abc123",
+      "rules": [
+        {
+          "match": "^https://pan\\.example\\.com/s/([A-Za-z0-9]+)",
+          "request": {
+            "method": "POST",
+            "url": "https://pan.example.com/api/share/{1}/verify",
+            "headers": {
+              "Content-Type": "application/x-www-form-urlencoded",
+              "Referer": "https://pan.example.com/"
+            },
+            "body": "pwd={{pwd}}&share={1}"
+          },
+          "extract": {
+            "json": "data.downloadUrl"
+          }
+        }
+      ]
+    }
+  ]
+}

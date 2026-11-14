@@ -6,16 +6,18 @@ import {
   requestAndroidBatteryOptimizationExemption,
   requestAndroidClipboardPermission,
   requestAndroidInstallPermission,
+  requestAndroidLocalNetworkPermission,
   requestAndroidNotificationPermission,
   requestAndroidStoragePermission,
   type AndroidPermissionStatus,
 } from '@/composables/useAndroidNative'
 
-export type AndroidPermissionKey = 'storage' | 'notification' | 'battery' | 'install' | 'clipboard'
+export type AndroidPermissionKey = 'storage' | 'notification' | 'local-network' | 'battery' | 'install' | 'clipboard'
 
 export const ANDROID_PERMISSION_KEYS: readonly AndroidPermissionKey[] = [
   'storage',
   'notification',
+  'local-network',
   'battery',
   'install',
   'clipboard',
@@ -41,6 +43,9 @@ export function useAndroidPermissions() {
         break
       case 'notification':
         requestAndroidNotificationPermission()
+        break
+      case 'local-network':
+        requestAndroidLocalNetworkPermission()
         break
       case 'battery':
         requestAndroidBatteryOptimizationExemption()

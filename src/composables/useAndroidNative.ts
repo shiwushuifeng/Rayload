@@ -12,6 +12,8 @@ interface RayloadNativeBridge {
   requestStoragePermission(): void
   notificationPermissionStatus(): string
   requestNotificationPermission(): void
+  localNetworkPermissionStatus(): string
+  requestLocalNetworkPermission(): void
   batteryOptimizationStatus(): string
   requestBatteryOptimizationExemption(): void
   installPermissionStatus(): string
@@ -47,7 +49,7 @@ export function getRayloadNativeBridge(): RayloadNativeBridge | null {
 }
 
 export function readAndroidPermissionStatuses(): Record<
-  'storage' | 'notification' | 'battery' | 'install' | 'clipboard',
+  'storage' | 'notification' | 'local-network' | 'battery' | 'install' | 'clipboard',
   AndroidPermissionStatus
 > {
   const bridge = getRayloadNativeBridge()
@@ -55,6 +57,7 @@ export function readAndroidPermissionStatuses(): Record<
     return {
       storage: 'unavailable',
       notification: 'unavailable',
+      'local-network': 'unavailable',
       battery: 'unavailable',
       install: 'unavailable',
       clipboard: 'unavailable',
@@ -70,6 +73,7 @@ export function readAndroidPermissionStatuses(): Record<
   return {
     storage: read(() => bridge.storagePermissionStatus()),
     notification: read(() => bridge.notificationPermissionStatus()),
+    'local-network': read(() => bridge.localNetworkPermissionStatus()),
     battery: read(() => bridge.batteryOptimizationStatus()),
     install: read(() => bridge.installPermissionStatus()),
     clipboard: read(() => bridge.clipboardPermissionStatus()),
@@ -82,6 +86,19 @@ export function requestAndroidStoragePermission(): void {
 
 export function requestAndroidNotificationPermission(): void {
   getRayloadNativeBridge()?.requestNotificationPermission()
+}
+
+/** Android 17 runtime grant required for LAN discovery and peer connections. */
+export function readAndroidLocalNetworkPermissionStatus(): AndroidPermissionStatus {
+  try {
+    return normalizeStatus(getRayloadNativeBridge()?.localNetworkPermissionStatus())
+  } catch {
+    return 'unavailable'
+  }
+}
+
+export function requestAndroidLocalNetworkPermission(): void {
+  getRayloadNativeBridge()?.requestLocalNetworkPermission()
 }
 
 export function requestAndroidBatteryOptimizationExemption(): void {

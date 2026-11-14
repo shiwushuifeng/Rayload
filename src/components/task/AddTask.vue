@@ -4,12 +4,14 @@ import { invoke } from '@tauri-apps/api/core'
  * @fileoverview Add task dialog: dual-tab layout (URI / Torrent) with AutoAnimate list transitions.
  * It fills the standalone add-task window.
  */
-import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { h, ref, computed, watch, onMounted, onBeforeUnmount, type VNodeChild } from 'vue'
 import { listen, type UnlistenFn } from '@tauri-apps/api/event'
 import { useI18n } from 'vue-i18n'
 import { useAppStore } from '@/stores/app'
 import { useTaskStore } from '@/stores/task'
 import { usePreferenceStore } from '@/stores/preference'
+import { useBuildInfoStore } from '@/stores/build'
+import { useLanStore, type LanDevice } from '@/stores/lan'
 import { usePreferenceNumericValidation } from '@/composables/usePreferenceNumericValidation'
 import { useHttpAuthStore } from '@/stores/httpAuth'
 import { useFilenamePreview } from '@/composables/useFilenamePreview'
@@ -71,6 +73,8 @@ import {
   NInput,
   NInputNumber,
   NButton,
+  NSelect,
+  type SelectOption,
   NSpace,
   NIcon,
   NInputGroup,
@@ -82,13 +86,17 @@ import {
   useDialog,
 } from 'naive-ui'
 import { useAppMessage } from '@/composables/useAppMessage'
+import { deviceArchLabel } from '@/composables/usePlatform'
 import type { BatchItem, BatchItemKind, BtFileSelectionItem, UserAgentProfile } from '@shared/types'
 import {
   FolderOpenOutline,
   CloudUploadOutline,
+  InformationCircleOutline,
   LinkOutline,
   ClipboardOutline,
   CloseCircleOutline,
+  PhonePortraitOutline,
+  WifiOutline,
 } from '@vicons/ionicons5'
 import { vMotionAutoAnimate } from '@/directives/motionAutoAnimate'
 import { defaultMediaOptions, mediaOutputHint } from '@shared/utils/media'
@@ -116,6 +124,56 @@ const rememberedDirectory = computed(() =>
 )
 
 const activeTab = ref<BatchItemKind>(ADD_TASK_TYPE.URI)
+const buildInfo = useBuildInfoStore()
+const lan = useLanStore()
+const targetDevice = ref('local')
+const deviceOptions = computed(() => [
+  { label: t('task.handoff-local'), value: 'local' },
+  ...lan.devices.map((device) => ({
+    label: device.name,
+    value: device.id,
+    disabled: !device.online,
+  })),
+])
+function onDeviceMenuToggle(show: boolean): void {
+  if (show) void lan.refreshDevices()
+}
+
+function deviceForOption(option: SelectOption): LanDevice | undefined {
+  return lan.devices.find((device) => device.id === String(option.value ?? ''))
+}
+function renderDeviceOption(info: { option?: SelectOption }): VNodeChild {
+  const option = info.option
+  if (!option) return ''
+  const device = deviceForOption(option)
+  const online = device?.online ?? true
+  return h('div', { class: ['device-option', { 'device-option--offline': !online }] }, [
+    h(
+      NIcon,
+      { size: 20, class: 'device-option__icon' },
+      {
+        default: () => h(device ? WifiOutline : PhonePortraitOutline),
+      },
+    ),
+    h('div', { class: 'device-option__copy' }, [
+      h('strong', { class: 'device-option__name' }, device?.name ?? t('task.handoff-local')),
+      h(
+        'span',
+        { class: 'device-option__meta' },
+        device
+          ? `${deviceArchLabel(device.arch) || '—'} · ${online ? t('lan-devices.online') : t('lan-devices.offline')}`
+          : '',
+      ),
+    ]),
+    h('span', { class: ['device-option__dot', online ? 'online' : 'offline'], 'aria-hidden': 'true' }),
+  ])
+}
+function renderDeviceLabel(option: SelectOption): VNodeChild {
+  return renderDeviceOption({ option })
+}
+const selectedDeviceName = computed(() => lan.devices.find((device) => device.id === targetDevice.value)?.name ?? '')
+/** Torrents always download here, so a stale device choice must not hide options. */
+const remoteTarget = computed(() => activeTab.value === ADD_TASK_TYPE.URI && targetDevice.value !== 'local')
 const tabsRef = ref<InstanceType<typeof import('naive-ui').NTabs> | null>(null)
 
 /**
@@ -573,6 +631,8 @@ let unlistenWithdrawn: UnlistenFn | null = null
 onBeforeUnmount(() => unlistenWithdrawn?.())
 
 onMounted(async () => {
+  void buildInfo.load()
+  void lan.refreshDevices()
   unlistenWithdrawn = await listen<{ id: string }>('downloads:handoff-expired', ({ payload }) =>
     withdrawRequest(payload.id),
   )
@@ -822,6 +882,7 @@ function reset() {
     speedLimit: '',
     checksum: '',
   })
+  targetDevice.value = 'local'
   syncDefaultTaskProxy()
   userAgentManuallyEdited.value = false
   submitting.value = false
@@ -908,6 +969,18 @@ async function duplicatesToSkip(): Promise<DuplicateSkipResult | null> {
   }
 }
 
+/** Sends every URI to the paired device; nothing is created locally. */
+async function submitToDevice(deviceId: string): Promise<void> {
+  const uris = normalizeUriLines(form.value.uris)
+  const singleName = uris.length === 1 ? outputName().trim() : ''
+  for (const url of uris) {
+    await lan.handoff(deviceId, url, singleName || null)
+  }
+  message.success(t('task.handoff-sent', { device: selectedDeviceName.value }))
+  await handleClose(false)
+  emit('submitted')
+}
+
 async function handleSubmit() {
   if (submitting.value || !canSubmit.value) return
   submitting.value = true
@@ -927,6 +1000,11 @@ async function handleSubmit() {
     if (outsideOut !== undefined) {
       message.error(t('task.input-out-outside', { out: outsideOut }), { closable: true })
       submitting.value = false
+      return
+    }
+
+    if (activeTab.value === ADD_TASK_TYPE.URI && targetDevice.value !== 'local') {
+      await submitToDevice(targetDevice.value)
       return
     }
 
@@ -1219,6 +1297,20 @@ defineExpose({ dismiss: () => handleClose(), reset, prepared: () => opening })
           </NTabPane>
         </NTabs>
 
+        <NFormItem
+          v-if="activeTab !== ADD_TASK_TYPE.TORRENT && buildInfo.info.lan"
+          class="handoff-target"
+          :label="t('task.handoff-target') + ':'"
+        >
+          <NSelect
+            v-model:value="targetDevice"
+            :options="deviceOptions"
+            :render-label="renderDeviceLabel"
+            :disabled="submitting"
+            @update:show="onDeviceMenuToggle"
+          />
+        </NFormItem>
+
         <!-- ── Download settings: always visible ──────────────── -->
         <div class="download-settings" data-reveal="2">
           <NFormItem v-if="activeTab !== ADD_TASK_TYPE.TORRENT" :label="t('task.task-out') + ':'">
@@ -1238,7 +1330,7 @@ defineExpose({ dismiss: () => handleClose(), reset, prepared: () => opening })
               }}</NButton>
             </NInputGroup>
           </NFormItem>
-          <NFormItem :label="dirLabel + ':'">
+          <NFormItem v-if="!remoteTarget" :label="dirLabel + ':'">
             <div style="width: 100%">
               <NInputGroup>
                 <NInput
@@ -1271,7 +1363,16 @@ defineExpose({ dismiss: () => handleClose(), reset, prepared: () => opening })
               </div>
             </div>
           </NFormItem>
+          <div v-else class="handoff-location-hint">
+            <NIcon :size="16"><InformationCircleOutline /></NIcon>
+            <span>{{ t('task.handoff-dir-hint', { device: selectedDeviceName }) }}</span>
+          </div>
+          <div v-if="remoteTarget" class="handoff-location-hint">
+            <NIcon :size="16"><InformationCircleOutline /></NIcon>
+            <span>{{ t('task.handoff-advanced-unavailable') }}</span>
+          </div>
           <AdvancedOptions
+            v-else
             v-model:show="showAdvanced"
             v-model:authorization="form.authorization"
             v-model:http-auth-username="form.httpAuthUsername"
@@ -1575,5 +1676,69 @@ defineExpose({ dismiss: () => handleClose(), reset, prepared: () => opening })
 .category-hint-leave-to {
   opacity: 0;
   transform: translateY(-4px);
+}
+
+/* NSelect teleports its menu to body, so these styles stay unscoped. */
+.handoff-location-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  color: var(--m3-on-surface-variant);
+  background: var(--m3-surface-container-low);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+.handoff-location-hint .n-icon {
+  flex: none;
+  margin-top: 2px;
+}
+.device-option {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 10px;
+  gap: 10px;
+  align-items: center;
+  min-height: 44px;
+  padding: 4px 2px;
+}
+.device-option__icon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  color: var(--m3-on-surface-variant);
+  background: var(--m3-surface-container-high);
+  border-radius: 10px;
+}
+.device-option__copy {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+.device-option__name,
+.device-option__meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.device-option__name {
+  font-size: var(--font-size-sm);
+}
+.device-option__meta {
+  color: var(--m3-on-surface-variant);
+  font-size: 11px;
+}
+.device-option__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--m3-outline);
+}
+.device-option__dot.online {
+  background: color-mix(in srgb, var(--m3-primary) 62%, var(--m3-outline));
+}
+.device-option--offline {
+  opacity: 0.58;
 }
 </style>

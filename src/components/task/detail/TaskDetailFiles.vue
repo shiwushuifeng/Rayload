@@ -78,7 +78,6 @@ const columns = computed(() => {
           label: t('task.file-name'),
           tooltip: props.tooltip,
           onCopy: props.onCopy,
-          ellipsis: true,
         }),
     },
     {

@@ -18,6 +18,8 @@ describe('triggerHaptic', () => {
       requestStoragePermission: vi.fn(),
       notificationPermissionStatus: vi.fn(() => 'denied'),
       requestNotificationPermission: vi.fn(),
+      localNetworkPermissionStatus: vi.fn(() => 'denied'),
+      requestLocalNetworkPermission: vi.fn(),
       batteryOptimizationStatus: vi.fn(() => 'denied'),
       requestBatteryOptimizationExemption: vi.fn(),
       installPermissionStatus: vi.fn(() => 'denied'),

@@ -1,3 +1,218 @@
+# Rayload v1.0.4
+
+## 中文
+
+Rayload `v1.0.4` 新增局域网设备互联与多设备数据视图，并拆分出
+轻量版、完整版与 F-Droid 版三个构建变体。
+
+### 局域网设备
+
+- 新增双向配对：接收端弹出包含发起方设备名与公钥指纹的确认框，双方确认后
+  互相保存；任意一方都能推送任务和查看统计。
+- 新增“局域网设备”页面：可设置本机名称、配对账号密码，支持扫码添加、
+  扫描局域网与手动输入地址三种配对方式。
+- 已配对设备支持在线状态检测、备注、手动移除与凭据保存。
+- 新建任务弹窗新增“目标设备”下拉框。选择其他设备后，链接通过局域网
+  直接推送到该设备，本机不创建任务；选择“本机”时行为不变。
+- 目标为远端设备时隐藏代理、Cookie 等高级选项，并提示在目标设备上配置。
+
+### 多设备任务与统计
+
+- 任务列表同时展示本机与已配对设备的远程任务，远程任务支持暂停、继续
+  与删除，设备离线时状态降级显示。
+- 数据统计页新增“本机”与“全部设备”两个 Tab。全部设备视图汇总各设备的
+  实时下载速度与活动任务数。
+
+### 插件与权限
+
+- 规则插件运行在宿主中介的 JSON 沙箱内：不执行任意代码，所有网络请求都经过
+  权限与域名白名单校验；脚本插件仍需显式确认高风险提示。
+- 插件清单新增 `permissions` 权限作用域：`network`、`cookies`、
+  `modify_headers`、`read_clipboard`；`network` 必须配合 `allowedDomains`
+  使用，`cookies` 必须同时声明 `network`。
+- 导入插件时按风险分级展示权限：常规权限绿色，Cookie 与剪贴板权限红色
+  高亮，必须勾选“我已知晓风险”才能导入；规则插件与脚本插件显示不同的
+  第三方风险提示。
+- Rust 宿主在执行时再次校验声明与授权交集，逐请求校验域名，强制剥离
+  `Cookie`、`Host`、`Content-Length` 等头部；未授予 `cookies` 时的任何
+  Cookie 头都会被移除。
+- 新增 `plugin.schema.json` 与中英双语 `PLUGIN_DEVELOPMENT_GUIDE.md`，
+  包含完整 Schema、POST 提取码示例、`{{password}}` 变量注入与脚本协议说明。
+- 内置示例插件改为下载 Rayload 自身安装包，自动匹配当前 ABI 的最新 Release。
+
+### 无界面 CLI
+
+- `ray` / `rayload` 重建为终端下载控制台：YAML 配置、交互式 `ray init`、
+  后台守护进程、systemd 安装、树状状态、任务增删暂停、日志跟踪、设备审批
+  与 `--json` 自动化输出。
+- 新增 `ray add/list/pause/resume/rm/log/plugin list` 与
+  `ray -d pending/allow/reject`。
+- 简写命令统一为 `ray -s`、`ray -a`、`ray -c`、`ray -d`；`ray -d list` 与
+  `ray -s` 使用 ANSI 彩色树状图，在线绿色、离线红色。
+- `ray start -d` 写入 `<data-dir>/rayload.log`，`ray log -f` 可实时跟踪；
+  `ray install` 注册 systemd 开机自启服务。
+
+### 合规与引导
+
+- 首次启动向导新增《用户使用协议》与《隐私政策》强制勾选，未同意时无法
+  完成向导。
+- 关于页新增中英双语免责声明；README 顶部新增声明区块。
+- 设置重组：下载、BitTorrent、ED2K、网络合并为“下载器”设置，文件分类
+  独立成页；导航栏自定义与悬浮球开关迁入向导并附带说明。
+
+### 修复
+
+- 修复局域网设置页与局域网设备页无法滑动的问题。
+- 修复多端口设备在局域网列表中被拆分为多条记录的问题，改为按设备指纹聚合。
+- 修复文件详情二级页面文件名过长时显示不全的问题。
+- 修复全部设备统计缺少历史总量与折线图的问题。
+- 修复无界面 CLI 主机无法删除已完成远程任务的问题。
+- 修复空密码保存会清空管理账号、取消配对未清理对端状态、轮询失败静默无提示
+  的问题。
+
+### 安全加固
+
+- 配对改为一次性凭证交换反向公钥，不再传输管理密码；取消或拒绝会立即作废凭证。
+- 局域网任务推送限制在下载根目录内，并记录来源 IP、URL 与任务元数据审计日志。
+- 插件请求按声明与授权交集执行，逐请求校验域名，强制剥离 `Cookie`、`Host`、
+  `Content-Length` 等请求头；未授权 Cookie 永远不会注入。
+
+### 构建与更新
+
+- 新增 `lite`、`full`、`fdroid` 三个构建变体；局域网功能仅随 `full` 提供。
+- 新增 x86_64 发行包，固定使用 `full` 特性集，供 x86 设备与模拟器安装。
+- 发行产物统一命名为 `Rayload-v1.0.4-lite-arm64.apk`、
+  `Rayload-v1.0.4-full-arm64.apk`、`Rayload-v1.0.4-full-x86_64.apk`、
+  `Rayload-v1.0.4-fdroid-arm64.apk` 与
+  `rayload-cli-v1.0.4-linux-x86_64.tar.gz`。
+- F-Droid 版使用独立包名 `com.shiwushuifeng.rayload.fdroid` 与独立启动
+  快捷方式，可与 GitHub 版并存安装。
+- F-Droid 版彻底移除 GitHub 自更新：不加载更新插件，更新检查命令直接
+  返回“由 F-Droid 客户端提供更新”，设置页仅显示说明文案。
+
+### 构建信息
+
+- 版本：`1.0.4`
+- 目标 API：37（Android 17）
+- 最低 API：24（Android 7）
+- 生产 ABI：`arm64-v8a`、`x86_64`（完整版）
+- 发行版：Lite、Full、F-Droid、Linux CLI
+
+## English
+
+Rayload `v1.0.4` adds LAN device pairing and multi-device views, and splits the
+Android build into lite, full and F-Droid variants.
+
+### LAN devices
+
+- Mutual pairing: the receiver shows the initiator name and public-key
+  fingerprint, both sides confirm, and either device can push tasks or read
+  statistics afterwards.
+- A new LAN devices page configures the local name and host credentials, with QR
+  scanning, subnet discovery and manual IP/password pairing.
+- Trusted devices show online status, support notes and can be removed cleanly.
+- The new-task dialog gains a target-device selector. Choosing another device
+  hands the link off over the LAN without creating a local task; “This device”
+  keeps the existing behavior.
+- Proxy, Cookie and other advanced options are hidden for remote targets, with
+  guidance to configure them on the target device.
+
+### Remote tasks and statistics
+
+- The task list shows remote tasks from paired devices next to local tasks,
+  with pause, resume and remove actions and an offline fallback state.
+- Statistics gains “This device” and “All devices” tabs, the latter showing
+  live speed and active task counts for every paired device.
+
+### Plugins and permissions
+
+- Rule plugins run in a host-mediated JSON sandbox with no arbitrary code
+  execution; every network request is permission-checked and domain-limited.
+  Script plugins remain available behind an explicit high-risk warning.
+- Plugin manifests declare `permissions` scopes: `network`, `cookies`,
+  `modify_headers` and `read_clipboard`. `network` requires `allowedDomains`;
+  `cookies` requires `network` as well.
+- The import dialog grades permissions by risk: normal scopes in green,
+  Cookie and clipboard access highlighted in red. High-risk and script
+  imports require an explicit "I understand the risk" checkbox.
+- The Rust host intersects declared and granted permissions at runtime,
+  validates every request host and strips `Cookie`, `Host`,
+  `Content-Length`, `Connection`, `Transfer-Encoding` and
+  `Proxy-Authorization` headers unconditionally.
+- New `plugin.schema.json` and bilingual `PLUGIN_DEVELOPMENT_GUIDE.md` with the
+  full Schema, a POST extraction-code example, `{{password}}` variable
+  injection and the script plugin protocol.
+- The bundled sample plugin now downloads Rayload itself, resolving the latest
+  release asset for the current ABI.
+
+### Compliance and onboarding
+
+- The first-run wizard now requires accepting the User Agreement and Privacy
+  Policy before it can be completed.
+- The About page and README carry a bilingual disclaimer.
+- Settings are reorganized: Downloads, BitTorrent, ED2K and Network share one
+  Downloader page, file categories have their own page, and navigation
+  customization plus the floating-orb switch moved into the wizard with
+  per-item descriptions.
+
+### Fixed
+
+- LAN settings and the LAN devices page now scroll correctly.
+- Devices reachable on multiple ports are aggregated by fingerprint instead
+  of appearing as duplicate entries.
+- Long file names wrap correctly on the file-detail screen.
+- All-devices statistics now include historical totals and trend charts.
+- Headless CLI hosts now remove completed remote tasks instead of failing with
+  "active download not found".
+- Saving an empty password no longer clears the host account, cancelling a
+  pairing cleans up both sides, and polling failures now surface an error.
+
+### Security hardening
+
+- Pairing now uses a one-time ticket and exchanges reverse public keys instead
+  of transmitting the admin password; cancel and reject invalidate the ticket.
+- LAN handoff is confined to the download root and records source IP, URL and
+  task metadata in the audit log.
+- Plugin requests obey the declared/granted permission intersection and
+  `allowedDomains`; unsafe headers are stripped and ungranted cookies are never
+  injected.
+
+### Headless CLI
+
+- Rebuilt `ray` / `rayload` as a terminal download console with YAML config,
+  interactive `init`, daemon mode, systemd installation, tree status, task
+  control, log tailing, plugin listing, device approval and `--json` output.
+- Shorthand commands include `ray -s`, `ray -a`, `ray -c` and `ray -d`.
+  `ray -s` and `ray -d list` print ANSI tree output (green online, red offline).
+- `ray start -d` writes `<data-dir>/rayload.log`; `ray log -f` follows it, and
+  `ray install` registers the systemd service for boot startup.
+
+### Builds and updates
+
+- Separate `lite`, `full` and `fdroid` variants; LAN features ship only in
+  `full`.
+- Added an x86_64 release artifact that always uses the `full` feature set for
+  x86 devices and emulators.
+- Artifacts use the final names `Rayload-v1.0.4-lite-arm64.apk`,
+  `Rayload-v1.0.4-full-arm64.apk`, `Rayload-v1.0.4-full-x86_64.apk`,
+  `Rayload-v1.0.4-fdroid-arm64.apk` and
+  `rayload-cli-v1.0.4-linux-x86_64.tar.gz`.
+- The F-Droid variant uses the `com.shiwushuifeng.rayload.fdroid` application ID
+  and its own launcher shortcuts, so it can be installed alongside the GitHub
+  build.
+- F-Droid builds ship no GitHub self-update path: the updater plugin is not
+  loaded and update commands report that the F-Droid client owns upgrades.
+
+### Build information
+
+- Version: `1.0.4`
+- Target API: 37 (Android 17)
+- Minimum API: 24 (Android 7)
+- Production ABIs: `arm64-v8a`, `x86_64` (full edition)
+- Editions: Lite, Full, F-Droid and Linux CLI
+
+---
+
 # Rayload v1.0.3
 
 ## 中文

@@ -1,0 +1,17 @@
+Rayload is a fast, private and customizable download manager for Android.
+It supports HTTP, HTTPS, FTP, BitTorrent, Magnet, Metalink and ED2K through a
+single Aria2 Next engine, with no ads, no accounts and no telemetry.
+
+Features:
+
+* Mobile-first task list, share-to-download and background foreground service
+* Pause, resume, retry, bulk actions, speed limits and scheduled limits
+* BitTorrent file selection, trackers, DHT, PEX, LPD and peer blocklists
+* Floating speed dashboard, keep-awake mode and notification controls
+* Mutual LAN pairing with fingerprint verification and cross-device tasks
+* JSON rule plugins with scoped permissions, domain allow-lists and a sandboxed host
+* Full and Lite ARM64 builds; x86_64 build for emulators and x86 tablets
+* Headless Linux CLI with YAML config, daemon mode and systemd support
+
+Rayload is an independent, unofficial Android port based on Rayburst by
+AnInsomniacy. It is licensed under GPL-3.0-only.

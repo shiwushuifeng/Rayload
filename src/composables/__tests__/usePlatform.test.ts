@@ -9,6 +9,15 @@ beforeEach(() => {
 })
 
 describe('Platform labels', () => {
+  it('labels remote device architectures without local platform bias', async () => {
+    const { deviceArchLabel } = await import('../usePlatform')
+    expect([deviceArchLabel('aarch64'), deviceArchLabel('x86_64'), deviceArchLabel('riscv64')]).toEqual([
+      'ARM64',
+      'x64',
+      'riscv64',
+    ])
+  })
+
   it.each([
     ['macos', 'macOS', true, false, false, 'Apple Silicon', 'Intel'],
     ['windows', 'Windows', false, true, false, 'ARM64', 'x64'],

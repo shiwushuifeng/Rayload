@@ -8,6 +8,8 @@ export const NAVIGATION_ITEM_KEYS = [
   'completed',
   'keep-awake',
   'statistics',
+  'lan-devices',
+  'plugins',
   'trash',
   'about',
 ] as const
@@ -26,6 +28,8 @@ function createDefaults(): NavigationVisibility {
     completed: false,
     'keep-awake': true,
     statistics: false,
+    'lan-devices': true,
+    plugins: false,
     trash: true,
     about: true,
   }

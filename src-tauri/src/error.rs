@@ -37,6 +37,9 @@ pub enum AppError {
     /// Protocol handler registration/query error.
     #[error("Protocol error: {0}")]
     Protocol(String),
+    /// LAN pairing, signed request or remote task failure.
+    #[error("LAN error: {0}")]
+    Lan(String),
     /// Aria2 JSON-RPC communication error.
     #[error("Aria2 RPC error: {0}")]
     Aria2(String),

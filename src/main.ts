@@ -16,6 +16,7 @@ import { useAppStore } from './stores/app'
 import { useHistoryStore } from './stores/history'
 import { useDatabaseStore } from './stores/database'
 import { useEngineStore } from './stores/engine'
+import { useBuildInfoStore } from './stores/build'
 import aria2Api from './api/aria2'
 import { ANDROID_ENGINE_RPC_PORT, DEFAULT_TRACKER_SOURCE, ENGINE_RPC_PORT, PROXY_SCOPES } from '@shared/constants'
 import { convertTrackerDataToLine, convertTrackerDataToComma } from '@shared/utils/tracker'
@@ -409,6 +410,7 @@ if (isFloatWindow) {
     // on their first run. The native window is still hidden until
     // MainLayout.onMounted explicitly shows it.
     app.mount('#app')
+    void useBuildInfoStore().load()
     void drainAndroidSharedLinks()
     // The add-task window saves directory history and remembered locations,
     // and the floating window's mode changes from its menu or the tray.

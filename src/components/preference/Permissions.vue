@@ -11,6 +11,7 @@ import {
   CubeOutline,
   FolderOpenOutline,
   NotificationsOutline,
+  WifiOutline,
 } from '@vicons/ionicons5'
 import {
   useAndroidPermissions,
@@ -66,6 +67,7 @@ const rows = computed(() =>
 function iconFor(key: AndroidPermissionKey) {
   if (key === 'storage') return FolderOpenOutline
   if (key === 'notification') return NotificationsOutline
+  if (key === 'local-network') return WifiOutline
   if (key === 'install') return CubeOutline
   if (key === 'clipboard') return ClipboardOutline
   return BatteryHalfOutline

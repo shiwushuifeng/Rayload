@@ -15,7 +15,6 @@ import { resolveUserVisibleDownloadDir } from '@shared/utils/userVisibleDirector
 import { toggleSpeedLimit } from '@/composables/useSpeedLimiter'
 import { changeGlobalOption, isEngineReady } from '@/api/aria2'
 import { FILE_ALLOCATION_OPTIONS, INCOMPLETE_SUFFIX, SCHEDULE_DAY } from '@shared/constants'
-import { getVideoArchiveFolder, withVideoArchiveFolder } from '@shared/utils/autoArchive'
 import { useAppMessage } from '@/composables/useAppMessage'
 import { usePlatform } from '@/composables/usePlatform'
 import { chooseAndroidDirectory } from '@/composables/useAndroidNative'
@@ -47,7 +46,6 @@ import {
 import PreferenceActionRegistration from './PreferenceActionRegistration.vue'
 import PreferenceHintLabel from './PreferenceHintLabel.vue'
 import DirectoryPopover from '@/components/common/DirectoryPopover.vue'
-import FileCategoryManager from './FileCategoryManager.vue'
 import { FolderOpenOutline } from '@vicons/ionicons5'
 
 const { t } = useI18n()
@@ -85,7 +83,7 @@ function buildForm() {
   return buildDownloadsForm(preferenceStore.config, defaultDownloadDir.value)
 }
 
-const { form, isDirty, handleSave, handleReset, resetSnapshot, commitInstant } = usePreferenceForm({
+const { form, isDirty, handleSave, handleReset, resetSnapshot } = usePreferenceForm({
   buildForm,
   buildSystemConfig: buildDownloadsSystemConfig,
   transformForStore: transformDownloadsForStore,
@@ -204,26 +202,6 @@ function handleDownloadValueChange(val: number | null) {
   form.value.maxOverallDownloadLimit = buildSpeedLimit(v, downloadUnit.value)
 }
 
-// ── File categories ─────────────────────────────────────────────────
-const showCategoryManager = ref(false)
-const categorySummary = computed(() => {
-  const categories = form.value.fileCategories
-  const urlRuleCount = categories.reduce((total, category) => total + (category.urlPatterns?.length ?? 0), 0)
-  return t('preferences.file-category-summary', { count: categories.length, url: urlRuleCount })
-})
-const categoryBaseDir = computed(() => form.value.dir || defaultDownloadDir.value)
-const videoArchiveFolder = computed({
-  get: () => getVideoArchiveFolder(form.value.fileCategories),
-  set: (value: string) => {
-    form.value.fileCategories = withVideoArchiveFolder(form.value.fileCategories, value)
-  },
-})
-async function handleCategoryManagerSave(categories: typeof form.value.fileCategories) {
-  const saved = await commitInstant({ fileCategories: categories }, () =>
-    preferenceStore.updateAndSave({ fileCategories: categories }),
-  )
-  if (!saved) message.error(t('preferences.save-fail-message'))
-}
 async function handleSelectDir() {
   const selected = isAndroid.value
     ? await chooseAndroidDirectory()
@@ -327,36 +305,6 @@ onMounted(async () => {
             @update:value="(on: boolean) => (form.incompleteSuffix = on ? INCOMPLETE_SUFFIX : '')"
           />
         </NFormItem>
-        <NFormItem>
-          <template #label>
-            <PreferenceHintLabel
-              :label="t('preferences.file-category-save')"
-              :hint="t('preferences.file-category-auto-archive-hint')"
-            />
-          </template>
-          <NSwitch v-model:value="form.fileCategoryEnabled" />
-        </NFormItem>
-        <NFormItem v-if="form.fileCategoryEnabled">
-          <template #label>
-            <PreferenceHintLabel
-              :label="t('preferences.auto-archive-video-folder')"
-              :hint="t('preferences.auto-archive-video-folder-hint')"
-            />
-          </template>
-          <NInput v-model:value="videoArchiveFolder" class="pref-control-auto" />
-        </NFormItem>
-        <NFormItem :show-label="false">
-          <div class="file-category-summary-row">
-            <div class="file-category-summary-text">
-              <span>{{ categorySummary }}</span>
-              <NText depth="3">{{ t('preferences.file-category-manager-hint') }}</NText>
-            </div>
-            <NButton size="small" @click="showCategoryManager = true">
-              {{ t('preferences.file-category-manage') }}
-            </NButton>
-          </div>
-        </NFormItem>
-
         <!-- Speed & concurrency -->
         <NDivider title-placement="left">{{ t('preferences.speed-and-concurrency') }}</NDivider>
         <NFormItem
@@ -589,12 +537,6 @@ onMounted(async () => {
       :is-valid="numericFieldsValid"
       @save="handleSave"
       @discard="handleReset"
-    />
-    <FileCategoryManager
-      v-model:show="showCategoryManager"
-      :categories="form.fileCategories"
-      :base-dir="categoryBaseDir"
-      @save="handleCategoryManagerSave"
     />
   </div>
 </template>
