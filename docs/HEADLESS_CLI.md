@@ -10,6 +10,14 @@ UI, and adds task control, pairing management, daemon mode and systemd support.
 
 ## Build / 构建
 
+Install the released Linux x86_64 binary into `~/.local/bin` without root:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/shiwushuifeng/Rayload/main/scripts/install-cli.sh | sh
+```
+
+无需 root，下载发行版并安装到 `~/.local/bin`。也可从源码构建：
+
 ```bash
 cargo build --release --manifest-path src-tauri/Cargo.toml --features cli --bin ray --bin rayload
 ```

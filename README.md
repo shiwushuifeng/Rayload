@@ -263,6 +263,13 @@ YAML config, daemon mode, task control and the LAN API. `rayload` and
 security check, environment variables and the non-root Docker image:
 
 ```bash
+curl -fsSL https://raw.githubusercontent.com/shiwushuifeng/Rayload/main/scripts/install-cli.sh | sh
+```
+
+This installs `ray` and `rayload` into `~/.local/bin` without `sudo`. To build
+from source instead:
+
+```bash
 cargo build --release --manifest-path src-tauri/Cargo.toml --features cli --bin ray
 ./src-tauri/target/release/ray security-check
 ```
