@@ -56,7 +56,6 @@ const taskList = computed(() => {
   }
   return [...ordered, ...tasks.values()]
 })
-const displayTasks = computed(() => [...taskList.value, ...props.remoteTasks])
 const listRef = ref<ListRefTarget>(null)
 const sorting = ref(false)
 const containerTransitioning = ref(false)
@@ -70,19 +69,25 @@ const pageTransitionKey = computed(() => taskStore.currentList)
 const pageSize = computed(() => taskStore.taskPagination.pageSize)
 /** How many cards are mounted; grows as the sentinel scrolls into view. */
 const renderLimit = ref(pageSize.value)
+/**
+ * Remote cards are never paginated: local list changes must not push them out
+ * of the rendered window or make them reappear after a deletion.
+ */
 const visibleTaskList = computed<Aria2Task[]>({
-  get: () => displayTasks.value.slice(0, renderLimit.value),
+  get: () => [...taskList.value.slice(0, renderLimit.value), ...props.remoteTasks],
   set(nextPageList) {
-    dragOrder.value = [...nextPageList, ...displayTasks.value.slice(nextPageList.length)].map((task) => task.gid)
+    const local = nextPageList.filter((task) => !task.remote)
+    const moved = new Set(local.map((task) => task.gid))
+    dragOrder.value = [...local, ...taskList.value.filter((task) => !moved.has(task.gid))].map((task) => task.gid)
   },
 })
-const hasMoreTasks = computed(() => renderLimit.value < displayTasks.value.length)
+const hasMoreTasks = computed(() => renderLimit.value < taskList.value.length)
 const sentinelRef = ref<HTMLElement | null>(null)
 let loadObserver: IntersectionObserver | null = null
 
 function loadMoreTasks() {
   if (!hasMoreTasks.value) return
-  renderLimit.value = Math.min(displayTasks.value.length, renderLimit.value + pageSize.value)
+  renderLimit.value = Math.min(taskList.value.length, renderLimit.value + pageSize.value)
 }
 
 function disconnectLoadObserver() {
@@ -193,7 +198,7 @@ watch(pageSize, (size, previous) => {
 })
 
 watch(
-  () => displayTasks.value.length,
+  () => taskList.value.length,
   (length) => {
     if (renderLimit.value > length) renderLimit.value = length
     void nextTick(observeSentinel)
@@ -392,7 +397,7 @@ function handleCardBeforeLeave(element: Element) {
             @swipe-delete="emit('delete', item)"
           >
             <component
-              :is="item.remote ? TaskItem : taskCardComponent"
+              :is="taskCardComponent"
               :task="item"
               :action-pending="taskStore.resubmittingGids.includes(item.gid)"
               @pause="emit('pause', item)"

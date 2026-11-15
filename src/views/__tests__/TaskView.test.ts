@@ -99,6 +99,10 @@ vi.mock('@/components/task/TaskDetail.vue', () => ({
   default: { template: '<div class="task-detail-stub" />' },
 }))
 
+vi.mock('@/components/task/RemoteTaskDetail.vue', () => ({
+  default: { template: '<div class="remote-task-detail-stub" />' },
+}))
+
 import TaskView from '../TaskView.vue'
 
 function deferredPromise() {

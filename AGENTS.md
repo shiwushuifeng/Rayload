@@ -40,8 +40,8 @@ src-tauri/locales/           Native JSON translations
 src/shared/locales/          Frontend JSON translations
 scripts/android/             Android Kotlin source templates
 docs/                        Bilingual default docs and translated READMEs
-release/current/             Current local APK and checksums (Git-ignored)
-release/archive/             Historical local build artifacts (Git-ignored)
+release/current/<version>/<channel>/  Current APK, CLI and checksums (Git-ignored)
+release/archive/<version>/<channel>/  Historical build artifacts (Git-ignored)
 assets/branding/             Original logo and icon source artwork
 ```
 

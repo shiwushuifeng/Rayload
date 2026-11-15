@@ -32,15 +32,18 @@ function inspect(): void {
 }
 
 export function useTaskFileMissing(task: ComputedRef<Aria2Task>) {
+  /** Remote cards have no local file to inspect. */
+  const trackedGid = computed(() => (task.value.remote ? '' : task.value.gid))
   const release = (gid: string) => {
     const count = (visible.get(gid) ?? 1) - 1
     if (count > 0) visible.set(gid, count)
     else visible.delete(gid)
   }
   watch(
-    () => task.value.gid,
+    trackedGid,
     (gid, previous) => {
       if (previous) release(previous)
+      if (!gid) return
       visible.set(gid, (visible.get(gid) ?? 0) + 1)
       inspect()
     },
@@ -48,10 +51,10 @@ export function useTaskFileMissing(task: ComputedRef<Aria2Task>) {
   )
   watch([() => task.value.status, () => task.value.seeder, recheckTrigger], inspect)
   onBeforeUnmount(() => {
-    release(task.value.gid)
+    if (trackedGid.value) release(trackedGid.value)
     inspect()
   })
-  const fileState = computed(() => states.value[task.value.gid] ?? 'unknown')
+  const fileState = computed(() => (trackedGid.value ? (states.value[trackedGid.value] ?? 'unknown') : 'unknown'))
   const fileMissing = computed(() => fileState.value === 'missing' || fileState.value === 'inaccessible')
   return { fileMissing, fileState }
 }

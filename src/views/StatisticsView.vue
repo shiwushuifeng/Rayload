@@ -22,6 +22,7 @@ import {
 import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
 import HistoryCategoryCard from '@/components/statistics/HistoryCategoryCard.vue'
 import HistoryTrendCard from '@/components/statistics/HistoryTrendCard.vue'
+import SpeedTrendCard from '@/components/statistics/SpeedTrendCard.vue'
 import StatSparkline from '@/components/statistics/StatSparkline.vue'
 import { useTaskStore } from '@/stores/task'
 import { useHistoryStore } from '@/stores/history'
@@ -174,79 +175,6 @@ const allTrendValues = computed<number[]>(() => {
 })
 
 const SPEED_WINDOW_MINUTES = Math.round(((SPEED_SAMPLE_LIMIT - 1) * SPEED_SAMPLE_INTERVAL_MS) / 60000)
-
-function niceSpeedCeiling(value: number): number {
-  if (!Number.isFinite(value) || value <= 0) return 1
-  const magnitude = 10 ** Math.floor(Math.log10(value))
-  const normalized = value / magnitude
-  const nice = normalized <= 1 ? 1 : normalized <= 2 ? 2 : normalized <= 5 ? 5 : 10
-  return nice * magnitude
-}
-
-const speedChart = computed(() => {
-  const width = 640
-  const height = 176
-  const left = 62
-  const right = width - 12
-  const top = 14
-  const baseline = height - 24
-  const window = speedTrend.samples.value
-  const peak = window.reduce((max, sample) => Math.max(max, sample.bytesPerSecond), 0)
-  const ceiling = niceSpeedCeiling(peak)
-  const slots = Math.max(1, window.length - 1)
-  const step = (right - left) / slots
-  const points = window.map((sample, index) => {
-    const x = left + index * step
-    const ratio = Math.min(1, sample.bytesPerSecond / ceiling)
-    return { x, y: baseline - (baseline - top) * ratio }
-  })
-  const startPoint = points[0]
-  const lastPoint = points[points.length - 1]
-  let line = ''
-  if (startPoint && lastPoint && points.length > 1) {
-    line = `M ${startPoint.x.toFixed(1)},${startPoint.y.toFixed(1)}`
-    for (let index = 1; index < points.length - 1; index += 1) {
-      const current = points[index]
-      const next = points[index + 1]
-      if (!current || !next) break
-      const midX = (current.x + next.x) / 2
-      const midY = (current.y + next.y) / 2
-      line += ` Q ${current.x.toFixed(1)},${current.y.toFixed(1)} ${midX.toFixed(1)},${midY.toFixed(1)}`
-    }
-    line += ` L ${lastPoint.x.toFixed(1)},${lastPoint.y.toFixed(1)}`
-  }
-  const area =
-    startPoint && lastPoint && line
-      ? `M ${startPoint.x.toFixed(1)},${baseline} L ${line.slice(1)} L ${lastPoint.x.toFixed(1)},${baseline} Z`
-      : ''
-  const gridLines = [0, 0.5, 1].map((ratio) => ({
-    y: baseline - (baseline - top) * ratio,
-    label: bytesToSize(ceiling * ratio, 1),
-  }))
-  const average = window.length ? window.reduce((sum, sample) => sum + sample.bytesPerSecond, 0) / window.length : 0
-  const averageY = baseline - (baseline - top) * Math.min(1, average / ceiling)
-  const elapsedSeconds = Math.max(0, (window.length - 1) * (SPEED_SAMPLE_INTERVAL_MS / 1000))
-  const windowLabel = elapsedSeconds >= 60 ? `−${Math.round(elapsedSeconds / 60)}m` : `−${Math.round(elapsedSeconds)}s`
-  return {
-    average,
-    averageY,
-    width,
-    height,
-    left,
-    right,
-    baseline,
-    points,
-    line,
-    area,
-    window: window.length,
-    peak,
-    gridLines,
-    windowLabel,
-    last: lastPoint ?? null,
-  }
-})
-
-const speedTrendReady = computed(() => speedTrend.samples.value.length > 1)
 
 const totalLabel = (value: number): string => bytesToSize(value, 2)
 const speedLabel = (value: number): string => `${bytesToSize(value, 1)}/s`
@@ -500,78 +428,12 @@ async function loadGlobalStat(): Promise<void> {
         :tag-text="t('statistics.placeholder-tag')"
       />
 
-      <NCard class="statistics-chart statistics-speed-trend" :bordered="false">
-        <div class="statistics-section-heading">
-          <div>
-            <h2>{{ t('statistics.speed-trend-title') }}</h2>
-            <p>{{ t('statistics.speed-trend-hint', { minutes: SPEED_WINDOW_MINUTES }) }}</p>
-          </div>
-          <NTag size="small" :bordered="false" type="info">
-            {{ t('statistics.speed-trend-peak', { speed: speedLabel(speedChart.peak) }) }}
-          </NTag>
-        </div>
-        <svg
-          v-if="speedTrendReady"
-          class="statistics-chart__svg statistics-speed-trend__svg"
-          :viewBox="`0 0 ${speedChart.width} ${speedChart.height}`"
-          role="img"
-          :aria-label="t('statistics.speed-trend-title')"
-        >
-          <defs>
-            <linearGradient id="rayload-speed-fill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="currentColor" stop-opacity="0.24" />
-              <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
-            </linearGradient>
-          </defs>
-          <g class="statistics-chart__grid">
-            <line
-              v-for="line in speedChart.gridLines"
-              :key="`speed-grid-${line.y}`"
-              :x1="speedChart.left"
-              :y1="line.y"
-              :x2="speedChart.right"
-              :y2="line.y"
-            />
-          </g>
-          <g class="statistics-speed-trend__axis">
-            <text v-for="line in speedChart.gridLines" :key="`speed-label-${line.y}`" x="6" :y="line.y + 3">
-              {{ line.label }}
-            </text>
-            <text :x="speedChart.left" :y="speedChart.height - 6">{{ speedChart.windowLabel }}</text>
-            <text :x="speedChart.right" :y="speedChart.height - 6" text-anchor="end">
-              {{ t('statistics.speed-trend-now') }}
-            </text>
-          </g>
-          <line
-            v-if="speedChart.average > 0"
-            class="statistics-speed-trend__avg"
-            :x1="speedChart.left"
-            :x2="speedChart.right"
-            :y1="speedChart.averageY"
-            :y2="speedChart.averageY"
-          />
-          <text
-            v-if="speedChart.average > 0"
-            class="statistics-speed-trend__avg-label"
-            :x="speedChart.left + 2"
-            :y="Math.max(12, speedChart.averageY - 5)"
-            text-anchor="start"
-          >
-            {{ t('statistics.speed-trend-average', { speed: speedLabel(speedChart.average) }) }}
-          </text>
-          <path :d="speedChart.area" fill="url(#rayload-speed-fill)" />
-          <path
-            :d="speedChart.line"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2.5"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
-          <circle v-if="speedChart.last" class="is-live" :cx="speedChart.last.x" :cy="speedChart.last.y" r="3.6" />
-        </svg>
-        <p v-else class="statistics-chart__empty">{{ t('statistics.speed-trend-empty') }}</p>
-      </NCard>
+      <SpeedTrendCard
+        :samples="localSpeedSpark"
+        :title="t('statistics.speed-trend-title')"
+        :hint="t('statistics.speed-trend-hint', { minutes: SPEED_WINDOW_MINUTES })"
+        :empty-text="t('statistics.speed-trend-empty')"
+      />
 
       <HistoryCategoryCard
         :rows="categories"
@@ -605,6 +467,13 @@ async function loadGlobalStat(): Promise<void> {
     </template>
 
     <template v-else>
+      <SpeedTrendCard
+        :samples="allSpeedSamples"
+        :title="t('statistics.all-devices-speed')"
+        :hint="t('statistics.speed-trend-hint', { minutes: SPEED_WINDOW_MINUTES })"
+        :empty-text="t('statistics.speed-trend-empty')"
+      />
+
       <section class="statistics-cards">
         <NCard class="stat-card" :bordered="false">
           <div class="stat-card__head">
@@ -615,17 +484,6 @@ async function loadGlobalStat(): Promise<void> {
           </div>
           <strong class="stat-card__value">{{ onlineDeviceCount }} / {{ allDevices.length }}</strong>
           <span class="stat-card__hint">{{ t('statistics.all-devices-hint') }}</span>
-        </NCard>
-        <NCard class="stat-card" :bordered="false">
-          <div class="stat-card__head">
-            <span class="stat-card__icon"
-              ><NIcon :size="18"><CloudDownloadOutline /></NIcon
-            ></span>
-            <span class="stat-card__label">{{ t('statistics.all-devices-speed') }}</span>
-          </div>
-          <strong class="stat-card__value"><AnimatedNumber :value="allDeviceSpeed" :formatter="speedLabel" /></strong>
-          <StatSparkline :values="allSpeedSamples" :label="t('statistics.all-devices-speed')" />
-          <span class="stat-card__hint">{{ t('statistics.live-speed-hint') }}</span>
         </NCard>
         <NCard class="stat-card" :bordered="false">
           <div class="stat-card__head">

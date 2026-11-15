@@ -16,11 +16,11 @@ import { triggerHaptic } from '@/composables/useHaptics'
 import { isEngineReady } from '@/api/aria2'
 import { logger } from '@shared/logger'
 import { getErrorMessage } from '@shared/utils/errorMessage'
-import { bytesToSize } from '@shared/utils/format'
 import { TASK_STATUS } from '@shared/constants'
 import type { Aria2Task, TaskDeletionOptions } from '@shared/types'
 import TaskList from '@/components/task/TaskList.vue'
 import TaskDetail from '@/components/task/TaskDetail.vue'
+import RemoteTaskDetail from '@/components/task/RemoteTaskDetail.vue'
 import TaskEmptyBrand from '@/components/task/TaskEmptyBrand.vue'
 import HomeStatsBar from '@/components/task/HomeStatsBar.vue'
 
@@ -216,6 +216,9 @@ async function stopRemoteSeeding(task: Aria2Task): Promise<void> {
   }
 }
 
+const remoteDetailVisible = ref(false)
+const remoteDetailTask = ref<Aria2Task | null>(null)
+
 async function sendRemoteToLocal(task: Aria2Task): Promise<void> {
   if (!task.remote || !requireEngine()) return
   try {
@@ -230,19 +233,8 @@ async function sendRemoteToLocal(task: Aria2Task): Promise<void> {
 
 function showRemoteDetails(task: Aria2Task): void {
   if (!task.remote) return
-  const lines = [
-    `${t('task.remote-device')}: ${task.remote.deviceName}`,
-    `${t('task.remote-file-size')}: ${bytesToSize(Number(task.totalLength) || 0)}`,
-  ]
-  if (task.dir) lines.push(`${t('task.remote-file-path')}: ${task.dir}`)
-  for (const file of task.files) {
-    lines.push(`${file.path || '—'} · ${bytesToSize(Number(file.completedLength) || 0)}`)
-  }
-  dialog.info({
-    title: t('task.remote-details-title'),
-    content: () => h('p', { style: 'white-space: pre-line; word-break: break-all; margin: 0;' }, lines.join('\n')),
-    positiveText: t('app.close'),
-  })
+  remoteDetailTask.value = task
+  remoteDetailVisible.value = true
 }
 
 async function showRemoteChecksum(task: Aria2Task): Promise<void> {
@@ -357,6 +349,12 @@ function deleteTask(task: Aria2Task): void {
         </NButton>
       </div>
     </Transition>
+    <RemoteTaskDetail
+      :show="remoteDetailVisible"
+      :task="remoteDetailTask"
+      @close="remoteDetailVisible = false"
+      @send-to-local="sendRemoteToLocal"
+    />
     <TaskDetail
       :show="taskStore.taskDetailVisible"
       :task="taskStore.currentTaskItem"

@@ -3,7 +3,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { TASK_STATUS } from '@shared/constants'
-import { NButton, NIcon } from 'naive-ui'
+import { NIcon } from 'naive-ui'
 import LinearProgress from '@/components/common/LinearProgress.vue'
 import MTooltip from '@/components/common/MTooltip.vue'
 import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
@@ -19,10 +19,6 @@ import {
   TimeOutline,
   ListOutline,
   PauseOutline,
-  PlayOutline,
-  DocumentTextOutline,
-  ShieldCheckmarkOutline,
-  StopCircleOutline,
 } from '@vicons/ionicons5'
 import { useTaskCardModel } from '@/composables/useTaskCardModel'
 import { useTaskFileIcon } from '@/composables/useTaskFileIcon'
@@ -100,11 +96,6 @@ const friendlyErrorMessage = computed(() =>
   displayErrorMessage.value ? t(`task.error-friendly-${friendlyErrorKind(displayErrorMessage.value)}`) : '',
 )
 const remoteOffline = computed(() => Boolean(props.task.remote && !props.task.remote.online))
-const remoteCanToggle = computed(() =>
-  [TASK_STATUS.ACTIVE, TASK_STATUS.WAITING, TASK_STATUS.PAUSED].includes(props.task.status),
-)
-const remoteSeeding = computed(() => Boolean(props.task.remote?.seeder))
-const remoteComplete = computed(() => props.task.status === TASK_STATUS.COMPLETE || remoteSeeding.value)
 const displayStatus = computed(() => {
   if (remoteOffline.value) return t('task.remote-offline')
   if (fileMissing.value)
@@ -275,70 +266,7 @@ const contentDraggable = computed(
           <span>{{ displayStatus }}</span>
         </span>
       </div>
-      <div v-if="task.remote" class="task-actions-row remote-actions">
-        <NButton
-          v-if="remoteCanToggle"
-          size="small"
-          secondary
-          :disabled="remoteOffline || actionPending"
-          @click="task.status === TASK_STATUS.PAUSED ? emit('resume', task) : emit('pause', task)"
-        >
-          <template #icon>
-            <NIcon><component :is="task.status === TASK_STATUS.PAUSED ? PlayOutline : PauseOutline" /></NIcon>
-          </template>
-          {{ task.status === TASK_STATUS.PAUSED ? t('task.resume-task') : t('task.pause-task') }}
-        </NButton>
-        <NButton
-          v-if="remoteSeeding"
-          size="small"
-          secondary
-          :disabled="remoteOffline || actionPending"
-          @click="emit('stop-seeding', task)"
-        >
-          <template #icon>
-            <NIcon><StopCircleOutline /></NIcon>
-          </template>
-          {{ t('task.remote-stop-seeding') }}
-        </NButton>
-        <NButton
-          v-if="remoteComplete"
-          size="small"
-          secondary
-          type="primary"
-          :disabled="remoteOffline || actionPending"
-          @click="emit('send-to-local', task)"
-        >
-          <template #icon>
-            <NIcon><CloudDownloadOutline /></NIcon>
-          </template>
-          {{ t('task.remote-send-local') }}
-        </NButton>
-        <NButton size="small" secondary :disabled="remoteOffline" @click="emit('remote-details', task)">
-          <template #icon>
-            <NIcon><DocumentTextOutline /></NIcon>
-          </template>
-          {{ t('task.remote-details') }}
-        </NButton>
-        <NButton
-          v-if="remoteComplete"
-          size="small"
-          secondary
-          :disabled="remoteOffline || actionPending"
-          @click="emit('remote-checksum', task)"
-        >
-          <template #icon>
-            <NIcon><ShieldCheckmarkOutline /></NIcon>
-          </template>
-          {{ t('task.remote-checksum') }}
-        </NButton>
-        <NButton size="small" secondary type="error" :disabled="actionPending" @click="emit('delete', task)">
-          <template #icon>
-            <NIcon><TrashOutline /></NIcon>
-          </template>
-          {{ t('task.delete-task') }}
-        </NButton>
-      </div>
-      <div v-else class="task-actions-row">
+      <div class="task-actions-row">
         <TaskItemActions
           :task="task"
           :file-missing="fileMissing"
@@ -358,6 +286,10 @@ const contentDraggable = computed(
           @checksum="emit('checksum', task)"
           @share-file="emit('share-file', task)"
           @select-files="emit('select-files', task)"
+          @send-to-local="emit('send-to-local', task)"
+          @remote-details="emit('remote-details', task)"
+          @remote-checksum="emit('remote-checksum', task)"
+          @stop-seeding="emit('stop-seeding', task)"
         />
       </div>
       <div v-if="friendlyErrorMessage" class="error-message" :title="displayErrorMessage">
@@ -413,11 +345,6 @@ const contentDraggable = computed(
   font-size: 11px;
   font-weight: 600;
   line-height: 17px;
-}
-.remote-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
 }
 .task-body {
   display: flex;

@@ -21,6 +21,7 @@ vi.mock('@vicons/ionicons5', () => {
     FolderOpenOutline: icon,
     ListOutline: icon,
     ShieldCheckmarkOutline: icon,
+    DocumentTextOutline: icon,
   }
 })
 
@@ -217,6 +218,22 @@ describe('TaskItemActions', () => {
     expect(complete.emitted('resume')).toBeFalsy()
   })
 
+  it('offers remote transfer actions in the same icon toolbar', async () => {
+    const wrapper = mountActions(
+      makeTask('complete', {
+        gid: 'remote:nas:abc',
+        remote: { deviceId: 'nas', deviceName: 'NAS', gid: 'abc', online: true },
+      }),
+    )
+    await wrapper.find('[aria-label="task.remote-send-local"]').trigger('click')
+    expect(wrapper.emitted('send-to-local')).toBeTruthy()
+    await wrapper.find('[aria-label="task.remote-details"]').trigger('click')
+    expect(wrapper.emitted('remote-details')).toBeTruthy()
+    await wrapper.find('[aria-label="task.remote-checksum"]').trigger('click')
+    expect(wrapper.emitted('remote-checksum')).toBeTruthy()
+    expect(wrapper.find('[aria-label="task.pause-task"]').exists()).toBe(false)
+  })
+
   it('limits compact rows to task details and delete', () => {
     const active = mount(TaskItemActions, { props: { task: makeTask('active'), density: 'compact', minimal: true } })
     expect(active.findAll('.task-item-action')).toHaveLength(2)
@@ -229,6 +246,19 @@ describe('TaskItemActions', () => {
     })
     expect(complete.find('[aria-label="task.remove-record"]').exists()).toBe(true)
     expect(complete.find('[aria-label="task.sha256"]').exists()).toBe(false)
+
+    const remote = mount(TaskItemActions, {
+      props: {
+        task: makeTask('complete', {
+          gid: 'remote:nas:abc',
+          remote: { deviceId: 'nas', deviceName: 'NAS', gid: 'abc', online: true },
+        }),
+        density: 'compact',
+        minimal: true,
+      },
+    })
+    expect(remote.find('[aria-label="task.remote-send-local"]').exists()).toBe(true)
+    expect(remote.find('[aria-label="task.remote-details"]').exists()).toBe(true)
   })
 
   it('moves full file actions into the detail bar without the info shortcut', () => {

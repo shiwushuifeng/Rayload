@@ -1,5 +1,17 @@
-import { describe, expect, it } from 'vitest'
-import { remoteTaskToAria2, type RemoteTask } from '../lan'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { createPinia, setActivePinia } from 'pinia'
+
+const invokeMock = vi.hoisted(() => vi.fn())
+
+vi.mock('@tauri-apps/api/core', () => ({
+  invoke: (...args: unknown[]) => invokeMock(...args),
+}))
+
+vi.mock('@shared/logger', () => ({
+  logger: { debug: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}))
+
+import { remoteTaskToAria2, useLanStore, type RemoteTask } from '../lan'
 
 const base: RemoteTask = {
   deviceId: 'nas',
@@ -48,5 +60,33 @@ describe('remoteTaskToAria2', () => {
     expect(task.files[0]?.path).toBe('/srv/downloads/file.zip')
     expect(task.files[0]?.selected).toBe('true')
     expect(task.remote).toMatchObject({ seeder: true, bittorrent: true })
+  })
+})
+
+describe('remote task snapshots', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    invokeMock.mockReset()
+  })
+
+  it('keeps a fresh handoff when an older poll response arrives later', async () => {
+    const lan = useLanStore()
+    let resolveRefresh!: (tasks: RemoteTask[]) => void
+    invokeMock.mockImplementationOnce(
+      () =>
+        new Promise<RemoteTask[]>((resolve) => {
+          resolveRefresh = resolve
+        }),
+    )
+    invokeMock.mockResolvedValueOnce({ ...base, gid: 'new' })
+
+    const refreshing = lan.refreshRemoteTasks()
+    await lan.handoff('nas', base.url, null)
+    expect(lan.remoteTasks.map((task) => task.gid)).toEqual(['new'])
+
+    invokeMock.mockResolvedValue([{ ...base, gid: 'new' }])
+    resolveRefresh([])
+    await refreshing
+    await vi.waitFor(() => expect(lan.remoteTasks.map((task) => task.gid)).toEqual(['new']))
   })
 })

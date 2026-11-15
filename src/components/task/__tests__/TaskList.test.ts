@@ -164,6 +164,33 @@ describe('TaskList', () => {
     expect(wrapper.find('.task-list-sentinel').exists()).toBe(true)
   })
 
+  it('keeps remote cards visible when local pagination changes', async () => {
+    const wrapper = mount(TaskList, {
+      global: {
+        plugins: [pinia],
+      },
+      props: {
+        remoteTasks: [
+          {
+            ...createTaskWithGid('remote:nas:abc'),
+            remote: { deviceId: 'nas', deviceName: 'NAS', gid: 'abc', online: true },
+          },
+        ],
+      },
+    })
+    const taskStore = useTaskStore()
+    taskStore.setTaskPageSize(2)
+    taskStore.taskList = ['a', 'b', 'c'].map(createTaskWithGid)
+    await wrapper.vm.$nextTick()
+
+    expect(wrapper.findAll('.full-task-item')).toHaveLength(3)
+
+    taskStore.taskList = ['a'].map(createTaskWithGid)
+    await wrapper.vm.$nextTick()
+    expect(wrapper.findAll('.full-task-item')).toHaveLength(2)
+    wrapper.unmount()
+  })
+
   it('saves visible drag order through the store', async () => {
     const wrapper = mount(TaskList, {
       global: {

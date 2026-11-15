@@ -13,11 +13,13 @@ import { parseChecksum, type ChecksumAlgorithm } from '@shared/utils/checksum'
 import { getErrorMessage } from '@shared/utils/errorMessage'
 import { logger } from '@shared/logger'
 import { useAppMessage } from '@/composables/useAppMessage'
+import { useLanStore } from '@/stores/lan'
 import type { Aria2Task } from '@shared/types'
 
 const props = defineProps<{ task: Aria2Task }>()
 const { t } = useI18n()
 const message = useAppMessage()
+const lan = useLanStore()
 
 const targetPath = ref('')
 const digests = ref<FileDigests | null>(null)
@@ -98,6 +100,12 @@ async function calculate() {
   computeError.value = ''
   digests.value = null
   try {
+    if (props.task.remote) {
+      targetPath.value = props.task.files[0]?.path || props.task.dir
+      const result = await lan.remoteChecksum(props.task.remote.deviceId, props.task.remote.gid)
+      if (token === calculationToken) digests.value = result
+      return
+    }
     if (!targetPath.value) {
       targetPath.value = (await resolveExistingTaskFile(props.task)) ?? ''
     }
@@ -147,19 +155,20 @@ function resetForTask() {
   githubState.value = 'idle'
 }
 
+function autoCalculateForLocalTask() {
+  if (!props.task.remote) void calculate()
+  void loadGitHubDigest()
+}
+
 watch(
   () => props.task.gid,
   () => {
     resetForTask()
-    void calculate()
-    void loadGitHubDigest()
+    autoCalculateForLocalTask()
   },
 )
 
-onMounted(() => {
-  void calculate()
-  void loadGitHubDigest()
-})
+onMounted(autoCalculateForLocalTask)
 </script>
 
 <template>

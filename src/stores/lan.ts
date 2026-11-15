@@ -177,6 +177,10 @@ export const useLanStore = defineStore('lan', () => {
   let historyPending = false
   let discoverPending = false
   let remotePending = false
+  let remoteRequestId = 0
+  let remoteRefreshAgain = false
+  /** Bumped by user mutations, so older snapshots cannot undo them. */
+  let remoteMutationVersion = 0
 
   async function refreshDevices(): Promise<void> {
     try {
@@ -187,14 +191,24 @@ export const useLanStore = defineStore('lan', () => {
   }
 
   async function refreshRemoteTasks(): Promise<void> {
-    if (remotePending) return
+    if (remotePending) {
+      remoteRefreshAgain = true
+      return
+    }
     remotePending = true
+    const requestId = ++remoteRequestId
+    const mutationVersion = remoteMutationVersion
     try {
-      remoteTasks.value = await invoke<RemoteTask[]>('lan_remote_tasks')
+      const tasks = await invoke<RemoteTask[]>('lan_remote_tasks')
+      if (requestId === remoteRequestId && mutationVersion === remoteMutationVersion) remoteTasks.value = tasks
     } catch (error) {
       logger.debug('Lan.refreshRemoteTasks', error)
     } finally {
       remotePending = false
+      if (remoteRefreshAgain) {
+        remoteRefreshAgain = false
+        void refreshRemoteTasks()
+      }
     }
   }
 
@@ -297,6 +311,7 @@ export const useLanStore = defineStore('lan', () => {
   }
 
   async function forget(id: string): Promise<void> {
+    remoteMutationVersion += 1
     await invoke('lan_forget_device', { id })
     await Promise.all([refreshDevices(), refreshRemoteTasks(), refreshHistoryStats()])
   }
@@ -317,10 +332,12 @@ export const useLanStore = defineStore('lan', () => {
 
   async function handoff(deviceId: string, url: string, filename: string | null): Promise<RemoteTask> {
     const task = await invoke<RemoteTask>('lan_handoff', { deviceId, url, filename })
+    remoteMutationVersion += 1
     remoteTasks.value = [
       ...remoteTasks.value.filter((item) => item.deviceId !== task.deviceId || item.gid !== task.gid),
       task,
     ]
+    void refreshRemoteTasks()
     return task
   }
 
@@ -329,6 +346,7 @@ export const useLanStore = defineStore('lan', () => {
     gid: string,
     action: 'pause' | 'unpause' | 'remove' | 'stop-seeding',
   ): Promise<void> {
+    remoteMutationVersion += 1
     await invoke('lan_remote_action', { deviceId: id, gid, action })
     await refreshRemoteTasks()
   }

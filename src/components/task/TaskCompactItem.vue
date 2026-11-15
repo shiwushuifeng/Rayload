@@ -6,7 +6,7 @@ import { TASK_STATUS } from '@shared/constants'
 import { NIcon } from 'naive-ui'
 import MTooltip from '@/components/common/MTooltip.vue'
 import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
-import { AlertCircleOutline, RadioOutline, TimeOutline } from '@vicons/ionicons5'
+import { AlertCircleOutline, CheckmarkCircleOutline, RadioOutline, TimeOutline } from '@vicons/ionicons5'
 import { useTaskCardModel } from '@/composables/useTaskCardModel'
 import { useTaskFileIcon } from '@/composables/useTaskFileIcon'
 import { usePlatform } from '@/composables/usePlatform'
@@ -33,6 +33,10 @@ const emit = defineEmits<{
   checksum: [task: Aria2Task]
   'open-file': [task: Aria2Task]
   'select-files': [task: Aria2Task]
+  'send-to-local': [task: Aria2Task]
+  'remote-details': [task: Aria2Task]
+  'remote-checksum': [task: Aria2Task]
+  'stop-seeding': [task: Aria2Task]
 }>()
 
 const { t } = useI18n()
@@ -45,13 +49,40 @@ const { fileMissing, fileState } = useTaskFileMissing(taskRef)
 // The rail orders the list; the rest of a finished card drags its file out.
 const contentDraggable = computed(
   () =>
+    !props.task.remote &&
     !isAndroid.value &&
     !fileMissing.value &&
     !props.actionPending &&
     (props.task.status === TASK_STATUS.COMPLETE || isSharing.value),
 )
 
+const remoteOffline = computed(() => Boolean(props.task.remote && !props.task.remote.online))
+
 const compactStatus = computed<{ label: string; tone: string; icon: Component } | null>(() => {
+  if (props.task.remote) {
+    if (remoteOffline.value) return { label: t('task.remote-offline'), tone: 'muted', icon: AlertCircleOutline }
+    const status = props.task.status
+    const complete = status === TASK_STATUS.COMPLETE || Boolean(props.task.remote.seeder)
+    return {
+      label: complete
+        ? t('task.status-complete')
+        : status === TASK_STATUS.ERROR
+          ? t('task.status-error')
+          : status === TASK_STATUS.PAUSED
+            ? t('task.status-paused')
+            : status === TASK_STATUS.WAITING
+              ? t('task.status-waiting')
+              : t('task.status-active'),
+      tone: complete
+        ? 'success'
+        : status === TASK_STATUS.ERROR
+          ? 'error'
+          : status === TASK_STATUS.WAITING
+            ? 'waiting'
+            : 'muted',
+      icon: complete ? CheckmarkCircleOutline : status === TASK_STATUS.ERROR ? AlertCircleOutline : RadioOutline,
+    }
+  }
   if (fileMissing.value) {
     return {
       label: fileState.value === 'inaccessible' ? t('task.file-inaccessible') : t('task.file-missing'),
@@ -93,8 +124,11 @@ const compactStatusColor = computed(() => {
     class="task-compact-item"
     :class="{
       'is-sharing': isSharing,
+      'is-remote-offline': remoteOffline,
     }"
-    @dblclick="!fileMissing && !actionPending && canOpenTaskContent(task, $event) && emit('open-file', task)"
+    @dblclick="
+      !task.remote && !fileMissing && !actionPending && canOpenTaskContent(task, $event) && emit('open-file', task)
+    "
   >
     <div class="compact-body" :draggable="contentDraggable" @dragstart="dragTaskContent(task, $event)">
       <span
@@ -105,6 +139,7 @@ const compactStatusColor = computed(() => {
       >
         <NIcon :size="15"><component :is="fileIcon.icon" /></NIcon>
       </span>
+      <span v-if="task.remote" class="compact-remote-badge">{{ task.remote.deviceName }}</span>
       <MTooltip placement="bottom-start">
         <template #trigger>
           <div class="compact-name">
@@ -141,6 +176,10 @@ const compactStatusColor = computed(() => {
         @folder="emit('folder', task)"
         @checksum="emit('checksum', task)"
         @select-files="emit('select-files', task)"
+        @send-to-local="emit('send-to-local', task)"
+        @remote-details="emit('remote-details', task)"
+        @remote-checksum="emit('remote-checksum', task)"
+        @stop-seeding="emit('stop-seeding', task)"
       />
     </div>
   </div>
@@ -174,6 +213,23 @@ const compactStatusColor = computed(() => {
 }
 .task-compact-item.is-sharing::before {
   opacity: 1;
+}
+.task-compact-item.is-remote-offline {
+  opacity: 0.55;
+}
+.compact-remote-badge {
+  flex: 0 1 auto;
+  max-width: 26%;
+  overflow: hidden;
+  padding: 1px 6px;
+  color: var(--m3-on-tertiary-container);
+  background: var(--m3-tertiary-container);
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 16px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .compact-body {
   display: flex;

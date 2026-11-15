@@ -33,7 +33,11 @@ vi.mock('naive-ui', async (importOriginal) => {
 })
 
 vi.mock('../TaskItemActions.vue', () => ({
-  default: { template: '<div class="task-item-actions-stub" />' },
+  default: {
+    name: 'TaskItemActions',
+    props: ['task'],
+    template: '<div class="task-item-actions-stub" :data-remote="Boolean(task.remote)" />',
+  },
 }))
 
 import TaskItem from '../TaskItem.vue'
@@ -155,18 +159,16 @@ describe('TaskItem', () => {
     expect(compact.get('.compact-percent').text()).toBe('25%')
   })
 
-  it('offers transfer actions instead of pause for a completed remote task', () => {
+  it.each([TaskItem, TaskCompactItem])('routes remote cards through the shared action toolbar', (component) => {
     const task = {
       ...createTask('/downloads/remote.bin'),
       gid: 'remote:nas:abc',
       remote: { deviceId: 'nas', deviceName: 'NAS', gid: 'abc', online: true },
     } satisfies Aria2Task
-    const wrapper = mount(TaskItem, { props: { task } })
-    const labels = wrapper.findAll('button').map((button) => button.text())
-    expect(labels).not.toContain('task.pause-task')
-    expect(labels).toContain('task.remote-send-local')
-    expect(labels).toContain('task.remote-checksum')
-    expect(labels).toContain('task.remote-details')
+    const wrapper = mount(component, { props: { task } })
+    expect(wrapper.find('.task-item-actions-stub').attributes('data-remote')).toBe('true')
+    expect(wrapper.find('.remote-actions').exists()).toBe(false)
+    wrapper.unmount()
   })
 
   it('keeps the compact row mounted while progress changes', async () => {

@@ -21,7 +21,9 @@ import {
   ListOutline,
   ShareSocialOutline,
   ShieldCheckmarkOutline,
+  DocumentTextOutline,
 } from '@vicons/ionicons5'
+import SendToDeviceIcon from './SendToDeviceIcon.vue'
 import { type Component } from 'vue'
 import type { Aria2Task } from '@shared/types'
 import { getBtLifecycleState } from '@/composables/useBtLifecycle'
@@ -52,6 +54,10 @@ const emit = defineEmits<{
   checksum: []
   'share-file': []
   'select-files': []
+  'send-to-local': []
+  'remote-details': []
+  'remote-checksum': []
+  'stop-seeding': []
 }>()
 
 const { t } = useI18n()
@@ -67,7 +73,64 @@ interface ActionDef {
   disabled?: boolean
 }
 
+function remoteActions(): ActionDef[] {
+  const remote = props.task.remote
+  if (!remote) return []
+  const offline = !remote.online
+  const busy = offline || props.pending
+  const complete = props.task.status === TASK_STATUS.COMPLETE || Boolean(remote.seeder)
+  const list: ActionDef[] = []
+  if (props.task.status === TASK_STATUS.ACTIVE || props.task.status === TASK_STATUS.WAITING) {
+    list.push({ key: 'toggle', icon: PauseOutline, label: t('task.pause-task'), event: 'pause', disabled: busy })
+  } else if (props.task.status === TASK_STATUS.PAUSED) {
+    list.push({ key: 'toggle', icon: PlayOutline, label: t('task.resume-task'), event: 'resume', disabled: busy })
+  }
+  if (complete) {
+    list.push({
+      key: 'send-to-local',
+      icon: SendToDeviceIcon,
+      label: t('task.remote-send-local'),
+      event: 'send-to-local',
+      emphasis: true,
+      disabled: busy,
+    })
+  }
+  if (remote.seeder) {
+    list.push({
+      key: 'stop-seeding',
+      icon: StopCircleOutline,
+      label: t('task.remote-stop-seeding'),
+      event: 'stop-seeding',
+      disabled: busy,
+    })
+  }
+  list.push({
+    key: 'details',
+    icon: DocumentTextOutline,
+    label: t('task.remote-details'),
+    event: 'remote-details',
+  })
+  if (complete) {
+    list.push({
+      key: 'checksum',
+      icon: ShieldCheckmarkOutline,
+      label: t('task.remote-checksum'),
+      event: 'remote-checksum',
+      disabled: offline,
+    })
+  }
+  list.push({ key: 'delete', icon: TrashOutline, label: t('task.delete-task'), event: 'delete' })
+  if (props.minimal) {
+    const details = list.find((action) => action.key === 'details')
+    const send = list.find((action) => action.key === 'send-to-local')
+    const remove = list.find((action) => action.key === 'delete')
+    return [details, send, remove].filter((action): action is ActionDef => Boolean(action)).reverse()
+  }
+  return list.reverse()
+}
+
 const actions = computed(() => {
+  if (props.task.remote) return remoteActions()
   const lifecycle = getBtLifecycleState(props.task)
   const sharing = getTaskSharingState(props.task)
   let primary: ActionDef[]
@@ -253,6 +316,18 @@ function onAction(event: string) {
       break
     case 'select-files':
       emit('select-files')
+      break
+    case 'send-to-local':
+      emit('send-to-local')
+      break
+    case 'remote-details':
+      emit('remote-details')
+      break
+    case 'remote-checksum':
+      emit('remote-checksum')
+      break
+    case 'stop-seeding':
+      emit('stop-seeding')
       break
   }
 }

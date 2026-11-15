@@ -83,7 +83,8 @@ if [ "${BOOTED:-}" != "1" ]; then
 fi
 
 VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' "$ROOT/src-tauri/Cargo.toml" | head -n 1)
-DEFAULT_APK="$ROOT/release/current/Rayload-v${VERSION}-x86_64-smoke.apk"
+OUT_DIR=$("$ROOT/scripts/android/release-dir.sh")
+DEFAULT_APK="$OUT_DIR/Rayload-v${VERSION}-x86_64-smoke.apk"
 
 if [ "$BUILD" = "1" ]; then
   ln -sfn ../../.toolchains/binaries/aria2-next-android-x86_64 \
@@ -93,7 +94,7 @@ if [ "$BUILD" = "1" ]; then
     cd "$ROOT"
     RAYLOAD_SMOKE_X86_64=1 pnpm tauri android build --apk --target x86_64
   )
-  mkdir -p "$ROOT/release/current"
+  mkdir -p "$OUT_DIR"
   cp "$ROOT/src-tauri/gen/android/app/build/outputs/apk/universal/release/app-universal-release.apk" "$DEFAULT_APK"
   APK=$DEFAULT_APK
 fi
@@ -144,10 +145,10 @@ if [ "$TITLE" != "Rayload" ]; then
   exit 1
 fi
 
-"$ADB" -s "$SERIAL" exec-out screencap -p > "$ROOT/release/current/emulator-smoke.png"
+"$ADB" -s "$SERIAL" exec-out screencap -p > "$OUT_DIR/emulator-smoke.png"
 
 echo "Smoke test passed."
 echo "  serial:     $SERIAL"
 echo "  app pid:    $PID"
 echo "  webview:    $TITLE"
-echo "  screenshot: $ROOT/release/current/emulator-smoke.png"
+echo "  screenshot: $OUT_DIR/emulator-smoke.png"

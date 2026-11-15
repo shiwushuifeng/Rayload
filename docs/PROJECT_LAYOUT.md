@@ -15,8 +15,8 @@ documentation, release assets, branding sources, and local-only material.
 | `docs/`           | README translations, release notes, handoff, project docs  |
 | `docs/assets/`    | Documentation images, including the sponsor QR code        |
 | `assets/branding/`| Original logo, icon, and preview source artwork            |
-| `release/current/`| Current APK and checksum material                          |
-| `release/archive/`| Historical Rayload and Rayburst build artifacts            |
+| `release/current/<version>/<channel>/` | Current APK, CLI and checksum material |
+| `release/archive/<version>/<channel>/` | Historical Rayload and Rayburst build artifacts |
 | `signing/`        | Local release signing configuration                        |
 | `local/`          | Local-only unrelated material, never committed             |
 | `dist/`           | Generated frontend build output                            |
@@ -46,8 +46,12 @@ documentation, release assets, branding sources, and local-only material.
 
 ## Release assets
 
-- `release/current/` contains only the current distributable APK and checksums.
-- `release/archive/` contains older APKs and Rayburst-derived reference builds.
+- `release/current/v<version>/<channel>/` contains the current APK, CLI
+  tarball and checksums, for example `release/current/v1.0.4/beta3/`.
+- Use `stable`, `betaN` or `rcN` as the channel directory name.
+- `release/archive/v<version>/<channel>/` contains older APKs,
+  for example `release/archive/v1.0.4/stable/`; Rayburst-derived reference
+  builds remain under `release/archive/v1.0.4-pre-final/`.
 - `release/` is Git-ignored and must not be committed.
 
 ## Local-only material
