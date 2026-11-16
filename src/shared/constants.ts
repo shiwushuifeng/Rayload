@@ -1,7 +1,7 @@
 /** @fileoverview Application-wide constants: themes, intervals, suffixes, limits. */
 import { version as appVersion } from '../../package.json'
 import { DEFAULT_TASK_MANUAL_ORDER, DEFAULT_TASK_SORT } from '@/composables/useTaskSort'
-import type { AppLogLevel, Aria2LogLevel, FloatWindowMode } from '@shared/types'
+import type { AppLogLevel, Aria2LogLevel, ChecksumAlgorithm, ChecksumRule, FloatWindowMode } from '@shared/types'
 import type { I18nKey } from '@shared/i18nTypes'
 export const EMPTY_STRING = ''
 
@@ -364,6 +364,11 @@ export const DEFAULT_APP_CONFIG = {
   dnsOverHttps: '',
   checkCertificate: true,
   notificationClickAction: 'reveal' as const,
+  checksumAlgorithms: ['md5', 'sha1', 'sha256', 'sha512'] as ChecksumAlgorithm[],
+  checksumAutoVerify: false,
+  checksumAutoVerifyCategories: [] as string[],
+  checksumOnlineLookup: true,
+  checksumRules: [] as ChecksumRule[],
   logLevel: 'info' as const,
   aria2LogLevel: 'info' as const,
   cookie: '',

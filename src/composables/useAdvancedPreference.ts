@@ -16,6 +16,11 @@ export interface AdvancedForm {
   aria2LogLevel: AppConfig['aria2LogLevel']
   tempFilesDir: string
   hardwareRendering: boolean
+  checksumAlgorithms: AppConfig['checksumAlgorithms']
+  checksumAutoVerify: boolean
+  checksumAutoVerifyCategories: string[]
+  checksumOnlineLookup: boolean
+  checksumRules: AppConfig['checksumRules']
 }
 
 export function buildAdvancedForm(config: AppConfig): AdvancedForm {
@@ -31,6 +36,11 @@ export function buildAdvancedForm(config: AppConfig): AdvancedForm {
     aria2LogLevel: config.aria2LogLevel,
     tempFilesDir: config.tempFilesDir,
     hardwareRendering: config.hardwareRendering,
+    checksumAlgorithms: [...config.checksumAlgorithms],
+    checksumAutoVerify: config.checksumAutoVerify,
+    checksumAutoVerifyCategories: [...config.checksumAutoVerifyCategories],
+    checksumOnlineLookup: config.checksumOnlineLookup,
+    checksumRules: config.checksumRules.map((rule) => ({ ...rule })),
   }
 }
 

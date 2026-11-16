@@ -18,7 +18,8 @@ import {
 } from '@shared/configConstraints'
 import { getAllowedColorSchemeIds, normalizeCustomColorScheme } from '@shared/utils/colorSchemeConfig'
 import { normalizeProxyMode } from '@shared/utils/proxy'
-import type { AppConfig, ClipboardConfig, ProxyConfig } from '@shared/types'
+import type { AppConfig, ChecksumAlgorithm, ChecksumRule, ClipboardConfig, ProxyConfig } from '@shared/types'
+import { CHECKSUM_ALGORITHMS } from '@shared/types'
 import { normalizeSiteRules } from './siteRules'
 import { normalizeFileCategory } from '@shared/utils/fileCategory'
 import { isValidOptionalIpAddress } from '@shared/utils/ipAddress'
@@ -231,6 +232,9 @@ function normalizeScalarValues(config: Record<string, unknown>, repairs: string[
     DEFAULT_APP_CONFIG.notificationClickAction,
     repairs,
   )
+  config.checksumAlgorithms = normalizeChecksumAlgorithms(config.checksumAlgorithms, repairs)
+  config.checksumAutoVerifyCategories = normalizeStringList(config.checksumAutoVerifyCategories, repairs)
+  config.checksumRules = normalizeChecksumRules(config.checksumRules, repairs)
   repairEnum(
     config,
     'extensionTorrentAction',
@@ -305,6 +309,47 @@ function normalizeScalarValues(config: Record<string, unknown>, repairs: string[
 
 function dedupe(values: string[]): string[] {
   return [...new Set(values)]
+}
+
+/** Keeps only known algorithms, in display order, and never returns an empty set. */
+function normalizeChecksumAlgorithms(value: unknown, repairs: string[]): ChecksumAlgorithm[] {
+  const before = JSON.stringify(value)
+  const requested = Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+  const normalized = CHECKSUM_ALGORITHMS.filter((algorithm) => requested.includes(algorithm))
+  const result = normalized.length > 0 ? [...normalized] : [...DEFAULT_APP_CONFIG.checksumAlgorithms]
+  if (JSON.stringify(result) !== before) repairs.push('checksumAlgorithms')
+  return result
+}
+
+function normalizeStringList(value: unknown, repairs: string[]): string[] {
+  const before = JSON.stringify(value)
+  const result = Array.isArray(value)
+    ? dedupe(value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0))
+    : []
+  if (JSON.stringify(result) !== before) repairs.push('checksumAutoVerifyCategories')
+  return result
+}
+
+function normalizeChecksumRules(value: unknown, repairs: string[]): ChecksumRule[] {
+  const before = JSON.stringify(value)
+  const result = Array.isArray(value)
+    ? value.flatMap((item, index): ChecksumRule[] => {
+        if (!isRecord(item)) return []
+        const pattern = typeof item.pattern === 'string' ? item.pattern.trim() : ''
+        if (!pattern) return []
+        return [
+          {
+            id: typeof item.id === 'string' && item.id ? item.id : `checksum-rule-${index}`,
+            enabled: item.enabled !== false,
+            pattern,
+            regex: item.regex === true,
+            mode: item.mode === 'allow' ? 'allow' : 'deny',
+          },
+        ]
+      })
+    : []
+  if (JSON.stringify(result) !== before) repairs.push('checksumRules')
+  return result
 }
 
 function normalizeUserAgentConfig(config: AppConfig, repairs: string[]): void {

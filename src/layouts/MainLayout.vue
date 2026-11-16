@@ -13,6 +13,7 @@ import { logger } from '@shared/logger'
 import { isMetadataTask } from '@/composables/useTaskLifecycle'
 import { resolveTaskFilePath, requestFileRecheck } from '@/composables/useTaskPaths'
 import { handleTaskComplete, handleP2pDownloadComplete, handleTaskError } from '@/composables/useTaskNotifyHandlers'
+import { verifyCompletedDownload } from '@/composables/useChecksumAutoVerify'
 import { shouldDeleteTorrent, trashTorrentFile } from '@/composables/useDownloadCleanup'
 import { getTaskName, resolveOpenTarget, checkTaskIsSharing, getTaskSharingKind } from '@shared/utils'
 import type { TaskSharingKind } from '@shared/utils/task'
@@ -714,6 +715,14 @@ onMounted(async () => {
 
     // ── Auto-shutdown: check after task completion ──
     checkShutdownCondition()
+
+    // ── Optional checksum verification of published digests ──
+    void verifyCompletedDownload(task, {
+      config: () => preferenceStore.config,
+      t,
+      messageSuccess: (content) => message.success(content),
+      messageWarning: (content) => message.warning(content),
+    }).catch((error: unknown) => logger.debug('Lifecycle.checksumVerify', error))
   }
 
   async function onP2pDownloadComplete(task: Aria2Task, kind: TaskSharingKind): Promise<void> {

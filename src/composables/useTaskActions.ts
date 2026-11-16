@@ -306,14 +306,13 @@ export function useTaskActions(deps: TaskActionsDeps) {
     const fileName = target.split(/[\\/]/).pop() || target
     const pending = message.progress(t('task.sha256-calculating', { fileName }))
     try {
-      const digests = await calculateFileDigests(target)
+      const algorithms = preferenceConfig().checksumAlgorithms
+      const digests = await calculateFileDigests(target, algorithms)
       pending.destroy()
-      const rows: Array<[string, string]> = [
-        ['MD5', digests.md5],
-        ['SHA-1', digests.sha1],
-        ['SHA-256', digests.sha256],
-        ['SHA-512', digests.sha512],
-      ]
+      const rows: Array<[string, string]> = Object.entries(digests.digests).map(([algorithm, digest]) => [
+        algorithm.toUpperCase(),
+        digest,
+      ])
       dialog.info({
         title: t('task.checksum-title'),
         content: () =>

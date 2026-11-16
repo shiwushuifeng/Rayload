@@ -155,27 +155,21 @@ Nothing in this list has been implemented yet.
 
 ### Module 3 — advanced checksum system
 
-8. Algorithm switches under Settings → Advanced → Checksums: MD5, SHA-1,
-   SHA-256, SHA-512, BLAKE3, SM3 (national standard), CRC32. The detail page
-   computes only enabled algorithms.
-   Existing: `src-tauri/src/commands/*` `FileDigests` command,
-   `src/components/task/detail/TaskChecksumPanel.vue`.
-   Likely crates: `blake3`, `sm3`, `crc32fast` (check `src-tauri/Cargo.toml`).
-9. SQLite cache of computed hashes keyed by mtime + size; unchanged files
-   return instantly. Storage lives in `src-tauri/src/database/`.
-10. "Auto-verify after download" master switch plus category filter (for
-    example only installers and archives).
-11. Allow/deny rules (wildcard or regex) to skip verification per URL suffix.
-    Default: online lookup only for GitHub sources.
-12. Online multi-source lookup for uncached, non-blacklisted files: GitHub API
-    first, then CIRCL Hash Lookup and similar public APIs.
-13. Checksum UI:
-    - "Expected checksum" input with automatic comparison: green tick on match,
-      red cross on mismatch.
-    - "Cancel calculation" button while running.
-    - "Export checksum file" button (`.sha256` in the download directory or via
-      system share).
-    - Per-file verification for multi-file BT tasks.
+8. ✅ Algorithm switches under Settings → Advanced → Checksums: MD5, SHA-1,
+   SHA-256, SHA-512, BLAKE3, SM3, CRC32. `file_digests` takes the enabled list
+   and hashes everything in one read; the detail page renders only those rows.
+9. ✅ SQLite cache keyed by path + size + mtime, one row per algorithm
+   (`file_hash_cache`), so a new algorithm only computes what is missing and a
+   rewritten file invalidates itself. Settings can clear it.
+10. ✅ "Verify after download" master switch plus a category filter; the check
+    runs from the completion handler and stays silent when nothing is published.
+11. ✅ Allow/deny rules (wildcard or regex). An allow rule overrides a broader
+    deny; online lookup is limited to GitHub-style sources by default.
+12. ✅ Online lookup: GitHub release metadata first, then CIRCL Hash Lookup.
+13. ✅ Checksum UI: expected-value comparison with match/mismatch for any
+    algorithm, cancel while running, export `.sha256`-style checksum file, and
+    per-file calculation for multi-file torrents. New copy ships in 27 locales
+    through `scripts/update-v104-beta7-checksum-locales.mjs`.
 
 ### Module 4 — detail and feature completion
 

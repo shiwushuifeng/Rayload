@@ -444,6 +444,34 @@ export interface SiteRule {
 
 export type SiteRuleProxy = 'default' | 'proxy' | 'direct'
 
+/** Digest algorithms the checksum subsystem can compute. */
+export type ChecksumAlgorithm = 'md5' | 'sha1' | 'sha256' | 'sha512' | 'blake3' | 'sm3' | 'crc32'
+
+/** Algorithms in display order; the first entry is the default export format. */
+export const CHECKSUM_ALGORITHMS: readonly ChecksumAlgorithm[] = [
+  'md5',
+  'sha1',
+  'sha256',
+  'sha512',
+  'blake3',
+  'sm3',
+  'crc32',
+] as const
+
+/**
+ * Skips automatic verification for downloads whose source URL matches the
+ * pattern: `deny` opts out, `allow` keeps verification even when a broader
+ * `deny` rule would match.
+ */
+export interface ChecksumRule {
+  id: string
+  enabled: boolean
+  pattern: string
+  /** Interpret `pattern` as a regular expression instead of a wildcard. */
+  regex: boolean
+  mode: 'allow' | 'deny'
+}
+
 /** Application user preferences with full type coverage. */
 export interface AppConfig {
   theme: 'auto' | 'light' | 'dark'
@@ -589,6 +617,16 @@ export interface AppConfig {
   checkCertificate: boolean
   /** Clicking a completion notification reveals the file in its folder or opens it. */
   notificationClickAction: 'reveal' | 'open'
+  /** Algorithms the checksum panel computes; empty means every algorithm. */
+  checksumAlgorithms: ChecksumAlgorithm[]
+  /** Verify finished downloads automatically and warn on a mismatch. */
+  checksumAutoVerify: boolean
+  /** File category ids that opt into automatic verification; empty means all. */
+  checksumAutoVerifyCategories: string[]
+  /** Ask GitHub and CIRCL for published digests of GitHub-hosted downloads. */
+  checksumOnlineLookup: boolean
+  /** Per-URL allow/deny rules that skip automatic verification. */
+  checksumRules: ChecksumRule[]
   rpcListenPort: number
   /** Port for the embedded HTTP API that browser extensions use to submit
    *  downloads. Defaults to 29110. */

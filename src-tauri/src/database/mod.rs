@@ -1,9 +1,11 @@
 //! Process-owned SQLite storage. No database lifecycle depends on a WebView.
+mod checksum_cache;
 mod credentials;
 mod history;
 mod rename;
 mod selection;
 use crate::error::AppError;
+pub use checksum_cache::CachedDigest;
 pub use credentials::HttpAuthCredential;
 pub use history::{HistoryPage, HistoryPageInput, HistoryRecord};
 use rusqlite::Connection;

@@ -51,3 +51,16 @@ CREATE TABLE IF NOT EXISTS file_renames (
     new_path TEXT NOT NULL,
     name TEXT NOT NULL
 );
+
+-- Cached file digests keyed by path + size + mtime; an unchanged file returns
+-- instantly instead of being read again. One row per algorithm so enabling a
+-- new algorithm only computes what is missing.
+CREATE TABLE IF NOT EXISTS file_hash_cache (
+  path        TEXT    NOT NULL,
+  size        INTEGER NOT NULL,
+  mtime_secs  INTEGER NOT NULL,
+  algorithm   TEXT    NOT NULL,
+  digest      TEXT    NOT NULL,
+  computed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (path, size, mtime_secs, algorithm)
+);
