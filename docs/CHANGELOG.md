@@ -21,6 +21,47 @@ this file.
 - Normalized license and sponsor links across all translated README editions.
 - Documented the v0.9.0-beta through v1.0.1 milestones in `ROADMAP.md`.
 
+## v1.0.4-beta4 to beta6 (test builds)
+
+### Added
+
+- Bottom navigation limited to All, Keep awake, Settings and About by default,
+  with a navigation customization page that can restore every destination.
+- Per-device accent rail and gradient on task cards, plus a compact card mode.
+- Swipe actions on task cards: left deletes, right pauses/resumes local tasks
+  and pushes completed remote tasks back to this device.
+- Two-tab task detail page (file details, checksums) with a card-based flow and
+  a single icon row of six actions.
+- Vertical settings groups with hint subtitles and a right-aligned chevron.
+- Plugin management under Advanced & extensions, plus plugin import from
+  `.sh` (`# @name:` metadata) and `.zip` (`plugin.json` + `main.sh`).
+- Algorithm-agnostic checksum panel groundwork and a plugin switch in the
+  navigation customization list.
+
+### Changed
+
+- Android default download directory is
+  `/storage/emulated/0/Download/Rayload`; finishing onboarding without the
+  permission page still requests all-files access.
+- Version bumps: `1.0.4-beta4`, `1.0.4-beta5`, `1.0.4-beta6`.
+
+### Fixed
+
+- Local tasks were dropped when remote tasks merged during polling.
+- LAN and plugin entries disappeared because builds omitted the
+  `plugin_engine` feature.
+- Settings retained the legacy footer form and floating apply/discard bar.
+- Navigation icons did not refresh after enabling a destination.
+- Swipe gestures lost pointer capture on Android WebView.
+- Aria2 failed to start when `useLegacyPackaging` was disabled; the flag is now
+  documented as required to stay enabled.
+
+### Verified
+
+- beta6 passed an x86_64 API 33 emulator smoke test: engine process, onboarding,
+  settings, plugin page, navigation toggle, swipe delete/pause/resume, and no
+  fatal or ANR log entries.
+
 ## v1.0.4 - 2026-11-14
 
 ### Added
