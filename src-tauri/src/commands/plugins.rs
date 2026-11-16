@@ -558,6 +558,11 @@ pub fn plugin_save(
     );
     let normalized = serde_json::to_string_pretty(&value)
         .map_err(|_| AppError::InvalidInput("Plugin manifest could not be serialized".into()))?;
+    if manifest.kind == PluginKind::Script && script_content.is_none() {
+        return Err(AppError::InvalidInput(
+            "A script plugin needs an entry script (main.sh)".into(),
+        ));
+    }
     let directory = plugins_dir(&app)?;
     if let Some(script) = script_content {
         if manifest.kind != PluginKind::Script {
