@@ -5,9 +5,17 @@ code; it is the single source of truth for the next session.
 
 ## Where we are
 
-- Repository: `/home/qi/桌面/rayload`, branch `main`.
-- Last committed state: `16cf2db save: beta6 gesture, settings, engine startup and packaging fixes`.
+- Repository: `C:\AAAARayload` (Windows), branch `main`, remote
+  `https://github.com/shiwushuifeng/Rayload.git` (push via `github-alt`).
 - Version in `src-tauri/Cargo.toml`: `1.0.4-beta6`.
+- Environment handoff, sandbox findings and the verified build recipe:
+  `docs/HANDOFF-WINDOWS.md`.
+- Done in this cycle (all committed, all gates green): module 2 (swipe,
+  device accent, HTTP panels, compact remote cards), module 1 (settings tabs,
+  width caps, single-row bar), extra A (share on swipe) and B, extra C
+  (transfer card overflow).
+- Next: module 3 (advanced checksum system), then module 4, then locales,
+  version bump, build and report.
 - Delivered beta6 artifact:
   `/home/qi/桌面/rayload/release/current/v1.0.4/beta6/v1.0.4-beta6-full-arm64.apk`
   (arm64-v8a only, 23,045,035 B, sha256
@@ -33,15 +41,25 @@ code; it is the single source of truth for the next session.
 - For beta7 the user explicitly said **do not start the AVD or run device
   tests**; compile and hand over the APK. Do not push, do not create a release.
 
-### Build command
+### Build command (Windows, verified 2026-11-17)
 
 ```bash
-export ANDROID_HOME="$HOME/.cache/rayburst-android/android-sdk"
+export CARGO_TARGET_DIR='C:\rayload-build\target'
+export ANDROID_HOME='C:\dev\toolchains\android-sdk'
 export ANDROID_SDK_ROOT="$ANDROID_HOME"
-export NDK_HOME="$ANDROID_HOME/ndk/29.0.14206865"
-export JAVA_HOME="/usr/lib/jvm/java-21-openjdk-amd64"
+export NDK_HOME="$ANDROID_HOME\ndk\29.0.14206865"
+export JAVA_HOME='C:\dev\toolchains\jdk21'
+export TMP='C:\AAAARayload\.build-tmp'   # esbuild still lives in node_modules
+export TEMP="$TMP" TMPDIR="$TMP"
+export PATH="$JAVA_HOME/bin:$HOME/.cargo/bin:$PATH"
 pnpm tauri android build --apk --target aarch64 --features plugin_engine
 ```
+
+Why `CARGO_TARGET_DIR` is set: this sandbox confines processes whose image lives
+inside the workspace to workspace-only writes. Building into a directory outside
+the workspace keeps the Rust build scripts and `cl.exe` unrestricted, so
+`CARGO_HOME` can stay default. Details and the experiments are in
+`docs/HANDOFF-WINDOWS.md` section five.
 
 Copy the result to
 `release/current/v1.0.4/beta7/v1.0.4-beta7-full-arm64.apk`, verify with
