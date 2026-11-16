@@ -1,10 +1,10 @@
 {
   "name": "Rayload Safe Test",
   "version": "1.0.0",
-  "description": "Safe rule plugin for beta7 import and UI testing. Declares no permissions.",
+  "description": "Safe rule plugin for beta7 import testing. Declares no permissions.",
   "type": "rule",
   "runtime": "download",
   "permissions": [],
-  "allowedDomains": [],
-  "grantedPermissions": []
+  "allowed_domains": [],
+  "granted_permissions": []
 }

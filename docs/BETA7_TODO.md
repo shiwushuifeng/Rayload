@@ -223,9 +223,18 @@ Nothing in this list has been implemented yet.
 
 ### Module 5 — test plugins and delivery
 
-17. ✅ `test_safe.json` and `test_script.sh` live in the repository root:
-    - `C:\AAAARayload\test_safe.json`
-    - `C:\AAAARayload\test_script.sh`
+17. ✅ Test plugins at the repository root:
+    - `C:\AAAARayload\test_safe.json` — rule plugin, no permissions.
+    - `C:\AAAARayload\test_script.sh` — bare script plugin (metadata header).
+    - `C:\AAAARayload\test_plugin_script.zip` — the packaged form the import
+      flow expects (`plugin.json` + `main.sh`), built from
+      `test_plugins/zip-src/`.
+    - Script plugins speak newline-delimited JSON and must stay alive: the first
+      version printed one JSON object and exited, which the host rejects with
+      "plugin closed stdout without answering". Both files now loop on stdin and
+      echo each request, which answers the version handshake and the echo probe.
+    - Manifest keys are snake_case (`allowed_domains`, `granted_permissions`);
+      camelCase keys are silently ignored by the parser.
 18. ✅ Built `v1.0.4-beta7-full-arm64.apk` (arm64-v8a, versionCode 10013,
     23,130,563 bytes, sha256
     `c40c4d5894737bed038e4005c705ffd15c3250e49b5d9b08ba6da69e72572c36`) and
