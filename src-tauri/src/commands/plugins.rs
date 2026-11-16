@@ -402,25 +402,49 @@ fn inspect_json(path: &Path, bytes: Vec<u8>) -> Result<PluginInspection, AppErro
     Ok(inspection(filename, normalized, None, &manifest))
 }
 
-/// Reads an import path in Rust so every entry is decoded as UTF-8 before the
-/// review dialog sees it, including files with non-ASCII names.
-#[tauri::command]
-pub fn plugin_inspect_import(path: String) -> Result<PluginInspection, AppError> {
-    let file_path = PathBuf::from(&path);
-    let bytes = std::fs::read(&file_path).map_err(|error| AppError::Io(error.to_string()))?;
-    let extension = file_path
+/// Inspects an import from bytes the caller already read.
+fn inspect_import_bytes(path: &Path, bytes: Vec<u8>) -> Result<PluginInspection, AppError> {
+    let extension = path
         .extension()
         .and_then(|value| value.to_str())
         .map(str::to_ascii_lowercase)
         .unwrap_or_default();
     match extension.as_str() {
-        "sh" => inspect_script(&file_path, bytes),
-        "zip" => inspect_zip(&file_path, bytes),
-        "json" => inspect_json(&file_path, bytes),
+        "sh" => inspect_script(path, bytes),
+        "zip" => inspect_zip(path, bytes),
+        "json" => inspect_json(path, bytes),
         _ => Err(AppError::InvalidInput(
             "Unsupported plugin file type; use .sh, .json or .zip".into(),
         )),
     }
+}
+
+/// Reads an import path in Rust so every entry is decoded as UTF-8 before the
+/// review dialog sees it, including files with non-ASCII names.
+#[tauri::command]
+pub fn plugin_inspect_import(path: String) -> Result<PluginInspection, AppError> {
+    let file_path = PathBuf::from(&path);
+    let bytes = std::fs::read(&file_path)
+        .map_err(|error| AppError::Io(format!("Cannot read {path}: {error}")))?;
+    inspect_import_bytes(&file_path, bytes)
+}
+
+/// Inspects an import the frontend already read. Android's file picker hands the
+/// WebView a content:// URI that std::fs cannot open, so the bytes are passed
+/// over instead of a path.
+#[tauri::command]
+pub fn plugin_inspect_import_bytes(
+    filename: String,
+    bytes: Vec<u8>,
+) -> Result<PluginInspection, AppError> {
+    if bytes.len() as u64 > MAX_SCRIPT_BYTES {
+        return Err(AppError::InvalidInput("Plugin file is too large".into()));
+    }
+    let name = filename.trim();
+    if name.is_empty() || name.contains(['/', '\\']) {
+        return Err(AppError::InvalidInput("Invalid plugin file name".into()));
+    }
+    inspect_import_bytes(Path::new(name), bytes)
 }
 
 fn policy_message(error: &PolicyError) -> String {

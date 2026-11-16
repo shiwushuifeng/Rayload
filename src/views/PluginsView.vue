@@ -4,6 +4,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { invoke } from '@tauri-apps/api/core'
 import { open as openDialog } from '@tauri-apps/plugin-dialog'
+import { readFile } from '@tauri-apps/plugin-fs'
 import { NButton, NCard, NCheckbox, NIcon, NModal, NTag } from 'naive-ui'
 import {
   AddCircleOutline,
@@ -120,15 +121,34 @@ async function requestImport(): Promise<void> {
       filters: [{ name: 'Plugin', extensions: ['json', 'sh', 'zip'] }],
     })
     if (typeof selected !== 'string') return
-    const inspected = await invoke<PluginInspection>('plugin_inspect_import', { path: selected })
+    const inspected = await inspectImport(selected)
     reviewImport({
       ...inspected,
       permissions: parsePermissions(inspected.permissions),
     })
   } catch (error) {
     logger.warn('Plugins.read', error)
-    message.error(t('plugins.import-failed'))
+    // Show the backend reason: it names the failing field, the missing script or
+    // the unreadable file instead of a generic "import failed".
+    message.error(getErrorMessage(error) || t('plugins.import-failed'))
   }
+}
+
+/**
+ * Android's file picker returns content:// URIs, which std::fs cannot open, so
+ * those are read here and handed to the backend as bytes. Plain paths still go
+ * through the backend reader, which decodes non-ASCII names.
+ */
+async function inspectImport(path: string): Promise<PluginInspection> {
+  if (!path.includes('://')) {
+    return invoke<PluginInspection>('plugin_inspect_import', { path })
+  }
+  const bytes = await readFile(path)
+  const filename = decodeURIComponent(path.split('/').pop() ?? 'plugin')
+  return invoke<PluginInspection>('plugin_inspect_import_bytes', {
+    filename,
+    bytes: Array.from(bytes),
+  })
 }
 
 /** Opens the permission-review dialog for a Rust-inspected import. */

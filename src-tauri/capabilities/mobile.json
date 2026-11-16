@@ -18,6 +18,7 @@
     "fs:allow-remove",
     "fs:allow-exists",
     "fs:allow-read-text-file",
+    "fs:allow-read-file",
     {
       "identifier": "fs:scope",
       "allow": [

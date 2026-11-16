@@ -861,6 +861,7 @@ pub fn run() {
             commands::lan_discovered,
             commands::plugin_list,
             commands::plugin_inspect_import,
+            commands::plugin_inspect_import_bytes,
             commands::plugin_save,
             commands::plugin_save_script,
             commands::plugin_remove,
