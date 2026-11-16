@@ -833,7 +833,9 @@ async function onFileRenamed() {
           </template>
         </div>
 
-        <div v-if="activeTab === 'details'" key="peers" class="tab-content detail-card">
+        <!-- Plain HTTP/HTTPS tasks have no peer-to-peer surface: hide the
+             peers/trackers cards instead of rendering empty states. -->
+        <div v-if="activeTab === 'details' && !isURI" key="peers" class="tab-content detail-card">
           <h3 class="detail-card-title">{{ t('task.section-peers') }}</h3>
           <TaskDetailPeers
             :gid="task?.gid ?? ''"
@@ -845,7 +847,7 @@ async function onFileRenamed() {
           />
         </div>
 
-        <div v-if="activeTab === 'details'" key="trackers" class="tab-content detail-card">
+        <div v-if="activeTab === 'details' && !isURI" key="trackers" class="tab-content detail-card">
           <h3 class="detail-card-title">{{ t('task.section-trackers') }}</h3>
           <TaskDetailTrackers
             :gid="task?.gid ?? ''"

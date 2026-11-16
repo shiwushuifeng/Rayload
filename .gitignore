@@ -21,6 +21,8 @@ coverage
 # Tauri / Rust build artifacts
 src-tauri/target
 src-tauri/generated-icons/
+# Local Windows build scaffolding (relocated temp dir and Cargo home copy)
+.build-tmp/
 src-tauri/generated-binaries/*
 !src-tauri/generated-binaries/README.md
 
@@ -86,3 +88,8 @@ signing/keystore.properties
 
 # Local DingTalk webhook helper (points outside the repo; never commit)
 notify_dingtalk.sh
+
+# DSH session artifacts
+.dsh/
+# Local toolchain bootstrapper downloads
+.build-tools/

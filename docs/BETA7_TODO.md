@@ -127,8 +127,10 @@ Nothing in this list has been implemented yet.
    the list and cards. Unify through one source.
    `src/shared/utils/task.ts` (`getTaskAccentColor`), `deviceColors.ts`,
    `LanDevicesView.vue`, card components.
-6. Plain HTTP/HTTPS tasks must hide the "Nodes" and "Tracker" panels in the
+6. ✅ Plain HTTP/HTTPS tasks must hide the "Nodes" and "Tracker" panels in the
    detail page instead of rendering empty states. `TaskDetail.vue`.
+   Done in the Windows migration kickoff: both cards now render only when the
+   task is not a plain URI download (`!isURI`).
 7. Compact remote cards squeeze the filename; reduce the right-side icon set
    and give the name the space. `TaskCompactItem.vue`.
 
@@ -182,9 +184,11 @@ A. Completed local tasks also need a right-to-left sharing interaction.
    share (right swipe currently does nothing for completed tasks), while left
    swipe stays delete.
 
-B. Tapping a finished file currently offers "Open file" and "Show in folder".
+B. ✅ Tapping a finished file currently offers "Open file" and "Show in folder".
    Remove the "Open file" action and keep only "Show in folder".
    File: `src/composables/useNotificationToast.ts` (completion toast buttons).
+   Done in the Windows migration kickoff: the toast, its dependencies and the
+   unused `openFileFromNotification` helper were removed together.
 
 C. The "Transfer" card in the task detail page still overflows its box.
    File: `src/components/task/TaskDetail.vue` (`.detail-card`, transfer rows)

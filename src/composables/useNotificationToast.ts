@@ -1,12 +1,12 @@
 /**
  * @fileoverview Toast VNode rendering for download-completion notifications.
  *
- * Produces a Naive UI `message.success` render function with inline action
- * buttons that let the user open the downloaded file or reveal it in the
- * system file manager — directly from the toast notification.
+ * Produces a Naive UI `message.success` render function with an inline action
+ * button that reveals the downloaded file in the system file manager —
+ * directly from the toast notification.
  *
  * Visual layout:
- *   [✓ body text                      Open File · Show in Folder]
+ *   [✓ body text                      Show in Folder]
  */
 import { h, type VNodeChild } from 'vue'
 import { NButton } from 'naive-ui'
@@ -17,8 +17,6 @@ export interface CompletionToastOptions {
   body: string
   /** i18n translation function. */
   t: (key: string) => string
-  /** Callback fired when the user clicks "Open File". */
-  onOpenFile: () => void
   /** Callback fired when the user clicks "Show in Folder". */
   onShowInFolder: () => void
 }
@@ -29,7 +27,7 @@ export interface CompletionToastOptions {
  * Returns a `() => VNodeChild` suitable for `message.success(renderFn)`.
  */
 export function renderCompletionToast(options: CompletionToastOptions): () => VNodeChild {
-  const { body, t, onOpenFile, onShowInFolder } = options
+  const { body, t, onShowInFolder } = options
 
   return () =>
     h(
@@ -71,19 +69,6 @@ export function renderCompletionToast(options: CompletionToastOptions): () => VN
             },
           },
           [
-            h(
-              NButton,
-              {
-                tertiary: true,
-                type: 'primary',
-                size: 'small',
-                onClick: (e: MouseEvent) => {
-                  e.stopPropagation()
-                  onOpenFile()
-                },
-              },
-              { default: () => t('task.open-file') },
-            ),
             h(
               NButton,
               {

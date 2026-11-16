@@ -20,6 +20,13 @@ this file.
   original JPEG.
 - Normalized license and sponsor links across all translated README editions.
 - Documented the v0.9.0-beta through v1.0.1 milestones in `ROADMAP.md`.
+- Completion toasts now offer only "Show in folder"; the duplicate "Open file"
+  action and its unused helper were removed.
+
+### Fixed
+
+- Plain HTTP/HTTPS tasks no longer render empty "Peers" and "Trackers" cards in
+  the task detail page.
 
 ## v1.0.4-beta4 to beta6 (test builds)
 

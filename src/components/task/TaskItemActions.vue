@@ -62,7 +62,9 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 const { isAndroid } = usePlatform()
-const folderActionLabel = computed(() => t(isAndroid.value ? 'task.open-file' : 'task.show-in-folder'))
+const androidFolderLabel = computed(() => t('task.open-file'))
+const desktopFolderLabel = computed(() => t('task.show-in-folder'))
+const folderActionLabel = computed(() => (isAndroid.value ? androidFolderLabel.value : desktopFolderLabel.value))
 
 interface ActionDef {
   key: string

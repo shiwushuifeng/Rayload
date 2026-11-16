@@ -8,9 +8,9 @@
  * - OS-level completion/error notification is sent by Rust's task monitor so
  *   lightweight mode works after the WebView is destroyed.
  *
- * Completion toasts render inline action buttons so the user can open
- * the downloaded file or reveal it in the system file manager directly
- * from the notification — without navigating through the task list.
+ * Completion toasts render an inline action button so the user can reveal the
+ * downloaded file in the system file manager directly from the notification —
+ * without navigating through the task list.
  */
 import type { VNodeChild } from 'vue'
 import type { Aria2Task } from '@shared/types'
@@ -25,7 +25,6 @@ export interface NotifyDeps {
   messageSuccess: (content: string | (() => VNodeChild)) => void
   messageError: (content: string) => void
   t: (key: string, params?: Record<string, unknown>) => string
-  onOpenFile: (task: Aria2Task) => void
   onShowInFolder: (task: Aria2Task) => void
 }
 
@@ -33,8 +32,8 @@ export interface NotifyDeps {
  * Handle a completed stream download.
  * Always sends in-app toast. Native OS notification is sent by Rust monitor.
  *
- * The toast includes inline buttons
- * for "Open File" and "Show in Folder".
+ * The toast includes an inline button
+ * for "Show in Folder".
  */
 export function handleTaskComplete(task: Aria2Task, deps: NotifyDeps): void {
   if (isMetadataTask(task)) return
@@ -45,7 +44,6 @@ export function handleTaskComplete(task: Aria2Task, deps: NotifyDeps): void {
   const toastContent = renderCompletionToast({
     body,
     t: deps.t,
-    onOpenFile: () => deps.onOpenFile(task),
     onShowInFolder: () => deps.onShowInFolder(task),
   })
   deps.messageSuccess(toastContent)
@@ -56,8 +54,8 @@ export function handleTaskComplete(task: Aria2Task, deps: NotifyDeps): void {
  * Handle a P2P download entering shared-upload state.
  * Always sends in-app toast. Native OS notification is sent by Rust monitor.
  *
- * The toast includes inline buttons
- * for "Open File" and "Show in Folder".
+ * The toast includes an inline button
+ * for "Show in Folder".
  */
 export function handleP2pDownloadComplete(task: Aria2Task, kind: TaskSharingKind, deps: NotifyDeps): void {
   const taskName = getTaskName(task)
@@ -67,7 +65,6 @@ export function handleP2pDownloadComplete(task: Aria2Task, kind: TaskSharingKind
   const toastContent = renderCompletionToast({
     body,
     t: deps.t,
-    onOpenFile: () => deps.onOpenFile(task),
     onShowInFolder: () => deps.onShowInFolder(task),
   })
   deps.messageSuccess(toastContent)

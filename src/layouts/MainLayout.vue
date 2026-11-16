@@ -317,35 +317,6 @@ let unlistenFocusRecheck: (() => void) | null = null
 // ── Notification action helpers (reuse existing IPC commands) ────────
 
 /**
- * Open the downloaded file with the system's default application.
- *
- * Reuses the same IPC commands as TaskItem's "Open File" context menu:
- *   - `resolveOpenTarget()` for smart path resolution (BT multi-file → subdir)
- *   - `check_path_exists` to guard against deleted files
- *   - `open_path_normalized` to invoke the system opener
- */
-async function openFileFromNotification(task: Aria2Task) {
-  const { invoke } = await import('@tauri-apps/api/core')
-  const target = await resolveOpenTarget(task)
-  if (!target) return
-  try {
-    const fileExists = await invoke<boolean>('check_path_exists', { path: target })
-    if (!fileExists) {
-      message.warning(t('task.file-not-exist'))
-      requestFileRecheck()
-      return
-    }
-    const isDir = await invoke<boolean>('check_path_is_dir', { path: target })
-    await invoke('open_path_normalized', { path: target })
-    message.success(t(isDir ? 'task.open-file-is-folder' : 'task.open-file-success'))
-  } catch (e) {
-    logger.warn('Notification.openFile', e)
-    message.warning(t('task.file-not-exist'))
-    requestFileRecheck()
-  }
-}
-
-/**
  * Reveal the downloaded file in the system file manager.
  *
  * Reuses the same IPC commands as TaskItem's "Show in Folder" context menu:
@@ -738,7 +709,6 @@ onMounted(async () => {
       messageSuccess: message.success,
       messageError: message.error,
       t,
-      onOpenFile: openFileFromNotification,
       onShowInFolder: showInFolderFromNotification,
     })
 
@@ -754,7 +724,6 @@ onMounted(async () => {
       messageSuccess: message.success,
       messageError: message.error,
       t,
-      onOpenFile: openFileFromNotification,
       onShowInFolder: showInFolderFromNotification,
     })
 

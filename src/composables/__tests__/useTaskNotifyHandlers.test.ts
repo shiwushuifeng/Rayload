@@ -34,7 +34,6 @@ const deps = {
   messageSuccess: vi.fn(),
   messageError: vi.fn(),
   messageInfo: vi.fn(),
-  onOpenFile: vi.fn(),
   onShowInFolder: vi.fn(),
   t: vi.fn((key: string, _params?: Record<string, unknown>) => key),
 }
@@ -47,9 +46,7 @@ describe('Task notifications', () => {
     expect(deps.t).toHaveBeenCalledWith('task.download-complete-message', { taskName: 'file.zip' })
     expect(deps.messageSuccess).toHaveBeenCalledWith(expect.any(Function))
     const options = renderToastMock.mock.calls[0][0]
-    options.onOpenFile()
     options.onShowInFolder()
-    expect(deps.onOpenFile).toHaveBeenCalledWith(task)
     expect(deps.onShowInFolder).toHaveBeenCalledWith(task)
     expect(invokeMock).not.toHaveBeenCalled()
   })
