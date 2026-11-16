@@ -1,0 +1,11 @@
+{
+  "name": "Rayload Network Test",
+  "version": "1.0.0",
+  "description": "Rule plugin that declares the network permission for example.com, so the import review shows a real risk prompt and the test runs one HTTP request.",
+  "type": "rule",
+  "runtime": "http",
+  "permissions": ["network"],
+  "allowedDomains": ["example.com"],
+  "grantedPermissions": ["network"],
+  "testUrl": "https://example.com/"
+}

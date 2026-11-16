@@ -1,9 +1,9 @@
 {
   "name": "Rayload Safe Test",
   "version": "1.0.0",
-  "description": "Safe rule plugin for beta7 import testing. Declares no permissions.",
+  "description": "Zero-permission rule plugin that exercises the import review and the echo runtime locally. It never touches the network.",
   "type": "rule",
-  "runtime": "download",
+  "runtime": "echo",
   "permissions": [],
   "allowedDomains": [],
   "grantedPermissions": []
