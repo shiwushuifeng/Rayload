@@ -1204,7 +1204,8 @@
     "install-apk": "Install package",
     "install-apk-started": "The package installer is opening",
     "install-apk-failed": "Could not start the package installer",
-    "preview-media": "Preview"
+    "preview-media": "Preview",
+    "remote-removed-offline": "Device offline: removed from this list, the remote task stays"
   },
   "media": {
     "probing": "Medium wird untersucht",

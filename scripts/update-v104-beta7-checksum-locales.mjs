@@ -11,6 +11,7 @@ const english = {
   'task.checksum-expected-placeholder':
     'Paste a checksum: MD5, SHA-1, SHA-256, SHA-512, BLAKE3, SM3 or CRC32, with or without a sha256: prefix',
   'task.checksum-cancel': 'Cancel calculation',
+  'task.remote-removed-offline': 'Device offline: removed from this list, the remote task stays',
   'task.install-apk': 'Install package',
   'task.install-apk-started': 'The package installer is opening',
   'task.install-apk-failed': 'Could not start the package installer',
@@ -67,6 +68,7 @@ const translations = {
     'task.checksum-expected-placeholder':
       '粘贴校验值：支持 MD5、SHA-1、SHA-256、SHA-512、BLAKE3、SM3、CRC32，可带 sha256: 前缀',
     'task.checksum-cancel': '取消计算',
+    'task.remote-removed-offline': '设备离线：已从本机列表移除，远端任务保留',
     'task.install-apk': '安装应用',
     'task.install-apk-started': '正在打开安装程序',
     'task.install-apk-failed': '无法启动安装程序',
@@ -121,6 +123,7 @@ const translations = {
     'task.checksum-expected-placeholder':
       '貼上校驗值：支援 MD5、SHA-1、SHA-256、SHA-512、BLAKE3、SM3、CRC32，可帶 sha256: 前置字串',
     'task.checksum-cancel': '取消計算',
+    'task.remote-removed-offline': '裝置離線：已從本機清單移除，遠端工作保留',
     'task.install-apk': '安裝應用程式',
     'task.install-apk-started': '正在開啟安裝程式',
     'task.install-apk-failed': '無法啟動安裝程式',

@@ -1204,7 +1204,8 @@
     "install-apk": "安装应用",
     "install-apk-started": "正在打开安装程序",
     "install-apk-failed": "无法启动安装程序",
-    "preview-media": "预览"
+    "preview-media": "预览",
+    "remote-removed-offline": "设备离线：已从本机列表移除，远端任务保留"
   },
   "media": {
     "probing": "正在探测媒体",

@@ -1204,7 +1204,8 @@
     "install-apk": "安裝應用程式",
     "install-apk-started": "正在開啟安裝程式",
     "install-apk-failed": "無法啟動安裝程式",
-    "preview-media": "預覽"
+    "preview-media": "預覽",
+    "remote-removed-offline": "裝置離線：已從本機清單移除，遠端工作保留"
   },
   "media": {
     "probing": "正在探測媒體",

@@ -212,3 +212,38 @@
     min-height: 44px;
   }
 }
+
+/* Phones: dense rows instead of stacked cards. Every form item used to be a
+   bordered card with its own margin, which made a single settings page taller
+   than the screen twice over. */
+@media (max-width: 768px) {
+  .form-preference {
+    padding: 6px 12px calc(18px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .form-preference .n-form-item {
+    margin-bottom: 0;
+    padding: 10px 2px;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--m3-outline-variant) 55%, transparent);
+    border-radius: 0;
+  }
+
+  .form-preference .n-form-item-label {
+    width: auto !important;
+    padding: 0 0 4px;
+    font-size: var(--font-size-sm);
+    line-height: 1.35;
+  }
+
+  .form-preference .n-divider:not(.n-divider--vertical) {
+    margin: 12px 0 2px;
+  }
+
+  .form-preference .pref-section-note {
+    padding: 0 2px;
+    font-size: var(--font-size-xs);
+    line-height: 1.4;
+  }
+}

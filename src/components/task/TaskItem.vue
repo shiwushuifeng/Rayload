@@ -30,7 +30,7 @@ import TaskTextTransition from './TaskTextTransition.vue'
 import type { Aria2Task } from '@shared/types'
 import { friendlyErrorKind } from '@shared/utils/friendlyError'
 import { bytesToSize } from '@shared/utils/format'
-import { getTaskAccentColor } from '@shared/utils/task'
+import { getTaskAccentColor, getTaskContrastAccent } from '@shared/utils/task'
 
 const props = withDefaults(defineProps<{ task: Aria2Task; actionPending?: boolean }>(), { actionPending: false })
 const emit = defineEmits<{
@@ -79,7 +79,10 @@ const {
   transferSummary,
 } = useTaskCardModel(taskRef)
 const fileIcon = useTaskFileIcon(taskFullName)
-const cardStyle = computed(() => ({ '--task-device-accent': getTaskAccentColor(props.task) }))
+const cardStyle = computed(() => ({
+  '--task-device-accent': getTaskAccentColor(props.task),
+  '--task-device-contrast': getTaskContrastAccent(props.task),
+}))
 
 const formatSpeed = (value: number) => bytesToSize(Math.max(0, Math.round(value)))
 const formatPercent = (value: number) => `${Math.round(value)}%`
@@ -321,7 +324,7 @@ const contentDraggable = computed(
   background:
     linear-gradient(
       270deg,
-      color-mix(in srgb, var(--task-device-accent, var(--m3-primary)) 13%, transparent) 0%,
+      color-mix(in srgb, var(--task-device-contrast, var(--m3-tertiary)) 16%, transparent) 0%,
       transparent 62%
     ),
     var(--task-item-bg);

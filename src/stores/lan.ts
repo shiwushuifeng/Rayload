@@ -341,6 +341,12 @@ export const useLanStore = defineStore('lan', () => {
     return task
   }
 
+  /** Drops one remote task from the local list without contacting the peer. */
+  function dismissRemoteTask(deviceId: string, gid: string): void {
+    remoteMutationVersion += 1
+    remoteTasks.value = remoteTasks.value.filter((item) => item.deviceId !== deviceId || item.gid !== gid)
+  }
+
   async function remoteAction(
     id: string,
     gid: string,
@@ -363,6 +369,7 @@ export const useLanStore = defineStore('lan', () => {
     devices,
     discovered,
     remoteTasks,
+    dismissRemoteTask,
     statuses,
     historyStats,
     refreshDevices,

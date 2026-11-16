@@ -284,8 +284,17 @@ function resumeTask(task: Aria2Task): void {
 }
 
 function deleteTask(task: Aria2Task): void {
-  if (task.remote) void remoteAction(task, 'remove')
-  else handleDeleteTask(task)
+  if (!task.remote) {
+    handleDeleteTask(task)
+    return
+  }
+  if (!remoteOnline(task)) {
+    // The peer cannot be told to drop it, so at least clear it from this list.
+    lan.dismissRemoteTask(task.remote.deviceId, task.remote.gid)
+    message.warning(t('task.remote-removed-offline'))
+    return
+  }
+  void remoteAction(task, 'remove')
 }
 </script>
 

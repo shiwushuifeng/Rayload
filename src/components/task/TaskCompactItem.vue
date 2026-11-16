@@ -16,7 +16,7 @@ import TaskItemActions from './TaskItemActions.vue'
 import TaskTextTransition from './TaskTextTransition.vue'
 import type { Component } from 'vue'
 import type { Aria2Task } from '@shared/types'
-import { getTaskAccentColor } from '@shared/utils/task'
+import { getTaskAccentColor, getTaskContrastAccent } from '@shared/utils/task'
 
 const props = withDefaults(defineProps<{ task: Aria2Task; actionPending?: boolean }>(), { actionPending: false })
 const emit = defineEmits<{
@@ -47,7 +47,10 @@ const { isAndroid } = usePlatform()
 const taskRef = computed(() => props.task)
 const { taskFullName, isSharing, statusBadge, isActive, indeterminate, percent } = useTaskCardModel(taskRef)
 const fileIcon = useTaskFileIcon(taskFullName)
-const cardStyle = computed(() => ({ '--task-device-accent': getTaskAccentColor(props.task) }))
+const cardStyle = computed(() => ({
+  '--task-device-accent': getTaskAccentColor(props.task),
+  '--task-device-contrast': getTaskContrastAccent(props.task),
+}))
 const formatPercent = (value: number) => `${Math.round(value)}%`
 const { fileMissing, fileState } = useTaskFileMissing(taskRef)
 // The rail orders the list; the rest of a finished card drags its file out.
@@ -201,7 +204,7 @@ const compactStatusColor = computed(() => {
   background:
     linear-gradient(
       270deg,
-      color-mix(in srgb, var(--task-device-accent, var(--m3-primary)) 13%, transparent) 0%,
+      color-mix(in srgb, var(--task-device-contrast, var(--m3-tertiary)) 16%, transparent) 0%,
       transparent 62%
     ),
     var(--task-item-bg);

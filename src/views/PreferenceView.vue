@@ -226,19 +226,16 @@ const activeGroup = computed(() => groups.value.find((group) => group.key === ac
   border: 1px solid var(--m3-outline-variant);
   border-radius: var(--radius-lg);
 }
-@media (max-width: 900px) {
+/* Phones: a horizontal tab strip replaces the vertical group list, and the
+   sections of the active group flow as cards underneath. The layout collapses
+   at the same width, so tablet portrait keeps its two columns instead of
+   stacking a second navigation above the form. */
+@media (max-width: 768px) {
   .preference-layout {
     grid-template-columns: minmax(0, 1fr);
     gap: 10px;
     padding-inline: 8px;
   }
-  .preference-groups {
-    max-height: 42dvh;
-  }
-}
-/* Phones: a horizontal tab strip replaces the vertical group list, and the
-   sections of the active group flow as cards underneath. */
-@media (max-width: 768px) {
   .preference-tabs {
     display: flex;
     flex: none;
@@ -278,9 +275,9 @@ const activeGroup = computed(() => groups.value.find((group) => group.key === ac
   .preference-card {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
     min-height: 44px;
-    padding: 10px 12px;
+    padding: 8px 10px;
     background: var(--m3-surface-container-low);
     border: 1px solid var(--m3-outline-variant);
     border-radius: var(--radius-lg);
@@ -301,7 +298,7 @@ const activeGroup = computed(() => groups.value.find((group) => group.key === ac
     line-height: 1.4;
     display: -webkit-box;
     -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 1;
   }
   .preference-groups {
     display: none;
