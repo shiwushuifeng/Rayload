@@ -727,7 +727,16 @@
     "permission-local-network-hint": "Required on Android 17 to discover and pair devices on the same network",
     "downloader": "Downloader",
     "categories": "File categories",
-    "plugins": "Plugins"
+    "plugins": "Plugins",
+    "group-account": "Account & connectivity",
+    "group-account-hint": "LAN devices, pairing and system permissions",
+    "group-download": "Downloads",
+    "group-download-hint": "Downloader, file categories and network",
+    "group-appearance": "Appearance & experience",
+    "group-appearance-hint": "Language, theme and interface behavior",
+    "group-advanced": "Advanced & extensions",
+    "group-advanced-hint": "Advanced options, plugins and maintenance tools",
+    "plugin-management": "Plugin management"
   },
   "task": {
     "scope-all": "전체",
@@ -739,7 +748,6 @@
     "uri-task": "URL",
     "torrent-task": "토렌트",
     "uri-task-tips": "줄당 하나의 다운로드 URL (마그넷 지원)",
-    "file-priority": "Priority",
     "file-priority-off": "Do not download",
     "file-priority-normal": "Normal",
     "file-priority-high": "High",
@@ -751,9 +759,7 @@
     "bt-source-one-per-line": "One URL per line",
     "bt-recheck": "Recheck data",
     "file-name": "파일명",
-    "file-extension": "확장자",
     "file-size": "크기",
-    "file-completed": "완료",
     "file-index": "번호",
     "task-gid": "GID",
     "task-name": "작업 이름",
@@ -1017,7 +1023,6 @@
     "restart-not-available": "다시 시작할 수 있는 다운로드 URL이 없습니다",
     "torrent-trashed": "\"{taskName}\" 다운로드 완료 — 토렌트 파일이 휴지통으로 이동됨",
     "sort-manual": "수동",
-    "sort-by": "정렬",
     "sort-added-at": "추가 시간",
     "sort-completed-at": "완료 시간",
     "sort-name": "이름",
@@ -1153,7 +1158,15 @@
     "remote-file-path": "Location",
     "copy-file-name": "Copy file name",
     "copy-file-path": "Copy file path",
-    "file-actions": "File actions"
+    "file-actions": "File actions",
+    "task-tab-file-details": "File details",
+    "task-tab-checksum-files": "Checksums",
+    "section-transfer": "Transfer",
+    "section-files": "Files",
+    "section-options": "Download options",
+    "section-peers": "Peers",
+    "section-trackers": "Trackers",
+    "remote-target-offline": "The target device is currently offline"
   },
   "media": {
     "probing": "미디어 분석 중",
@@ -1195,7 +1208,6 @@
   "navigation": {
     "about": "정보",
     "settings": "설정",
-    "extensions": "확장 프로그램",
     "trash": "Trash",
     "keep-awake": "화면 켜짐 유지",
     "statistics": "Statistics",
@@ -1273,7 +1285,10 @@
     "consent-title": "확인 및 동의",
     "consent-description": "설정을 완료하려면 사용자 계약과 개인정보 처리방침을 읽고 동의해야 합니다.",
     "consent-eula-hint": "이용 약관, 라이선스 및 책임",
-    "consent-privacy-hint": "데이터가 기기에 보관되는 방식"
+    "consent-privacy-hint": "데이터가 기기에 보관되는 방식",
+    "skip": "Skip",
+    "default-download-path": "Default download path",
+    "consent-disclaimer-hint": "Technical use, copyright and liability"
   },
   "trash": {
     "title": "Trash",
@@ -1385,12 +1400,12 @@
     "local-fingerprint": "이 기기의 지문",
     "device-name-label": "기기 이름",
     "device-name-save": "이름 저장",
-    "device-name-saved": "기기 이름이 저장되었습니다"
+    "device-name-saved": "기기 이름이 저장되었습니다",
+    "choose-color": "Choose device color"
   },
   "plugins": {
     "title": "Plugin management",
     "description": "Import JSON plugin manifests and manage the ones stored on this device.",
-    "manage": "Manage plugins",
     "import": "Import plugin",
     "imported": "{name} imported",
     "import-failed": "Could not import this plugin manifest",

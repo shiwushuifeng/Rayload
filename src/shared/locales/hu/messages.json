@@ -727,7 +727,16 @@
     "permission-local-network-hint": "Required on Android 17 to discover and pair devices on the same network",
     "downloader": "Downloader",
     "categories": "File categories",
-    "plugins": "Plugins"
+    "plugins": "Plugins",
+    "group-account": "Account & connectivity",
+    "group-account-hint": "LAN devices, pairing and system permissions",
+    "group-download": "Downloads",
+    "group-download-hint": "Downloader, file categories and network",
+    "group-appearance": "Appearance & experience",
+    "group-appearance-hint": "Language, theme and interface behavior",
+    "group-advanced": "Advanced & extensions",
+    "group-advanced-hint": "Advanced options, plugins and maintenance tools",
+    "plugin-management": "Plugin management"
   },
   "task": {
     "scope-all": "Összes",
@@ -739,7 +748,6 @@
     "uri-task": "URL",
     "torrent-task": "Torrent",
     "uri-task-tips": "Soronként egy URL (magnet támogatott)",
-    "file-priority": "Priority",
     "file-priority-off": "Do not download",
     "file-priority-normal": "Normal",
     "file-priority-high": "High",
@@ -751,9 +759,7 @@
     "bt-source-one-per-line": "One URL per line",
     "bt-recheck": "Recheck data",
     "file-name": "Név",
-    "file-extension": "Kiterjesztés",
     "file-size": "Méret",
-    "file-completed": "Befejezve",
     "file-index": "Ssz.",
     "task-gid": "GID",
     "task-name": "Feladat neve",
@@ -1017,7 +1023,6 @@
     "restart-not-available": "Nincs elérhető letöltési link az újraindításhoz",
     "torrent-trashed": "A(z) \"{taskName}\" letöltése kész, a torrent fájl a kukába került",
     "sort-manual": "Kézi",
-    "sort-by": "Rendezés",
     "sort-added-at": "Hozzáadás ideje",
     "sort-completed-at": "Befejezés ideje",
     "sort-name": "Név",
@@ -1153,7 +1158,15 @@
     "remote-file-path": "Location",
     "copy-file-name": "Copy file name",
     "copy-file-path": "Copy file path",
-    "file-actions": "File actions"
+    "file-actions": "File actions",
+    "task-tab-file-details": "File details",
+    "task-tab-checksum-files": "Checksums",
+    "section-transfer": "Transfer",
+    "section-files": "Files",
+    "section-options": "Download options",
+    "section-peers": "Peers",
+    "section-trackers": "Trackers",
+    "remote-target-offline": "The target device is currently offline"
   },
   "media": {
     "probing": "Média vizsgálata",
@@ -1195,7 +1208,6 @@
   "navigation": {
     "about": "Névjegy",
     "settings": "Beállítások",
-    "extensions": "Bővítmények",
     "trash": "Trash",
     "keep-awake": "Képernyő bekapcsolva tartása",
     "statistics": "Statistics",
@@ -1273,7 +1285,10 @@
     "consent-title": "Áttekintés és elfogadás",
     "consent-description": "A folytatás előtt olvasd el a Felhasználói szerződést és az Adatvédelmi irányelveket. A beállítás befejezéséhez el kell fogadnod őket.",
     "consent-eula-hint": "Használati feltételek, licenc és felelősség",
-    "consent-privacy-hint": "Hogyan maradnak adataid az eszközön"
+    "consent-privacy-hint": "Hogyan maradnak adataid az eszközön",
+    "skip": "Skip",
+    "default-download-path": "Default download path",
+    "consent-disclaimer-hint": "Technical use, copyright and liability"
   },
   "trash": {
     "title": "Trash",
@@ -1385,12 +1400,12 @@
     "local-fingerprint": "Ennek az eszköznek az ujjlenyomata",
     "device-name-label": "Eszköznév",
     "device-name-save": "Név mentése",
-    "device-name-saved": "Eszköznév mentve"
+    "device-name-saved": "Eszköznév mentve",
+    "choose-color": "Choose device color"
   },
   "plugins": {
     "title": "Plugin management",
     "description": "Import JSON plugin manifests and manage the ones stored on this device.",
-    "manage": "Manage plugins",
     "import": "Import plugin",
     "imported": "{name} imported",
     "import-failed": "Could not import this plugin manifest",

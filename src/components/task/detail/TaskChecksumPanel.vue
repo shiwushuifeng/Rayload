@@ -41,7 +41,6 @@ const digestRows = computed(() => {
     { key: 'md5', label: 'MD5', value: value.md5 },
     { key: 'sha1', label: 'SHA-1', value: value.sha1 },
     { key: 'sha256', label: 'SHA-256', value: value.sha256 },
-    { key: 'sha512', label: 'SHA-512', value: value.sha512 },
   ]
 })
 

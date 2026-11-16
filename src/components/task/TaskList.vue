@@ -7,6 +7,7 @@ import { usePreferenceStore } from '@/stores/preference'
 import { useReducedMotion } from '@/composables/useReducedMotion'
 import { usePlatform } from '@/composables/usePlatform'
 import { logger } from '@shared/logger'
+import { TASK_STATUS } from '@shared/constants'
 import TaskItem from './TaskItem.vue'
 import TaskCompactItem from './TaskCompactItem.vue'
 import TaskSwipeRow from './TaskSwipeRow.vue'
@@ -73,8 +74,9 @@ const renderLimit = ref(pageSize.value)
  * Remote cards are never paginated: local list changes must not push them out
  * of the rendered window or make them reappear after a deletion.
  */
+const localTaskList = computed(() => taskList.value.slice(0, renderLimit.value))
 const visibleTaskList = computed<Aria2Task[]>({
-  get: () => [...taskList.value.slice(0, renderLimit.value), ...props.remoteTasks],
+  get: () => [...localTaskList.value, ...props.remoteTasks],
   set(nextPageList) {
     const local = nextPageList.filter((task) => !task.remote)
     const moved = new Set(local.map((task) => task.gid))
@@ -199,8 +201,15 @@ watch(pageSize, (size, previous) => {
 
 watch(
   () => taskList.value.length,
-  (length) => {
-    if (renderLimit.value > length) renderLimit.value = length
+  (length, previous) => {
+    // A poll can briefly publish an empty local snapshot. Never keep the
+    // window collapsed when local tasks return, or only remote cards show.
+    if (length === 0) return
+    if (renderLimit.value < pageSize.value && (previous === 0 || length > previous)) {
+      renderLimit.value = Math.min(length, pageSize.value)
+    } else if (renderLimit.value > length) {
+      renderLimit.value = length
+    }
     void nextTick(observeSentinel)
   },
 )
@@ -312,6 +321,12 @@ function handleLongPress(task: Aria2Task) {
   if (!taskStore.checkedGids.includes(task.gid)) taskStore.setChecked(task.gid, true)
 }
 
+function handleSwipePrimary(task: Aria2Task) {
+  if (task.remote) emit('send-to-local', task)
+  else if (task.status === TASK_STATUS.PAUSED) emit('resume', task)
+  else emit('pause', task)
+}
+
 function handleItemClick(event: MouseEvent, task: Aria2Task) {
   if (task.remote) return
   if (taskStore.selectionMode) {
@@ -393,7 +408,7 @@ function handleCardBeforeLeave(element: Element) {
             :disabled="taskStore.resubmittingGids.includes(item.gid)"
             @activate="handleItemClick($event, item)"
             @long-press="handleLongPress"
-            @swipe-pause="emit('pause', item)"
+            @swipe-primary="handleSwipePrimary(item)"
             @swipe-delete="emit('delete', item)"
           >
             <component
@@ -431,6 +446,9 @@ function handleCardBeforeLeave(element: Element) {
 <style scoped>
 .task-list {
   --task-list-bottom-safety: 96px;
+  width: 100%;
+  max-width: 1120px;
+  margin-inline: auto;
   padding: 16px var(--content-gutter);
   min-height: 100%;
   box-sizing: border-box;

@@ -18,20 +18,11 @@ import { getTaskSharingState } from '@shared/utils/task'
 
 import { logger } from '@shared/logger'
 import { getErrorMessage } from '@shared/utils/errorMessage'
-import { NButton, NIcon, NCheckbox, NDrawer, NDrawerContent, NDropdown, useDialog, type DropdownOption } from 'naive-ui'
+import { NButton, NIcon, NCheckbox, NDrawer, NDrawerContent, useDialog } from 'naive-ui'
 import MTooltip from '@/components/common/MTooltip.vue'
 import { useAppMessage } from '@/composables/useAppMessage'
 import { usePreferenceStore } from '@/stores/preference'
 import { triggerHaptic } from '@/composables/useHaptics'
-import {
-  PROGRESS_SORT_FIELDS,
-  TERMINAL_SORT_FIELDS,
-  ALL_SORT_FIELDS,
-  DEFAULT_TASK_SORT,
-  type ProgressSortField,
-  type TerminalSortField,
-  type AllSortField,
-} from '@/composables/useTaskSort'
 import {
   AddOutline,
   PlayOutline,
@@ -41,9 +32,6 @@ import {
   RefreshOutline,
   CloseOutline,
   DocumentOutline,
-  SwapVerticalOutline,
-  ArrowUpOutline,
-  ArrowDownOutline,
   EllipsisHorizontalOutline,
   ChevronForwardOutline,
 } from '@vicons/ionicons5'
@@ -55,50 +43,6 @@ const appStore = useAppStore()
 const taskStore = useTaskStore()
 const preferenceStore = usePreferenceStore()
 
-// ── Sort dropdown ─────────────────────────────────────────────────
-const currentTab = computed(() => props.scope)
-
-/** Map sort field key to its i18n label. */
-const SORT_LABELS: Record<ProgressSortField | TerminalSortField | AllSortField, I18nKey> = {
-  manual: 'task.sort-manual',
-  'added-at': 'task.sort-added-at',
-  'completed-at': 'task.sort-completed-at',
-  name: 'task.sort-name',
-  size: 'task.sort-size',
-  progress: 'task.sort-progress',
-  speed: 'task.sort-speed',
-}
-
-/** Active sort config for the current tab. */
-const currentSort = computed(() => {
-  const cfg = preferenceStore.config?.taskSort ?? DEFAULT_TASK_SORT
-  switch (currentTab.value) {
-    case 'failed':
-    case 'completed':
-      return cfg[currentTab.value]
-    case 'all':
-      return cfg.all
-    default:
-      return cfg.progress
-  }
-})
-
-/** Sort field list for the current tab. */
-const currentSortFields = computed(() => {
-  switch (currentTab.value) {
-    case 'failed':
-    case 'completed':
-      return TERMINAL_SORT_FIELDS
-    case 'all':
-      return ALL_SORT_FIELDS
-    default:
-      return PROGRESS_SORT_FIELDS
-  }
-})
-
-async function onSortSelect(key: ProgressSortField | TerminalSortField | AllSortField) {
-  await taskStore.changeCurrentSort(key)
-}
 const message = useAppMessage()
 const dialog = useDialog()
 
@@ -424,30 +368,11 @@ function menuIcon(icon: Component) {
   return () => h(NIcon, null, { default: () => h(icon) })
 }
 
-const sortOptions = computed<DropdownOption[]>(() =>
-  currentSortFields.value.map((field) => ({
-    key: field,
-    label: t(SORT_LABELS[field]),
-    icon:
-      field === currentSort.value.field
-        ? menuIcon(
-            field === 'manual'
-              ? SwapVerticalOutline
-              : currentSort.value.direction === 'asc'
-                ? ArrowUpOutline
-                : ArrowDownOutline,
-          )
-        : undefined,
-  })),
-)
-
-function selectSort(key: string | number) {
-  const field = currentSortFields.value.find((field) => field === key)
-  if (field) void onSortSelect(field)
-}
-
-type BatchAction = DropdownOption & {
+interface BatchAction {
   key: string
+  label: string
+  icon?: () => ReturnType<typeof h>
+  disabled?: boolean
   action: () => unknown
 }
 
@@ -608,19 +533,19 @@ function runMobileAction(action: BatchAction) {
           ><NIcon><ChevronForwardOutline /></NIcon
         ></template>
       </NButton>
-      <NDropdown
-        trigger="click"
-        placement="bottom-end"
-        :options="sortOptions"
-        :value="currentSort.field"
-        @select="selectSort"
+      <NButton
+        quaternary
+        circle
+        size="large"
+        :aria-label="t('task.refresh-list')"
+        :loading="refreshing"
+        :disabled="refreshing"
+        @click="onRefresh"
       >
-        <NButton quaternary circle size="large" :aria-label="t('task.sort-by')">
-          <template #icon
-            ><NIcon><SwapVerticalOutline /></NIcon
-          ></template>
-        </NButton>
-      </NDropdown>
+        <template #icon
+          ><NIcon :class="{ 'task-refresh-spin': refreshing }"><RefreshOutline /></NIcon
+        ></template>
+      </NButton>
       <NButton
         quaternary
         circle
@@ -683,20 +608,6 @@ function runMobileAction(action: BatchAction) {
         {{ t('task.new-task') || 'New Task' }}
       </MTooltip></span
     >
-    <span key="sort" class="toolbar-action"
-      ><NDropdown
-        trigger="click"
-        placement="bottom-end"
-        :options="sortOptions"
-        :value="currentSort.field"
-        @select="selectSort"
-      >
-        <NButton quaternary circle size="small" :aria-label="t('task.sort-by')">
-          <template #icon
-            ><NIcon><SwapVerticalOutline /></NIcon
-          ></template>
-        </NButton> </NDropdown
-    ></span>
     <span key="refresh" class="toolbar-action"
       ><MTooltip>
         <template #trigger>
@@ -710,7 +621,7 @@ function runMobileAction(action: BatchAction) {
             @click="onRefresh"
           >
             <template #icon>
-              <NIcon><RefreshOutline /></NIcon>
+              <NIcon :class="{ 'task-refresh-spin': refreshing }"><RefreshOutline /></NIcon>
             </template>
           </NButton>
         </template>
@@ -760,6 +671,14 @@ function runMobileAction(action: BatchAction) {
 .mobile-task-toolbar :deep(.n-button) {
   min-width: 44px;
   min-height: 44px;
+}
+.task-refresh-spin {
+  animation: task-refresh-spin 0.85s linear infinite;
+}
+@keyframes task-refresh-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 .task-fab {
   position: fixed;

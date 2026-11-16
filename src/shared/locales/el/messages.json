@@ -727,7 +727,16 @@
     "permission-local-network-hint": "Required on Android 17 to discover and pair devices on the same network",
     "downloader": "Downloader",
     "categories": "File categories",
-    "plugins": "Plugins"
+    "plugins": "Plugins",
+    "group-account": "Account & connectivity",
+    "group-account-hint": "LAN devices, pairing and system permissions",
+    "group-download": "Downloads",
+    "group-download-hint": "Downloader, file categories and network",
+    "group-appearance": "Appearance & experience",
+    "group-appearance-hint": "Language, theme and interface behavior",
+    "group-advanced": "Advanced & extensions",
+    "group-advanced-hint": "Advanced options, plugins and maintenance tools",
+    "plugin-management": "Plugin management"
   },
   "task": {
     "scope-all": "Όλα",
@@ -739,7 +748,6 @@
     "uri-task": "URL",
     "torrent-task": "Torrent",
     "uri-task-tips": "Ένα URL ανά γραμμή (magnet υποστηρίζεται)",
-    "file-priority": "Priority",
     "file-priority-off": "Do not download",
     "file-priority-normal": "Normal",
     "file-priority-high": "High",
@@ -751,9 +759,7 @@
     "bt-source-one-per-line": "One URL per line",
     "bt-recheck": "Recheck data",
     "file-name": "Όνομα",
-    "file-extension": "Επέκταση",
     "file-size": "Μέγεθος",
-    "file-completed": "Ολοκληρώθηκε",
     "file-index": "Αρ.",
     "task-gid": "GID",
     "task-name": "Όνομα εργασίας",
@@ -1017,7 +1023,6 @@
     "restart-not-available": "Δεν υπάρχουν διαθέσιμοι σύνδεσμοι για επανεκκίνηση",
     "torrent-trashed": "Η λήψη του \"{taskName}\" ολοκληρώθηκε, το αρχείο torrent μεταφέρθηκε στον κάδο ανακύκλωσης",
     "sort-manual": "Χειροκίνητα",
-    "sort-by": "Ταξινόμηση κατά",
     "sort-added-at": "Ημερομηνία προσθήκης",
     "sort-completed-at": "Ημερομηνία ολοκλήρωσης",
     "sort-name": "Όνομα",
@@ -1153,7 +1158,15 @@
     "remote-file-path": "Location",
     "copy-file-name": "Copy file name",
     "copy-file-path": "Copy file path",
-    "file-actions": "File actions"
+    "file-actions": "File actions",
+    "task-tab-file-details": "File details",
+    "task-tab-checksum-files": "Checksums",
+    "section-transfer": "Transfer",
+    "section-files": "Files",
+    "section-options": "Download options",
+    "section-peers": "Peers",
+    "section-trackers": "Trackers",
+    "remote-target-offline": "The target device is currently offline"
   },
   "media": {
     "probing": "Ανάλυση πολυμέσων",
@@ -1195,7 +1208,6 @@
   "navigation": {
     "about": "Σχετικά",
     "settings": "Ρυθμίσεις",
-    "extensions": "Επεκτάσεις",
     "trash": "Trash",
     "keep-awake": "Διατήρηση οθόνης ενεργής",
     "statistics": "Statistics",
@@ -1273,7 +1285,10 @@
     "consent-title": "Έλεγχος και αποδοχή",
     "consent-description": "Διάβασε τη Συμφωνία χρήστη και την Πολιτική απορρήτου πριν συνεχίσεις. Πρέπει να τις αποδεχτείς για να ολοκληρώσεις τη ρύθμιση.",
     "consent-eula-hint": "Όροι χρήσης, άδεια και ευθύνη",
-    "consent-privacy-hint": "Πώς τα δεδομένα σου μένουν στη συσκευή"
+    "consent-privacy-hint": "Πώς τα δεδομένα σου μένουν στη συσκευή",
+    "skip": "Skip",
+    "default-download-path": "Default download path",
+    "consent-disclaimer-hint": "Technical use, copyright and liability"
   },
   "trash": {
     "title": "Trash",
@@ -1385,12 +1400,12 @@
     "local-fingerprint": "Αποτύπωμα αυτής της συσκευής",
     "device-name-label": "Όνομα συσκευής",
     "device-name-save": "Αποθήκευση ονόματος",
-    "device-name-saved": "Το όνομα συσκευής αποθηκεύτηκε"
+    "device-name-saved": "Το όνομα συσκευής αποθηκεύτηκε",
+    "choose-color": "Choose device color"
   },
   "plugins": {
     "title": "Plugin management",
     "description": "Import JSON plugin manifests and manage the ones stored on this device.",
-    "manage": "Manage plugins",
     "import": "Import plugin",
     "imported": "{name} imported",
     "import-failed": "Could not import this plugin manifest",

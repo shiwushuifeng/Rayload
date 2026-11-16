@@ -17,8 +17,8 @@ export const NAVIGATION_ITEM_KEYS = [
 export type NavigationItemKey = (typeof NAVIGATION_ITEM_KEYS)[number]
 export type NavigationVisibility = Record<NavigationItemKey, boolean>
 
-// v2 hides the secondary task scopes by default on a fresh configuration.
-const STORAGE_KEY = 'rayload.bottom-navigation.visibility.v2'
+// v3 keeps only All, Keep awake, Settings and About in the default bottom bar.
+const STORAGE_KEY = 'rayload.bottom-navigation.visibility.v3'
 
 function createDefaults(): NavigationVisibility {
   return {
@@ -28,9 +28,9 @@ function createDefaults(): NavigationVisibility {
     completed: false,
     'keep-awake': true,
     statistics: false,
-    'lan-devices': true,
+    'lan-devices': false,
     plugins: false,
-    trash: true,
+    trash: false,
     about: true,
   }
 }

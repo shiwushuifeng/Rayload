@@ -82,7 +82,8 @@ const router = createRouter({
             },
             {
               path: 'plugins',
-              redirect: { name: 'plugins' },
+              name: 'preference-plugins',
+              component: () => import('@/views/PluginsView.vue'),
             },
             {
               path: 'advanced',

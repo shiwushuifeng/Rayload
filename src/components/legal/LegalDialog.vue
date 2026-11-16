@@ -7,17 +7,27 @@ import { CloseOutline } from '@vicons/ionicons5'
 
 const props = defineProps<{
   show: boolean
-  kind: 'eula' | 'privacy'
+  kind: 'eula' | 'privacy' | 'disclaimer'
 }>()
 
 const emit = defineEmits<{ 'update:show': [value: boolean] }>()
 
 const { t } = useI18n()
-const title = computed(() => t(props.kind === 'eula' ? 'legal.eula-title' : 'legal.privacy-title'))
+const title = computed(() =>
+  t(
+    props.kind === 'eula'
+      ? 'legal.eula-title'
+      : props.kind === 'privacy'
+        ? 'legal.privacy-title'
+        : 'onboarding.disclaimer-title',
+  ),
+)
 const sections = computed(() =>
-  props.kind === 'eula'
-    ? [{ key: 'technical' }, { key: 'copyright' }, { key: 'lawful' }, { key: 'liability' }]
-    : [{ key: 'privacy-local' }, { key: 'privacy-tracking' }, { key: 'privacy-lan' }],
+  props.kind === 'privacy'
+    ? [{ key: 'privacy-local' }, { key: 'privacy-tracking' }, { key: 'privacy-lan' }]
+    : props.kind === 'eula'
+      ? [{ key: 'technical' }, { key: 'copyright' }, { key: 'lawful' }, { key: 'liability' }]
+      : [{ key: 'technical' }, { key: 'copyright' }, { key: 'liability' }],
 )
 </script>
 

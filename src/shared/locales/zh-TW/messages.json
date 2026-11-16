@@ -727,7 +727,16 @@
     "permission-local-network-hint": "Android 17 上用於探索並配對同一網路中的裝置",
     "downloader": "下載器設定",
     "categories": "檔案分類",
-    "plugins": "Plugins"
+    "plugins": "Plugins",
+    "group-account": "帳號與互聯",
+    "group-account-hint": "區域網路裝置、配對與系統權限",
+    "group-download": "下載設定",
+    "group-download-hint": "下載器、檔案分類與網路",
+    "group-appearance": "外觀與體驗",
+    "group-appearance-hint": "語言、主題與介面行為",
+    "group-advanced": "進階與擴充",
+    "group-advanced-hint": "進階選項、外掛與維護工具",
+    "plugin-management": "外掛管理"
   },
   "task": {
     "scope-all": "全部",
@@ -739,7 +748,6 @@
     "uri-task": "連結任務",
     "torrent-task": "種子任務",
     "uri-task-tips": "每行一個下載連結（支援磁力連結）",
-    "file-priority": "優先級",
     "file-priority-off": "不下載",
     "file-priority-normal": "一般",
     "file-priority-high": "高",
@@ -751,9 +759,7 @@
     "bt-source-one-per-line": "每行一個 URL",
     "bt-recheck": "重新驗證資料",
     "file-name": "檔名",
-    "file-extension": "副檔名",
     "file-size": "大小",
-    "file-completed": "已完成",
     "file-index": "序號",
     "task-gid": "GID",
     "task-name": "任務名稱",
@@ -1017,7 +1023,6 @@
     "restart-not-available": "沒有可用的下載連結，無法重新下載",
     "torrent-trashed": "「{taskName}」下載完成，種子檔案已移至回收桶",
     "sort-manual": "手動排序",
-    "sort-by": "排序方式",
     "sort-added-at": "新增時間",
     "sort-completed-at": "完成時間",
     "sort-name": "名稱",
@@ -1153,7 +1158,15 @@
     "remote-file-path": "位置",
     "copy-file-name": "複製檔案名稱",
     "copy-file-path": "複製檔案路徑",
-    "file-actions": "檔案操作"
+    "file-actions": "檔案操作",
+    "task-tab-file-details": "檔案詳情",
+    "task-tab-checksum-files": "校驗檔案",
+    "section-transfer": "傳輸資訊",
+    "section-files": "檔案列表",
+    "section-options": "下載選項",
+    "section-peers": "節點",
+    "section-trackers": "Tracker",
+    "remote-target-offline": "目標裝置目前離線"
   },
   "media": {
     "probing": "正在探測媒體",
@@ -1195,7 +1208,6 @@
   "navigation": {
     "about": "關於",
     "settings": "設定",
-    "extensions": "擴充功能",
     "trash": "回收站",
     "keep-awake": "不息屏掛機",
     "statistics": "資料統計",
@@ -1273,7 +1285,10 @@
     "consent-title": "閱讀並同意",
     "consent-description": "完成設定前，請閱讀《使用者協議》與《隱私權政策》。同意後才能繼續。",
     "consent-eula-hint": "使用條款、授權與責任說明",
-    "consent-privacy-hint": "瞭解您的資料如何保留在本機"
+    "consent-privacy-hint": "瞭解您的資料如何保留在本機",
+    "skip": "略過",
+    "default-download-path": "預設下載路徑",
+    "consent-disclaimer-hint": "技術用途、版權與責任說明"
   },
   "trash": {
     "title": "回收站",
@@ -1385,12 +1400,12 @@
     "local-fingerprint": "本機指紋",
     "device-name-label": "本機名稱",
     "device-name-save": "儲存名稱",
-    "device-name-saved": "本機名稱已儲存"
+    "device-name-saved": "本機名稱已儲存",
+    "choose-color": "選擇裝置顏色"
   },
   "plugins": {
     "title": "Plugin management",
     "description": "Import JSON plugin manifests and manage the ones stored on this device.",
-    "manage": "Manage plugins",
     "import": "Import plugin",
     "imported": "{name} imported",
     "import-failed": "Could not import this plugin manifest",

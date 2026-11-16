@@ -727,7 +727,16 @@
     "permission-local-network-hint": "Required on Android 17 to discover and pair devices on the same network",
     "downloader": "Downloader",
     "categories": "File categories",
-    "plugins": "Plugins"
+    "plugins": "Plugins",
+    "group-account": "Account & connectivity",
+    "group-account-hint": "LAN devices, pairing and system permissions",
+    "group-download": "Downloads",
+    "group-download-hint": "Downloader, file categories and network",
+    "group-appearance": "Appearance & experience",
+    "group-appearance-hint": "Language, theme and interface behavior",
+    "group-advanced": "Advanced & extensions",
+    "group-advanced-hint": "Advanced options, plugins and maintenance tools",
+    "plugin-management": "Plugin management"
   },
   "task": {
     "scope-all": "Alle",
@@ -739,7 +748,6 @@
     "uri-task": "URL",
     "torrent-task": "Torrent",
     "uri-task-tips": "Én URL per linje (magnet støttes)",
-    "file-priority": "Priority",
     "file-priority-off": "Do not download",
     "file-priority-normal": "Normal",
     "file-priority-high": "High",
@@ -751,9 +759,7 @@
     "bt-source-one-per-line": "One URL per line",
     "bt-recheck": "Recheck data",
     "file-name": "Navn",
-    "file-extension": "Filtype",
     "file-size": "Størrelse",
-    "file-completed": "Fullført",
     "file-index": "Nr.",
     "task-gid": "GID",
     "task-name": "Oppgavenavn",
@@ -1017,7 +1023,6 @@
     "restart-not-available": "Ingen nedlastingslenker tilgjengelig for omstart",
     "torrent-trashed": "Nedlasting av \"{taskName}\" fullført, torrentfilen er flyttet til papirkurven",
     "sort-manual": "Manuell",
-    "sort-by": "Sorter etter",
     "sort-added-at": "Lagt til",
     "sort-completed-at": "Fullført",
     "sort-name": "Navn",
@@ -1153,7 +1158,15 @@
     "remote-file-path": "Location",
     "copy-file-name": "Copy file name",
     "copy-file-path": "Copy file path",
-    "file-actions": "File actions"
+    "file-actions": "File actions",
+    "task-tab-file-details": "File details",
+    "task-tab-checksum-files": "Checksums",
+    "section-transfer": "Transfer",
+    "section-files": "Files",
+    "section-options": "Download options",
+    "section-peers": "Peers",
+    "section-trackers": "Trackers",
+    "remote-target-offline": "The target device is currently offline"
   },
   "media": {
     "probing": "Undersøker medier",
@@ -1195,7 +1208,6 @@
   "navigation": {
     "about": "Om",
     "settings": "Innstillinger",
-    "extensions": "Utvidelser",
     "trash": "Trash",
     "keep-awake": "Hold skjermen på",
     "statistics": "Statistics",
@@ -1273,7 +1285,10 @@
     "consent-title": "Se gjennom og godta",
     "consent-description": "Les Brukeravtalen og Personvernerklæringen før du fortsetter. Du må godta dem for å fullføre oppsettet.",
     "consent-eula-hint": "Bruksvilkår, lisens og ansvar",
-    "consent-privacy-hint": "Hvordan dataene dine blir på enheten"
+    "consent-privacy-hint": "Hvordan dataene dine blir på enheten",
+    "skip": "Skip",
+    "default-download-path": "Default download path",
+    "consent-disclaimer-hint": "Technical use, copyright and liability"
   },
   "trash": {
     "title": "Trash",
@@ -1385,12 +1400,12 @@
     "local-fingerprint": "Fingeravtrykk for denne enheten",
     "device-name-label": "Enhetsnavn",
     "device-name-save": "Lagre navn",
-    "device-name-saved": "Enhetsnavn lagret"
+    "device-name-saved": "Enhetsnavn lagret",
+    "choose-color": "Choose device color"
   },
   "plugins": {
     "title": "Plugin management",
     "description": "Import JSON plugin manifests and manage the ones stored on this device.",
-    "manage": "Manage plugins",
     "import": "Import plugin",
     "imported": "{name} imported",
     "import-failed": "Could not import this plugin manifest",

@@ -123,8 +123,7 @@ function remoteActions(): ActionDef[] {
   if (props.minimal) {
     const details = list.find((action) => action.key === 'details')
     const send = list.find((action) => action.key === 'send-to-local')
-    const remove = list.find((action) => action.key === 'delete')
-    return [details, send, remove].filter((action): action is ActionDef => Boolean(action)).reverse()
+    return [details, send].filter((action): action is ActionDef => Boolean(action)).reverse()
   }
   return list.reverse()
 }
@@ -261,11 +260,7 @@ const actions = computed(() => {
     .reverse()
 
   if (props.minimal) {
-    const destructive = full.find((action) => action.key === 'delete' || action.key === 'trash')
-    return [
-      { key: 'info', icon: InformationCircleOutline, label: t('task.task-detail-title'), event: 'show-info' },
-      ...(destructive ? [destructive] : []),
-    ].reverse()
+    return [{ key: 'info', icon: InformationCircleOutline, label: t('task.task-detail-title'), event: 'show-info' }]
   }
   if (props.density === 'detail') return full.filter((action) => action.key !== 'info')
   return full
@@ -427,13 +422,19 @@ function onAction(event: string) {
   transition: color 0.15s;
 }
 .task-item-actions--compact {
-  --task-action-height: 24px;
-  --task-action-padding-x: 10px;
-  --task-action-item-margin: 3px;
-  --task-action-icon-size: 16px;
-  --task-action-item-max-width: 28px;
-  --task-action-button-size: 22px;
-  border-radius: var(--radius-full);
+  --task-action-height: 28px;
+  --task-action-padding-x: 0;
+  --task-action-item-margin: 2px;
+  --task-action-icon-size: 15px;
+  --task-action-item-max-width: 26px;
+  --task-action-button-size: 26px;
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+}
+.task-item-actions--compact:hover,
+.task-item-actions--compact:focus-within {
+  background: transparent;
 }
 .task-item-action:hover,
 .task-item-action:active,
@@ -518,8 +519,7 @@ function onAction(event: string) {
 }
 
 @media (max-width: 768px) {
-  .task-item-actions,
-  .task-item-actions--compact {
+  .task-item-actions:not(.task-item-actions--compact) {
     --task-action-height: 44px;
     --task-action-padding-x: 6px;
     --task-action-item-margin: 1px;

@@ -727,7 +727,16 @@
     "permission-local-network-hint": "Required on Android 17 to discover and pair devices on the same network",
     "downloader": "Downloader",
     "categories": "File categories",
-    "plugins": "Plugins"
+    "plugins": "Plugins",
+    "group-account": "Account & connectivity",
+    "group-account-hint": "LAN devices, pairing and system permissions",
+    "group-download": "Downloads",
+    "group-download-hint": "Downloader, file categories and network",
+    "group-appearance": "Appearance & experience",
+    "group-appearance-hint": "Language, theme and interface behavior",
+    "group-advanced": "Advanced & extensions",
+    "group-advanced-hint": "Advanced options, plugins and maintenance tools",
+    "plugin-management": "Plugin management"
   },
   "task": {
     "scope-all": "همه",
@@ -739,7 +748,6 @@
     "uri-task": "URL",
     "torrent-task": "Torrent",
     "uri-task-tips": "یک URL در هر خط (magnet پشتیبانی می‌شود)",
-    "file-priority": "Priority",
     "file-priority-off": "Do not download",
     "file-priority-normal": "Normal",
     "file-priority-high": "High",
@@ -751,9 +759,7 @@
     "bt-source-one-per-line": "One URL per line",
     "bt-recheck": "Recheck data",
     "file-name": "نام",
-    "file-extension": "پسوند",
     "file-size": "حجم",
-    "file-completed": "تکمیل‌شده",
     "file-index": "ردیف",
     "task-gid": "GID",
     "task-name": "نام وظیفه",
@@ -1017,7 +1023,6 @@
     "restart-not-available": "لینک دانلود برای شروع مجدد موجود نیست",
     "torrent-trashed": "دانلود \"{taskName}\" کامل شد، فایل تورنت به سطل زباله منتقل شد",
     "sort-manual": "دستی",
-    "sort-by": "مرتب‌سازی بر اساس",
     "sort-added-at": "زمان افزودن",
     "sort-completed-at": "زمان تکمیل",
     "sort-name": "نام",
@@ -1153,7 +1158,15 @@
     "remote-file-path": "Location",
     "copy-file-name": "Copy file name",
     "copy-file-path": "Copy file path",
-    "file-actions": "File actions"
+    "file-actions": "File actions",
+    "task-tab-file-details": "File details",
+    "task-tab-checksum-files": "Checksums",
+    "section-transfer": "Transfer",
+    "section-files": "Files",
+    "section-options": "Download options",
+    "section-peers": "Peers",
+    "section-trackers": "Trackers",
+    "remote-target-offline": "The target device is currently offline"
   },
   "media": {
     "probing": "در حال بررسی رسانه",
@@ -1195,7 +1208,6 @@
   "navigation": {
     "about": "درباره",
     "settings": "تنظیمات",
-    "extensions": "افزونه‌ها",
     "trash": "Trash",
     "keep-awake": "روشن نگه داشتن صفحه",
     "statistics": "Statistics",
@@ -1273,7 +1285,10 @@
     "consent-title": "بررسی و پذیرش",
     "consent-description": "لطفاً پیش از ادامه، توافق‌نامه کاربر و سیاست حریم خصوصی را بخوانید. برای تکمیل راه‌اندازی باید آن‌ها را بپذیرید.",
     "consent-eula-hint": "شرایط استفاده، مجوز و مسئولیت",
-    "consent-privacy-hint": "چگونه داده‌های شما روی دستگاه می‌ماند"
+    "consent-privacy-hint": "چگونه داده‌های شما روی دستگاه می‌ماند",
+    "skip": "Skip",
+    "default-download-path": "Default download path",
+    "consent-disclaimer-hint": "Technical use, copyright and liability"
   },
   "trash": {
     "title": "Trash",
@@ -1385,12 +1400,12 @@
     "local-fingerprint": "اثر انگشت این دستگاه",
     "device-name-label": "نام دستگاه",
     "device-name-save": "ذخیره نام",
-    "device-name-saved": "نام دستگاه ذخیره شد"
+    "device-name-saved": "نام دستگاه ذخیره شد",
+    "choose-color": "Choose device color"
   },
   "plugins": {
     "title": "Plugin management",
     "description": "Import JSON plugin manifests and manage the ones stored on this device.",
-    "manage": "Manage plugins",
     "import": "Import plugin",
     "imported": "{name} imported",
     "import-failed": "Could not import this plugin manifest",

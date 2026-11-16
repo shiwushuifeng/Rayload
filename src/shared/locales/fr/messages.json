@@ -727,7 +727,16 @@
     "permission-local-network-hint": "Required on Android 17 to discover and pair devices on the same network",
     "downloader": "Downloader",
     "categories": "File categories",
-    "plugins": "Plugins"
+    "plugins": "Plugins",
+    "group-account": "Account & connectivity",
+    "group-account-hint": "LAN devices, pairing and system permissions",
+    "group-download": "Downloads",
+    "group-download-hint": "Downloader, file categories and network",
+    "group-appearance": "Appearance & experience",
+    "group-appearance-hint": "Language, theme and interface behavior",
+    "group-advanced": "Advanced & extensions",
+    "group-advanced-hint": "Advanced options, plugins and maintenance tools",
+    "plugin-management": "Plugin management"
   },
   "task": {
     "scope-all": "Toutes",
@@ -739,7 +748,6 @@
     "uri-task": "URL",
     "torrent-task": "Torrent",
     "uri-task-tips": "Une URL par ligne (magnet pris en charge)",
-    "file-priority": "Priority",
     "file-priority-off": "Do not download",
     "file-priority-normal": "Normal",
     "file-priority-high": "High",
@@ -751,9 +759,7 @@
     "bt-source-one-per-line": "One URL per line",
     "bt-recheck": "Recheck data",
     "file-name": "Nom",
-    "file-extension": "Extension",
     "file-size": "Taille",
-    "file-completed": "Terminé",
     "file-index": "N°",
     "task-gid": "GID",
     "task-name": "Nom de la tâche",
@@ -1017,7 +1023,6 @@
     "restart-not-available": "Aucun lien de téléchargement disponible pour redémarrer",
     "torrent-trashed": "Téléchargement de \"{taskName}\" terminé — fichier torrent déplacé dans la corbeille",
     "sort-manual": "Manuel",
-    "sort-by": "Trier par",
     "sort-added-at": "Date d'ajout",
     "sort-completed-at": "Date de fin",
     "sort-name": "Nom",
@@ -1153,7 +1158,15 @@
     "remote-file-path": "Location",
     "copy-file-name": "Copy file name",
     "copy-file-path": "Copy file path",
-    "file-actions": "File actions"
+    "file-actions": "File actions",
+    "task-tab-file-details": "File details",
+    "task-tab-checksum-files": "Checksums",
+    "section-transfer": "Transfer",
+    "section-files": "Files",
+    "section-options": "Download options",
+    "section-peers": "Peers",
+    "section-trackers": "Trackers",
+    "remote-target-offline": "The target device is currently offline"
   },
   "media": {
     "probing": "Analyse du média",
@@ -1195,7 +1208,6 @@
   "navigation": {
     "about": "À propos",
     "settings": "Paramètres",
-    "extensions": "Extensions",
     "trash": "Trash",
     "keep-awake": "Écran toujours allumé",
     "statistics": "Statistics",
@@ -1273,7 +1285,10 @@
     "consent-title": "Vérifier et accepter",
     "consent-description": "Veuillez lire le Contrat d'utilisation et la Politique de confidentialité avant de continuer. Vous devez les accepter pour terminer la configuration.",
     "consent-eula-hint": "Conditions d'utilisation, licence et responsabilité",
-    "consent-privacy-hint": "Comment vos données restent sur votre appareil"
+    "consent-privacy-hint": "Comment vos données restent sur votre appareil",
+    "skip": "Skip",
+    "default-download-path": "Default download path",
+    "consent-disclaimer-hint": "Technical use, copyright and liability"
   },
   "trash": {
     "title": "Trash",
@@ -1385,12 +1400,12 @@
     "local-fingerprint": "Empreinte de cet appareil",
     "device-name-label": "Nom de l'appareil",
     "device-name-save": "Enregistrer le nom",
-    "device-name-saved": "Nom de l'appareil enregistré"
+    "device-name-saved": "Nom de l'appareil enregistré",
+    "choose-color": "Choose device color"
   },
   "plugins": {
     "title": "Plugin management",
     "description": "Import JSON plugin manifests and manage the ones stored on this device.",
-    "manage": "Manage plugins",
     "import": "Import plugin",
     "imported": "{name} imported",
     "import-failed": "Could not import this plugin manifest",

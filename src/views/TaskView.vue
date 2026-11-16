@@ -194,8 +194,21 @@ watch(
 onMounted(() => lan.startTaskPolling())
 onBeforeUnmount(() => lan.stopTaskPolling())
 
+/** The remote snapshot and the paired-device list must both say online. */
+function remoteOnline(task: Aria2Task): boolean {
+  if (!task.remote?.online) return false
+  const device = lan.devices.find((item) => item.id === task.remote?.deviceId)
+  return device ? device.online : true
+}
+
+function requireRemoteOnline(task: Aria2Task): boolean {
+  if (remoteOnline(task)) return true
+  message.warning(t('task.remote-target-offline'))
+  return false
+}
+
 async function remoteAction(task: Aria2Task, action: 'pause' | 'unpause' | 'remove'): Promise<void> {
-  if (!task.remote) return
+  if (!task.remote || !requireRemoteOnline(task)) return
   try {
     await lan.remoteAction(task.remote.deviceId, task.remote.gid, action)
     if (action === 'remove') message.success(t('task.remote-removed'))
@@ -206,7 +219,7 @@ async function remoteAction(task: Aria2Task, action: 'pause' | 'unpause' | 'remo
 }
 
 async function stopRemoteSeeding(task: Aria2Task): Promise<void> {
-  if (!task.remote) return
+  if (!task.remote || !requireRemoteOnline(task)) return
   try {
     await lan.remoteAction(task.remote.deviceId, task.remote.gid, 'stop-seeding')
     message.success(t('task.remote-stop-seeding-success'))
@@ -220,7 +233,7 @@ const remoteDetailVisible = ref(false)
 const remoteDetailTask = ref<Aria2Task | null>(null)
 
 async function sendRemoteToLocal(task: Aria2Task): Promise<void> {
-  if (!task.remote || !requireEngine()) return
+  if (!task.remote || !requireRemoteOnline(task) || !requireEngine()) return
   try {
     await lan.remoteFetch(task.remote.deviceId, task.remote.gid)
     await taskStore.fetchList()
@@ -238,7 +251,7 @@ function showRemoteDetails(task: Aria2Task): void {
 }
 
 async function showRemoteChecksum(task: Aria2Task): Promise<void> {
-  if (!task.remote) return
+  if (!task.remote || !requireRemoteOnline(task)) return
   const body = ref(t('task.remote-checksum-running'))
   dialog.info({
     title: t('task.remote-checksum-title'),

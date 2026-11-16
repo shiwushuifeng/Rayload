@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import QRCode from 'qrcode'
-import { NButton, NCard, NIcon, NInput, NModal, NTag } from 'naive-ui'
+import { NButton, NCard, NColorPicker, NIcon, NInput, NModal, NTag } from 'naive-ui'
 import {
   CreateOutline,
   LinkOutline,
@@ -30,6 +30,7 @@ import {
 import { getErrorMessage } from '@shared/utils/errorMessage'
 import { deviceArchLabel } from '@/composables/usePlatform'
 import { logger } from '@shared/logger'
+import { getDeviceColor, setDeviceColor, useDeviceColors } from '@shared/utils/deviceColors'
 import QrScanner from '@/components/lan/QrScanner.vue'
 
 interface HostCredentials {
@@ -48,6 +49,7 @@ interface PairingQr {
 const { t } = useI18n()
 const lan = useLanStore()
 const message = useAppMessage()
+const deviceColors = useDeviceColors()
 
 const address = ref('')
 const username = ref('')
@@ -75,6 +77,8 @@ let unlistenUnpaired: (() => void) | null = null
 const renaming = ref<{ id: string; name: string; note: string } | null>(null)
 const renameDraft = ref('')
 const noteDraft = ref('')
+const coloring = ref<string | null>(null)
+const colorDraft = ref('#2563EB')
 
 const confirmedDevices = computed(() => lan.devices)
 const pairedAddresses = computed(() => new Set(confirmedDevices.value.map((device) => device.address)))
@@ -283,6 +287,17 @@ function openRename(id: string, name: string, note: string): void {
   noteDraft.value = note
 }
 
+function openColor(id: string): void {
+  coloring.value = id
+  colorDraft.value = getDeviceColor(id) ?? '#2563EB'
+}
+
+function saveColor(): void {
+  if (!coloring.value) return
+  setDeviceColor(coloring.value, colorDraft.value)
+  coloring.value = null
+}
+
 async function saveRename(): Promise<void> {
   if (!renaming.value || !renameDraft.value.trim()) return
   try {
@@ -470,9 +485,16 @@ onBeforeUnmount(() => {
       <h3>{{ t('lan-devices.paired-title') }}</h3>
       <p v-if="confirmedDevices.length === 0" class="lan-empty">{{ t('lan-devices.empty') }}</p>
       <div v-for="device in confirmedDevices" :key="device.id" class="lan-device-row">
-        <span class="lan-device-icon" :class="{ online: device.online }">
+        <button
+          type="button"
+          class="lan-device-icon"
+          :class="{ online: device.online }"
+          :style="{ '--device-color': deviceColors[device.id] ?? 'var(--m3-primary)' }"
+          :aria-label="t('lan-devices.choose-color')"
+          @click="openColor(device.id)"
+        >
           <NIcon :size="18"><WifiOutline /></NIcon>
-        </span>
+        </button>
         <div class="lan-device-copy">
           <strong>
             <span class="lan-dot" :class="{ online: device.online }" aria-hidden="true" />
@@ -529,6 +551,20 @@ onBeforeUnmount(() => {
           <NButton type="primary" :disabled="!renameDraft.trim()" @click="saveRename">
             {{ t('app.save') }}
           </NButton>
+        </div>
+      </NCard>
+    </NModal>
+
+    <NModal
+      :show="coloring !== null"
+      transform-origin="center"
+      @update:show="(visible: boolean) => !visible && (coloring = null)"
+    >
+      <NCard class="lan-rename" :bordered="false" :title="t('lan-devices.choose-color')">
+        <NColorPicker v-model:value="colorDraft" :show-alpha="false" :modes="['hex']" />
+        <div class="lan-fingerprint-actions">
+          <NButton @click="coloring = null">{{ t('app.cancel') }}</NButton>
+          <NButton type="primary" @click="saveColor">{{ t('app.save') }}</NButton>
         </div>
       </NCard>
     </NModal>
@@ -750,16 +786,20 @@ onBeforeUnmount(() => {
 }
 .lan-device-icon {
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
   place-items: center;
   color: var(--m3-on-surface-variant);
   background: var(--m3-surface-container-high);
+  border: 1px solid var(--m3-outline-variant);
+  border-left: 3px solid var(--device-color, var(--m3-primary));
   border-radius: 12px;
+  cursor: pointer;
 }
 .lan-device-icon.online {
-  color: color-mix(in srgb, var(--m3-primary) 74%, var(--m3-on-surface-variant));
-  background: color-mix(in srgb, var(--m3-primary-container) 74%, var(--m3-surface-container-high));
+  color: color-mix(in srgb, var(--device-color, var(--m3-primary)) 74%, var(--m3-on-surface-variant));
+  background: color-mix(in srgb, var(--device-color, var(--m3-primary)) 18%, var(--m3-surface-container-high));
 }
 .lan-device-copy {
   display: grid;

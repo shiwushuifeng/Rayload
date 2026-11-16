@@ -2,7 +2,6 @@
 /** @fileoverview Detailed task view with file list, peers, and BT info. */
 import { ref, computed, watch, defineComponent, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { I18nKey } from '@shared/i18nTypes'
 import { logger } from '@shared/logger'
 import { writeAppClipboardText } from '@shared/utils'
 import {
@@ -31,14 +30,14 @@ import {
   NCollapseTransition,
 } from 'naive-ui'
 import {
-  InformationCircleOutline,
-  PulseOutline,
   DocumentOutline,
-  PeopleOutline,
-  ServerOutline,
-  SettingsOutline,
   SearchOutline,
   ShieldCheckmarkOutline,
+  FolderOpenOutline,
+  RefreshOutline,
+  LinkOutline,
+  ShareSocialOutline,
+  TrashOutline,
 } from '@vicons/ionicons5'
 import { useTaskDetailOptions } from '@/composables/useTaskDetailOptions'
 import { replaceTaskUri } from '@/api/aria2'
@@ -69,7 +68,6 @@ import TaskDetailPeers from './detail/TaskDetailPeers.vue'
 import TaskDetailSources from './detail/TaskDetailSources.vue'
 import TaskDetailTrackers from './detail/TaskDetailTrackers.vue'
 import TaskChecksumPanel from './detail/TaskChecksumPanel.vue'
-import TaskItemActions from './TaskItemActions.vue'
 import RenameCompletedFile from './detail/RenameCompletedFile.vue'
 import MoveDownload from './detail/MoveDownload.vue'
 import FriendlyErrorNotice from '@/components/common/FriendlyErrorNotice.vue'
@@ -211,53 +209,14 @@ const CopyableValue = defineComponent({
   },
 })
 
-const activeTab = ref('general')
-const slideDirection = ref<'left' | 'right'>('left')
-const prevTabIndex = ref(0)
-
-interface TabDef {
-  key: string
-  labelKey: I18nKey
-  icon: typeof InformationCircleOutline
-  btOnly?: boolean
-  protocolOnly?: boolean
-  uriOnly?: boolean
-  liveOnly?: boolean
-  checksumOnly?: boolean
-}
-const allTabs: TabDef[] = [
-  { key: 'general', labelKey: 'task.task-tab-general', icon: InformationCircleOutline },
-  { key: 'activity', labelKey: 'task.task-tab-activity', icon: PulseOutline, liveOnly: true },
-  { key: 'files', labelKey: 'task.task-tab-files', icon: DocumentOutline },
-  { key: 'options', labelKey: 'task.task-tab-options', icon: SettingsOutline, uriOnly: true, liveOnly: true },
-  { key: 'sources', labelKey: 'task.task-tab-sources', icon: ServerOutline, uriOnly: true },
-  { key: 'checksum', labelKey: 'task.task-tab-checksum', icon: ShieldCheckmarkOutline, checksumOnly: true },
-  { key: 'status', labelKey: 'task.task-tab-status', icon: PulseOutline, protocolOnly: true, liveOnly: true },
-  { key: 'peers', labelKey: 'task.task-tab-peers', icon: PeopleOutline, btOnly: true, liveOnly: true },
-  { key: 'trackers', labelKey: 'task.task-tab-trackers', icon: ServerOutline, btOnly: true, liveOnly: true },
+const activeTab = ref<'details' | 'checksum'>('details')
+const detailTabs: Array<{ key: 'details' | 'checksum'; icon: typeof DocumentOutline }> = [
+  { key: 'details', icon: DocumentOutline },
+  { key: 'checksum', icon: ShieldCheckmarkOutline },
 ]
 
 const isTerminal = computed(() => ['complete', 'error', 'removed'].includes(props.task?.status ?? ''))
-/** A failed download keeps its options page to retry from another source (#548). */
-const retriesFromSource = computed(() => props.task?.status === 'error' && optCanReplaceUri.value)
-
-const visibleTabs = computed(() =>
-  allTabs.filter(
-    (tab) =>
-      !(props.task?.media && (tab.key === 'activity' || (tab.key === 'files' && !isTerminal.value))) &&
-      (!tab.btOnly || isBT.value) &&
-      (!tab.protocolOnly || isBT.value || isED2K.value) &&
-      (!tab.uriOnly || isURI.value || (tab.key === 'options' && Boolean(props.task?.media))) &&
-      (!tab.checksumOnly || isTerminal.value || (props.task ? checkTaskIsSharing(props.task) : false)) &&
-      (!tab.liveOnly || !isTerminal.value || (tab.key === 'options' && retriesFromSource.value)),
-  ),
-)
-
-function switchTab(key: string) {
-  const oldIdx = visibleTabs.value.findIndex((t) => t.key === activeTab.value)
-  const newIdx = visibleTabs.value.findIndex((t) => t.key === key)
-  slideDirection.value = newIdx > oldIdx ? 'left' : 'right'
-  prevTabIndex.value = newIdx
+function switchTab(key: 'details' | 'checksum') {
   activeTab.value = key
 }
 
@@ -281,18 +240,11 @@ watch(
   () => props.task?.gid,
   (gid) => {
     if (gid && gid !== prevTaskGid.value) {
-      activeTab.value = 'general'
+      activeTab.value = 'details'
       prevTaskGid.value = gid
     }
   },
 )
-
-watch(visibleTabs, (tabs) => {
-  if (!tabs.some((tab) => tab.key === activeTab.value)) {
-    activeTab.value = 'general'
-    prevTabIndex.value = 0
-  }
-})
 const sharingState = computed(() => (props.task ? getTaskSharingState(props.task) : null))
 const sharingKind = computed(() => sharingState.value?.kind ?? null)
 const isSharing = computed(() => (props.task ? checkTaskIsSharing(props.task) : false))
@@ -454,470 +406,526 @@ async function onFileRenamed() {
     <NDrawerContent :title="t('task.task-detail-title') || 'Task Details'" closable @close="handleClose">
       <div class="detail-tabs">
         <button
-          v-for="tab in visibleTabs"
+          v-for="tab in detailTabs"
           :key="tab.key"
           :class="['detail-tab', { active: activeTab === tab.key }]"
           @click="switchTab(tab.key)"
         >
           <NIcon :size="16"><component :is="tab.icon" /></NIcon>
-          <span class="detail-tab-label">{{ t(tab.labelKey) }}</span>
+          <span class="detail-tab-label">{{
+            tab.key === 'details' ? t('task.task-tab-file-details') : t('task.task-tab-checksum-files')
+          }}</span>
         </button>
       </div>
 
-      <div class="tab-content-wrapper">
-        <Transition :name="`tab-slide-${slideDirection}`" mode="out-in">
-          <div v-if="activeTab === 'general'" key="general" class="tab-content">
-            <template v-if="task">
+      <div class="detail-flow">
+        <div v-if="activeTab === 'details'" key="details" class="tab-content detail-card">
+          <h3 class="detail-card-title">{{ t('task.task-tab-general') }}</h3>
+          <template v-if="task">
+            <NDescriptions
+              :column="1"
+              label-placement="left"
+              :bordered="false"
+              size="small"
+              :label-style="{ width: '1px', whiteSpace: 'nowrap' }"
+            >
+              <NDescriptionsItem :label="t('task.task-name') || 'Name'">
+                <CopyableValue :value="taskFullName" :label="copyLabel(t('task.task-name'), 'Name')" />
+                <RenameCompletedFile :task="task" @renamed="onFileRenamed" />
+              </NDescriptionsItem>
+              <NDescriptionsItem v-if="task.dir" :label="t('task.task-dir') || 'Directory'">
+                <CopyableValue :value="task.dir" :label="copyLabel(t('task.task-dir'), 'Directory')" />
+                <MoveDownload :task="task" @moved="taskStore.fetchList()" />
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-status') || 'Status'">
+                <div class="detail-status-value">
+                  <NTag :type="statusTagType" size="small">{{ taskStatus }}</NTag>
+                  <NButton v-if="canSelectMedia(task)" text type="primary" size="small" @click="editMedia">{{
+                    t('media.select-tracks')
+                  }}</NButton>
+                </div>
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-type') || 'Type'">
+                {{
+                  task.media
+                    ? [
+                        task.media.protocol.toUpperCase() || t('media.auto'),
+                        task.media.live === 'true' ? t('media.live') : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' · ')
+                    : t(`task.task-type-${detailKind}`)
+                }}
+              </NDescriptionsItem>
+              <NDescriptionsItem v-for="row in mediaRows" :key="row.key" :label="t(row.label)">
+                <span class="technical-text-wrap">{{ row.value }}</span>
+              </NDescriptionsItem>
+              <NDescriptionsItem v-if="taskErrorLog" :label="t('task.task-error-info') || 'Error'">
+                <FriendlyErrorNotice :raw="taskErrorLog" :gid="task?.gid" :url="taskPrimaryUrl" source="task-detail" />
+              </NDescriptionsItem>
+              <NDescriptionsItem v-if="taskAddedAt" :label="t('task.task-added-at') || 'Added At'">
+                {{ taskAddedAt }}
+              </NDescriptionsItem>
+              <NDescriptionsItem v-if="taskCompletedAt" :label="t('task.task-completed-at') || 'Completed At'">
+                {{ taskCompletedAt }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-gid') || 'GID'">
+                <CopyableValue :value="task.gid" :label="copyLabel(t('task.task-gid'), 'GID')" />
+              </NDescriptionsItem>
+            </NDescriptions>
+            <template v-if="isBT && btInfo && hasBtOverviewDetails">
+              <div class="section-divider">BitTorrent</div>
               <NDescriptions
                 :column="1"
                 label-placement="left"
-                bordered
+                :bordered="false"
                 size="small"
                 :label-style="{ width: '1px', whiteSpace: 'nowrap' }"
               >
-                <NDescriptionsItem :label="t('task.task-name') || 'Name'">
-                  <CopyableValue :value="taskFullName" :label="copyLabel(t('task.task-name'), 'Name')" />
-                  <RenameCompletedFile :task="task" @renamed="onFileRenamed" />
+                <NDescriptionsItem v-if="task.infoHash" :label="t('task.task-info-hash') || 'Hash'">
+                  <CopyableValue :value="task.infoHash" :label="copyLabel(t('task.task-info-hash'), 'Hash')" />
                 </NDescriptionsItem>
-                <NDescriptionsItem v-if="task.dir" :label="t('task.task-dir') || 'Directory'">
-                  <CopyableValue :value="task.dir" :label="copyLabel(t('task.task-dir'), 'Directory')" />
-                  <MoveDownload :task="task" @moved="taskStore.fetchList()" />
+                <NDescriptionsItem v-if="hasPieceLength" :label="t('task.task-piece-length') || 'Piece Size'">
+                  {{ bytesToSize(String(task.pieceLength)) }}
                 </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-status') || 'Status'">
-                  <div class="detail-status-value">
-                    <NTag :type="statusTagType" size="small">{{ taskStatus }}</NTag>
-                    <NButton v-if="canSelectMedia(task)" text type="primary" size="small" @click="editMedia">{{
-                      t('media.select-tracks')
-                    }}</NButton>
-                  </div>
+                <NDescriptionsItem v-if="hasPieceCount" :label="t('task.task-num-pieces') || 'Pieces'">
+                  {{ task.numPieces }}
                 </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-type') || 'Type'">
-                  {{
-                    task.media
-                      ? [
-                          task.media.protocol.toUpperCase() || t('media.auto'),
-                          task.media.live === 'true' ? t('media.live') : '',
-                        ]
-                          .filter(Boolean)
-                          .join(' · ')
-                      : t(`task.task-type-${detailKind}`)
-                  }}
+                <NDescriptionsItem v-if="sharingDuration" :label="sharingDurationLabel">
+                  {{ sharingDuration }}
                 </NDescriptionsItem>
-                <NDescriptionsItem v-for="row in mediaRows" :key="row.key" :label="t(row.label)">
-                  <span class="technical-text-wrap">{{ row.value }}</span>
+                <NDescriptionsItem
+                  v-if="btInfo?.creationDate"
+                  :label="t('task.task-bittorrent-creation-date') || 'Created'"
+                >
+                  {{ localeDateTimeFormat(Number(btInfo.creationDate), locale) }}
                 </NDescriptionsItem>
-                <NDescriptionsItem v-if="taskErrorLog" :label="t('task.task-error-info') || 'Error'">
-                  <FriendlyErrorNotice
-                    :raw="taskErrorLog"
-                    :gid="task?.gid"
-                    :url="taskPrimaryUrl"
-                    source="task-detail"
+                <NDescriptionsItem v-if="btInfo?.comment" :label="t('task.task-bittorrent-comment') || 'Comment'">
+                  {{ btInfo.comment }}
+                </NDescriptionsItem>
+              </NDescriptions>
+            </template>
+            <template v-if="isED2K && ed2kInfo?.hash">
+              <div class="section-divider">ED2K</div>
+              <NDescriptions
+                :column="1"
+                label-placement="left"
+                :bordered="false"
+                size="small"
+                :label-style="{ width: '1px', whiteSpace: 'nowrap' }"
+              >
+                <NDescriptionsItem v-if="ed2kInfo.hash" :label="t('task.task-ed2k-hash')">
+                  <CopyableValue :value="ed2kInfo.hash" :label="t('task.task-ed2k-hash')" />
+                </NDescriptionsItem>
+                <NDescriptionsItem v-if="sharingDuration" :label="sharingDurationLabel">
+                  {{ sharingDuration }}
+                </NDescriptionsItem>
+              </NDescriptions>
+            </template>
+          </template>
+        </div>
+
+        <div v-if="activeTab === 'details'" key="activity" class="tab-content detail-card">
+          <h3 class="detail-card-title">{{ t('task.section-transfer') }}</h3>
+          <TaskDetailActivity :task="task" :transfer-summary="transferSummary" />
+        </div>
+
+        <div v-if="activeTab === 'details' && isBT" key="bt-status" class="tab-content detail-card">
+          <h3 class="detail-card-title">BitTorrent</h3>
+          <template v-if="task && isBT">
+            <div class="status-actions">
+              <NButton size="small" :loading="rechecking" :disabled="!optCanModify" @click="recheckTask">
+                {{ t('task.bt-recheck') }}
+              </NButton>
+            </div>
+            <NDescriptions
+              :column="1"
+              label-placement="left"
+              :bordered="false"
+              size="small"
+              :label-style="{ width: '1px', whiteSpace: 'nowrap' }"
+            >
+              <NDescriptionsItem :label="t('task.task-bt-metadata-state')">
+                {{ t(`task.task-bt-metadata-${btHealth.metadataState}`) }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-bt-has-metadata')">
+                {{ yesNo(btHealth.hasMetadata) }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-bt-selected-files')">
+                {{ btHealth.selectedFileCount }} / {{ btHealth.totalFileCount }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-bt-selected-size')">
+                {{ bytesToSize(btHealth.selectedLength) }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-bt-trackers')">
+                {{ btHealth.trackerCount }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-bt-peers')">
+                {{ btHealth.peerCount }}
+                <span v-if="btHealth.seederPeerCount > 0" class="muted-inline">
+                  · {{ btHealth.seederPeerCount }} {{ t('task.task-peer-seeder') }}
+                </span>
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-bt-active-peers')">
+                {{ t('task.task-peer-download-speed') }} {{ btHealth.activeDownloadPeerCount }} /
+                {{ t('task.task-peer-upload-speed') }} {{ btHealth.activeUploadPeerCount }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-bt-choking')">
+                {{ t('task.task-bt-am-choking') }} {{ btHealth.amChokingCount }} / {{ t('task.task-bt-peer-choking') }}
+                {{ btHealth.peerChokingCount }}
+              </NDescriptionsItem>
+            </NDescriptions>
+          </template>
+        </div>
+
+        <div v-if="activeTab === 'details'" key="files" class="tab-content detail-card">
+          <h3 class="detail-card-title">{{ t('task.section-files') }}</h3>
+          <TaskDetailFiles
+            :files="files"
+            :gid="task?.gid"
+            :editable="optCanModify && isBT"
+            :terminal="isTerminal"
+            :tooltip="t('about.click-to-copy')"
+            :on-copy="copyDetailValue"
+          />
+        </div>
+
+        <div v-if="activeTab === 'details' && isURI" key="sources" class="tab-content detail-card">
+          <h3 class="detail-card-title">{{ t('task.task-tab-sources') }}</h3>
+          <TaskDetailSources
+            v-if="task && isURI"
+            :task="task"
+            :summary="uriSummary"
+            :terminal="isTerminal"
+            :tooltip="t('about.click-to-copy')"
+            :on-copy="copyDetailValue"
+          />
+        </div>
+
+        <div v-if="activeTab === 'checksum'" key="checksum" class="tab-content detail-card">
+          <TaskChecksumPanel v-if="task" :key="task.gid" :task="task" />
+        </div>
+
+        <div v-if="activeTab === 'details'" key="options" class="tab-content detail-card">
+          <h3 class="detail-card-title">{{ t('task.section-options') }}</h3>
+          <NForm label-placement="left" label-width="110px" class="options-form">
+            <NFormItem v-if="optForm.uri" :label="t('task.source-url') + ':'">
+              <NInput
+                v-model:value="optForm.uri"
+                type="textarea"
+                :autosize="{ minRows: 1, maxRows: 3 }"
+                :readonly="!optCanReplaceUri"
+              />
+            </NFormItem>
+            <NFormItem v-if="!isTerminal" :label="t('task.speed-limit') + ':'">
+              <SpeedLimitInput
+                v-model:value="optForm.maxDownloadLimit"
+                :disabled="!optCanModify"
+                :placeholder="t('task.speed-limit-unlimited')"
+              />
+            </NFormItem>
+            <NFormItem v-if="!isTerminal && isBT" :label="t('task.upload-limit') + ':'">
+              <SpeedLimitInput
+                v-model:value="optForm.maxUploadLimit"
+                :disabled="!optCanModify"
+                :placeholder="t('task.speed-limit-unlimited')"
+              />
+            </NFormItem>
+            <template v-if="!isTerminal">
+              <NFormItem :label="t('task.task-user-agent') + ':'">
+                <NInputGroup class="detail-ua-row">
+                  <NInput
+                    v-model:value="optForm.userAgent"
+                    type="textarea"
+                    :autosize="{ minRows: 1, maxRows: 3 }"
+                    :readonly="!optCanModify"
+                    :placeholder="t('task.task-user-agent-placeholder') || ''"
                   />
-                </NDescriptionsItem>
-                <NDescriptionsItem v-if="taskAddedAt" :label="t('task.task-added-at') || 'Added At'">
-                  {{ taskAddedAt }}
-                </NDescriptionsItem>
-                <NDescriptionsItem v-if="taskCompletedAt" :label="t('task.task-completed-at') || 'Completed At'">
-                  {{ taskCompletedAt }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-gid') || 'GID'">
-                  <CopyableValue :value="task.gid" :label="copyLabel(t('task.task-gid'), 'GID')" />
-                </NDescriptionsItem>
-              </NDescriptions>
-              <template v-if="isBT && btInfo && hasBtOverviewDetails">
-                <div class="section-divider">BitTorrent</div>
-                <NDescriptions
-                  :column="1"
-                  label-placement="left"
-                  bordered
-                  size="small"
-                  :label-style="{ width: '1px', whiteSpace: 'nowrap' }"
-                >
-                  <NDescriptionsItem v-if="task.infoHash" :label="t('task.task-info-hash') || 'Hash'">
-                    <CopyableValue :value="task.infoHash" :label="copyLabel(t('task.task-info-hash'), 'Hash')" />
-                  </NDescriptionsItem>
-                  <NDescriptionsItem v-if="hasPieceLength" :label="t('task.task-piece-length') || 'Piece Size'">
-                    {{ bytesToSize(String(task.pieceLength)) }}
-                  </NDescriptionsItem>
-                  <NDescriptionsItem v-if="hasPieceCount" :label="t('task.task-num-pieces') || 'Pieces'">
-                    {{ task.numPieces }}
-                  </NDescriptionsItem>
-                  <NDescriptionsItem v-if="sharingDuration" :label="sharingDurationLabel">
-                    {{ sharingDuration }}
-                  </NDescriptionsItem>
-                  <NDescriptionsItem
-                    v-if="btInfo?.creationDate"
-                    :label="t('task.task-bittorrent-creation-date') || 'Created'"
-                  >
-                    {{ localeDateTimeFormat(Number(btInfo.creationDate), locale) }}
-                  </NDescriptionsItem>
-                  <NDescriptionsItem v-if="btInfo?.comment" :label="t('task.task-bittorrent-comment') || 'Comment'">
-                    {{ btInfo.comment }}
-                  </NDescriptionsItem>
-                </NDescriptions>
-              </template>
-              <template v-if="isED2K && ed2kInfo?.hash">
-                <div class="section-divider">ED2K</div>
-                <NDescriptions
-                  :column="1"
-                  label-placement="left"
-                  bordered
-                  size="small"
-                  :label-style="{ width: '1px', whiteSpace: 'nowrap' }"
-                >
-                  <NDescriptionsItem v-if="ed2kInfo.hash" :label="t('task.task-ed2k-hash')">
-                    <CopyableValue :value="ed2kInfo.hash" :label="t('task.task-ed2k-hash')" />
-                  </NDescriptionsItem>
-                  <NDescriptionsItem v-if="sharingDuration" :label="sharingDurationLabel">
-                    {{ sharingDuration }}
-                  </NDescriptionsItem>
-                </NDescriptions>
-              </template>
-            </template>
-          </div>
-
-          <div v-else-if="activeTab === 'activity'" key="activity" class="tab-content">
-            <TaskDetailActivity :task="task" :transfer-summary="transferSummary" />
-          </div>
-
-          <div v-else-if="activeTab === 'status' && isBT" key="bt-status" class="tab-content">
-            <template v-if="task && isBT">
-              <div class="status-actions">
-                <NButton size="small" :loading="rechecking" :disabled="!optCanModify" @click="recheckTask">
-                  {{ t('task.bt-recheck') }}
-                </NButton>
-              </div>
-              <NDescriptions
-                :column="1"
-                label-placement="left"
-                bordered
-                size="small"
-                :label-style="{ width: '1px', whiteSpace: 'nowrap' }"
-              >
-                <NDescriptionsItem :label="t('task.task-bt-metadata-state')">
-                  {{ t(`task.task-bt-metadata-${btHealth.metadataState}`) }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-bt-has-metadata')">
-                  {{ yesNo(btHealth.hasMetadata) }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-bt-selected-files')">
-                  {{ btHealth.selectedFileCount }} / {{ btHealth.totalFileCount }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-bt-selected-size')">
-                  {{ bytesToSize(btHealth.selectedLength) }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-bt-trackers')">
-                  {{ btHealth.trackerCount }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-bt-peers')">
-                  {{ btHealth.peerCount }}
-                  <span v-if="btHealth.seederPeerCount > 0" class="muted-inline">
-                    · {{ btHealth.seederPeerCount }} {{ t('task.task-peer-seeder') }}
-                  </span>
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-bt-active-peers')">
-                  {{ t('task.task-peer-download-speed') }} {{ btHealth.activeDownloadPeerCount }} /
-                  {{ t('task.task-peer-upload-speed') }} {{ btHealth.activeUploadPeerCount }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-bt-choking')">
-                  {{ t('task.task-bt-am-choking') }} {{ btHealth.amChokingCount }} /
-                  {{ t('task.task-bt-peer-choking') }} {{ btHealth.peerChokingCount }}
-                </NDescriptionsItem>
-              </NDescriptions>
-            </template>
-          </div>
-
-          <div v-else-if="activeTab === 'files'" key="files" class="tab-content">
-            <TaskDetailFiles
-              :files="files"
-              :gid="task?.gid"
-              :editable="optCanModify && isBT"
-              :terminal="isTerminal"
-              :tooltip="t('about.click-to-copy')"
-              :on-copy="copyDetailValue"
-            />
-          </div>
-
-          <div v-else-if="activeTab === 'sources'" key="sources" class="tab-content">
-            <TaskDetailSources
-              v-if="task && isURI"
-              :task="task"
-              :summary="uriSummary"
-              :terminal="isTerminal"
-              :tooltip="t('about.click-to-copy')"
-              :on-copy="copyDetailValue"
-            />
-          </div>
-
-          <div v-else-if="activeTab === 'checksum'" key="checksum" class="tab-content">
-            <TaskChecksumPanel v-if="task" :key="task.gid" :task="task" />
-          </div>
-
-          <div v-else-if="activeTab === 'options'" key="options" class="tab-content">
-            <NForm label-placement="left" label-width="110px" class="options-form">
-              <NFormItem v-if="optForm.uri" :label="t('task.source-url') + ':'">
+                  <UserAgentPopover
+                    :url="taskPrimaryUrl"
+                    :profiles="preferenceStore.config.userAgentProfiles"
+                    :rules="preferenceStore.config.userAgentRules"
+                    :recent-profile-ids="preferenceStore.config.recentUserAgentProfileIds"
+                    :disabled="!optCanModify"
+                    @select="selectTaskUserAgentProfile"
+                  />
+                </NInputGroup>
+              </NFormItem>
+              <NFormItem :label="t('task.task-authorization') + ':'">
                 <NInput
-                  v-model:value="optForm.uri"
+                  v-model:value="optForm.authorization"
                   type="textarea"
                   :autosize="{ minRows: 1, maxRows: 3 }"
-                  :readonly="!optCanReplaceUri"
+                  :readonly="!optCanModify"
+                  :placeholder="t('task.task-authorization-placeholder') || ''"
                 />
               </NFormItem>
-              <NFormItem v-if="!isTerminal" :label="t('task.speed-limit') + ':'">
-                <SpeedLimitInput
-                  v-model:value="optForm.maxDownloadLimit"
+              <NFormItem :label="t('task.task-http-auth') + ':'">
+                <div class="http-auth-fields">
+                  <NInput
+                    v-model:value="optForm.httpAuthUsername"
+                    :readonly="!optCanModify"
+                    :placeholder="t('task.task-http-auth-username-placeholder') || ''"
+                  />
+                  <NInput
+                    v-model:value="optForm.httpAuthPassword"
+                    type="password"
+                    show-password-on="click"
+                    :readonly="!optCanModify"
+                    :placeholder="t('task.task-http-auth-password-placeholder') || ''"
+                  />
+                </div>
+              </NFormItem>
+              <NFormItem :label="t('task.task-referer') + ':'">
+                <NInput
+                  v-model:value="optForm.referer"
+                  type="textarea"
+                  :autosize="{ minRows: 1, maxRows: 3 }"
+                  :readonly="!optCanModify"
+                  :placeholder="t('task.task-referer-placeholder') || ''"
+                />
+              </NFormItem>
+              <NFormItem :label="t('task.task-cookie') + ':'">
+                <NInput
+                  v-model:value="optForm.cookie"
+                  type="textarea"
+                  :autosize="{ minRows: 1, maxRows: 3 }"
+                  :readonly="!optCanModify"
+                  :placeholder="t('task.task-cookie-placeholder') || ''"
+                />
+              </NFormItem>
+              <NFormItem :label="t('task.use-proxy') + ':'">
+                <NSwitch
+                  :value="optForm.proxyMode === 'manual'"
                   :disabled="!optCanModify"
-                  :placeholder="t('task.speed-limit-unlimited')"
+                  @update:value="optForm.proxyMode = $event ? 'manual' : 'direct'"
                 />
               </NFormItem>
-              <NFormItem v-if="!isTerminal && isBT" :label="t('task.upload-limit') + ':'">
-                <SpeedLimitInput
-                  v-model:value="optForm.maxUploadLimit"
-                  :disabled="!optCanModify"
-                  :placeholder="t('task.speed-limit-unlimited')"
-                />
-              </NFormItem>
-              <template v-if="!isTerminal">
-                <NFormItem :label="t('task.task-user-agent') + ':'">
-                  <NInputGroup class="detail-ua-row">
-                    <NInput
-                      v-model:value="optForm.userAgent"
-                      type="textarea"
-                      :autosize="{ minRows: 1, maxRows: 3 }"
-                      :readonly="!optCanModify"
-                      :placeholder="t('task.task-user-agent-placeholder') || ''"
-                    />
-                    <UserAgentPopover
-                      :url="taskPrimaryUrl"
-                      :profiles="preferenceStore.config.userAgentProfiles"
-                      :rules="preferenceStore.config.userAgentRules"
-                      :recent-profile-ids="preferenceStore.config.recentUserAgentProfileIds"
-                      :disabled="!optCanModify"
-                      @select="selectTaskUserAgentProfile"
-                    />
-                  </NInputGroup>
-                </NFormItem>
-                <NFormItem :label="t('task.task-authorization') + ':'">
-                  <NInput
-                    v-model:value="optForm.authorization"
-                    type="textarea"
-                    :autosize="{ minRows: 1, maxRows: 3 }"
-                    :readonly="!optCanModify"
-                    :placeholder="t('task.task-authorization-placeholder') || ''"
-                  />
-                </NFormItem>
-                <NFormItem :label="t('task.task-http-auth') + ':'">
-                  <div class="http-auth-fields">
-                    <NInput
-                      v-model:value="optForm.httpAuthUsername"
-                      :readonly="!optCanModify"
-                      :placeholder="t('task.task-http-auth-username-placeholder') || ''"
-                    />
-                    <NInput
-                      v-model:value="optForm.httpAuthPassword"
-                      type="password"
-                      show-password-on="click"
-                      :readonly="!optCanModify"
-                      :placeholder="t('task.task-http-auth-password-placeholder') || ''"
-                    />
-                  </div>
-                </NFormItem>
-                <NFormItem :label="t('task.task-referer') + ':'">
-                  <NInput
-                    v-model:value="optForm.referer"
-                    type="textarea"
-                    :autosize="{ minRows: 1, maxRows: 3 }"
-                    :readonly="!optCanModify"
-                    :placeholder="t('task.task-referer-placeholder') || ''"
-                  />
-                </NFormItem>
-                <NFormItem :label="t('task.task-cookie') + ':'">
-                  <NInput
-                    v-model:value="optForm.cookie"
-                    type="textarea"
-                    :autosize="{ minRows: 1, maxRows: 3 }"
-                    :readonly="!optCanModify"
-                    :placeholder="t('task.task-cookie-placeholder') || ''"
-                  />
-                </NFormItem>
-                <NFormItem :label="t('task.use-proxy') + ':'">
-                  <NSwitch
-                    :value="optForm.proxyMode === 'manual'"
-                    :disabled="!optCanModify"
-                    @update:value="optForm.proxyMode = $event ? 'manual' : 'direct'"
-                  />
-                </NFormItem>
-                <NFormItem label=" " :show-feedback="false" class="proxy-options-item">
-                  <NCollapseTransition :show="optForm.proxyMode === 'manual'">
-                    <div class="proxy-radio-group">
-                      <div class="custom-proxy-input">
-                        <NInput
-                          v-model:value="optForm.customProxy"
-                          :readonly="!optCanModify"
-                          :placeholder="'http://host:port'"
-                        />
-                        <NInput
-                          v-model:value="optForm.customProxyUsername"
-                          :readonly="!optCanModify"
-                          :placeholder="t('preferences.proxy-username') || ''"
-                        />
-                        <NInput
-                          v-model:value="optForm.customProxyPassword"
-                          type="password"
-                          show-password-on="click"
-                          :readonly="!optCanModify"
-                          :placeholder="t('preferences.proxy-password') || ''"
-                        />
-                        <NButton :loading="detectingProxy" :disabled="!optCanModify" size="small" @click="detectProxy">
-                          <template #icon>
-                            <NIcon><SearchOutline /></NIcon>
-                          </template>
-                          {{ t('preferences.detect-system-proxy') }}
-                        </NButton>
-                      </div>
+              <NFormItem label=" " :show-feedback="false" class="proxy-options-item">
+                <NCollapseTransition :show="optForm.proxyMode === 'manual'">
+                  <div class="proxy-radio-group">
+                    <div class="custom-proxy-input">
+                      <NInput
+                        v-model:value="optForm.customProxy"
+                        :readonly="!optCanModify"
+                        :placeholder="'http://host:port'"
+                      />
+                      <NInput
+                        v-model:value="optForm.customProxyUsername"
+                        :readonly="!optCanModify"
+                        :placeholder="t('preferences.proxy-username') || ''"
+                      />
+                      <NInput
+                        v-model:value="optForm.customProxyPassword"
+                        type="password"
+                        show-password-on="click"
+                        :readonly="!optCanModify"
+                        :placeholder="t('preferences.proxy-password') || ''"
+                      />
+                      <NButton :loading="detectingProxy" :disabled="!optCanModify" size="small" @click="detectProxy">
+                        <template #icon>
+                          <NIcon><SearchOutline /></NIcon>
+                        </template>
+                        {{ t('preferences.detect-system-proxy') }}
+                      </NButton>
                     </div>
-                  </NCollapseTransition>
-                </NFormItem>
-              </template>
-              <div v-if="optCanModify || optCanReplaceUri" class="options-apply-bar">
-                <NButton
-                  :type="optDirty ? 'primary' : 'default'"
-                  :disabled="!optDirty"
-                  :loading="optApplying"
-                  class="apply-btn"
-                  @click="optApplyFn"
-                >
-                  {{
-                    optRetriesWithUri
-                      ? t('task.source-url-retry')
-                      : optDirty
-                        ? t('task.apply-changes')
-                        : t('task.no-changes')
-                  }}
-                </NButton>
-              </div>
-            </NForm>
-          </div>
-
-          <div v-else-if="activeTab === 'status' && isED2K" key="ed2k-status" class="tab-content">
-            <template v-if="ed2kInfo">
-              <NDescriptions
-                :column="1"
-                label-placement="left"
-                bordered
-                size="small"
-                :label-style="{ width: '1px', whiteSpace: 'nowrap' }"
-              >
-                <NDescriptionsItem :label="t('task.task-ed2k-hash')">
-                  <CopyableValue :value="ed2kInfo.hash || '-'" :label="t('task.task-ed2k-hash')" />
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-name')">
-                  <CopyableValue :value="ed2kInfo.name || taskFullName" :label="t('task.task-name')" />
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-file-size')">
-                  {{ ed2kInfo.length ? bytesToSize(ed2kInfo.length) : bytesToSize(task?.totalLength || '0') }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-ed2k-part-hash-count')">
-                  {{ ed2kInfo.partHashCount || 0 }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-ed2k-aich-root')">
-                  <CopyableValue :value="ed2kInfo.aichRoot || '-'" :label="t('task.task-ed2k-aich-root')" />
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-ed2k-server-count')">
-                  {{ ed2kSummary.connectedServerCount }} / {{ ed2kSummary.serverCount }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-ed2k-peer-count')">
-                  {{ ed2kSummary.peerCount }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-ed2k-queued-peer-count')">
-                  {{ ed2kSummary.queuedPeerCount }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-ed2k-accepted-peer-count')">
-                  {{ ed2kSummary.acceptedPeerCount }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-ed2k-dead-peer-count')">
-                  {{ ed2kSummary.deadPeerCount }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-ed2k-low-id-peer-count')">
-                  {{ ed2kSummary.lowIdPeerCount }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-ed2k-callback-waiting-peer-count')">
-                  {{ ed2kSummary.callbackWaitingPeerCount }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-ed2k-kad-node-count')">
-                  {{ ed2kSummary.kadNodeCount }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-ed2k-kad-router-count')">
-                  {{ ed2kSummary.kadRouterCount }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-ed2k-kad-firewalled')">
-                  {{ yesNo(ed2kSummary.kadFirewalled) }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-ed2k-kad-observed-address-count')">
-                  {{ ed2kInfo.kadObservedAddressCount || 0 }}
-                </NDescriptionsItem>
-                <NDescriptionsItem v-if="ed2kSummary.hasSearchState" :label="t('task.task-ed2k-search-active')">
-                  {{ yesNo(ed2kInfo.searchActive) }}
-                </NDescriptionsItem>
-                <NDescriptionsItem v-if="ed2kSummary.hasSearchState" :label="t('task.task-ed2k-search-more-results')">
-                  {{ yesNo(ed2kInfo.searchMoreResults) }}
-                </NDescriptionsItem>
-                <NDescriptionsItem v-if="ed2kSummary.hasSearchState" :label="t('task.task-ed2k-search-result-count')">
-                  {{ ed2kInfo.searchResultCount || 0 }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-ed2k-uploading-peer-count')">
-                  {{ ed2kSummary.uploadingPeerCount }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-ed2k-waiting-upload-peer-count')">
-                  {{ ed2kSummary.waitingUploadPeerCount }}
-                </NDescriptionsItem>
-                <NDescriptionsItem :label="t('task.task-ed2k-peer-credit-count')">
-                  {{ ed2kInfo.peerCreditCount || 0 }}
-                </NDescriptionsItem>
-              </NDescriptions>
+                  </div>
+                </NCollapseTransition>
+              </NFormItem>
             </template>
-          </div>
+            <div v-if="optCanModify || optCanReplaceUri" class="options-apply-bar">
+              <NButton
+                :type="optDirty ? 'primary' : 'default'"
+                :disabled="!optDirty"
+                :loading="optApplying"
+                class="apply-btn"
+                @click="optApplyFn"
+              >
+                {{
+                  optRetriesWithUri
+                    ? t('task.source-url-retry')
+                    : optDirty
+                      ? t('task.apply-changes')
+                      : t('task.no-changes')
+                }}
+              </NButton>
+            </div>
+          </NForm>
+        </div>
 
-          <div v-else-if="activeTab === 'peers'" key="peers" class="tab-content">
-            <TaskDetailPeers
-              :gid="task?.gid ?? ''"
-              :editable="optCanModify"
-              :peers="task?.peers"
-              :locale="locale"
-              :tooltip="t('about.click-to-copy')"
-              :on-copy="copyDetailValue"
-            />
-          </div>
+        <div v-if="activeTab === 'details' && isED2K" key="ed2k-status" class="tab-content detail-card">
+          <h3 class="detail-card-title">ED2K</h3>
+          <template v-if="ed2kInfo">
+            <NDescriptions
+              :column="1"
+              label-placement="left"
+              :bordered="false"
+              size="small"
+              :label-style="{ width: '1px', whiteSpace: 'nowrap' }"
+            >
+              <NDescriptionsItem :label="t('task.task-ed2k-hash')">
+                <CopyableValue :value="ed2kInfo.hash || '-'" :label="t('task.task-ed2k-hash')" />
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-name')">
+                <CopyableValue :value="ed2kInfo.name || taskFullName" :label="t('task.task-name')" />
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-file-size')">
+                {{ ed2kInfo.length ? bytesToSize(ed2kInfo.length) : bytesToSize(task?.totalLength || '0') }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-ed2k-part-hash-count')">
+                {{ ed2kInfo.partHashCount || 0 }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-ed2k-aich-root')">
+                <CopyableValue :value="ed2kInfo.aichRoot || '-'" :label="t('task.task-ed2k-aich-root')" />
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-ed2k-server-count')">
+                {{ ed2kSummary.connectedServerCount }} / {{ ed2kSummary.serverCount }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-ed2k-peer-count')">
+                {{ ed2kSummary.peerCount }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-ed2k-queued-peer-count')">
+                {{ ed2kSummary.queuedPeerCount }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-ed2k-accepted-peer-count')">
+                {{ ed2kSummary.acceptedPeerCount }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-ed2k-dead-peer-count')">
+                {{ ed2kSummary.deadPeerCount }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-ed2k-low-id-peer-count')">
+                {{ ed2kSummary.lowIdPeerCount }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-ed2k-callback-waiting-peer-count')">
+                {{ ed2kSummary.callbackWaitingPeerCount }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-ed2k-kad-node-count')">
+                {{ ed2kSummary.kadNodeCount }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-ed2k-kad-router-count')">
+                {{ ed2kSummary.kadRouterCount }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-ed2k-kad-firewalled')">
+                {{ yesNo(ed2kSummary.kadFirewalled) }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-ed2k-kad-observed-address-count')">
+                {{ ed2kInfo.kadObservedAddressCount || 0 }}
+              </NDescriptionsItem>
+              <NDescriptionsItem v-if="ed2kSummary.hasSearchState" :label="t('task.task-ed2k-search-active')">
+                {{ yesNo(ed2kInfo.searchActive) }}
+              </NDescriptionsItem>
+              <NDescriptionsItem v-if="ed2kSummary.hasSearchState" :label="t('task.task-ed2k-search-more-results')">
+                {{ yesNo(ed2kInfo.searchMoreResults) }}
+              </NDescriptionsItem>
+              <NDescriptionsItem v-if="ed2kSummary.hasSearchState" :label="t('task.task-ed2k-search-result-count')">
+                {{ ed2kInfo.searchResultCount || 0 }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-ed2k-uploading-peer-count')">
+                {{ ed2kSummary.uploadingPeerCount }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-ed2k-waiting-upload-peer-count')">
+                {{ ed2kSummary.waitingUploadPeerCount }}
+              </NDescriptionsItem>
+              <NDescriptionsItem :label="t('task.task-ed2k-peer-credit-count')">
+                {{ ed2kInfo.peerCreditCount || 0 }}
+              </NDescriptionsItem>
+            </NDescriptions>
+          </template>
+        </div>
 
-          <div v-else-if="activeTab === 'trackers'" key="trackers" class="tab-content">
-            <TaskDetailTrackers
-              :gid="task?.gid ?? ''"
-              :web-seeds="task?.bittorrent?.webSeeds"
-              :editable="optCanModify"
-              :tooltip="t('about.click-to-copy')"
-              :on-copy="copyDetailValue"
-            />
-          </div>
-        </Transition>
-      </div>
-      <template v-if="task && activeTab === 'general'" #footer>
-        <div class="detail-action-bar">
-          <TaskItemActions
-            :task="task"
-            density="detail"
-            @pause="emit('pause', task)"
-            @resume="emit('resume', task)"
-            @retry="emit('retry', task)"
-            @redownload="emit('redownload', task)"
-            @finish-sharing="emit('finish-sharing', task)"
-            @finish-media="emit('finish-media', task)"
-            @delete="emit('delete', task)"
-            @delete-record="emit('delete-record', task)"
-            @copy-link="emit('copy-link', task)"
-            @folder="emit('folder', task)"
-            @checksum="emit('checksum', task)"
-            @share-file="emit('share-file', task)"
+        <div v-if="activeTab === 'details'" key="peers" class="tab-content detail-card">
+          <h3 class="detail-card-title">{{ t('task.section-peers') }}</h3>
+          <TaskDetailPeers
+            :gid="task?.gid ?? ''"
+            :editable="optCanModify"
+            :peers="task?.peers"
+            :locale="locale"
+            :tooltip="t('about.click-to-copy')"
+            :on-copy="copyDetailValue"
           />
+        </div>
+
+        <div v-if="activeTab === 'details'" key="trackers" class="tab-content detail-card">
+          <h3 class="detail-card-title">{{ t('task.section-trackers') }}</h3>
+          <TaskDetailTrackers
+            :gid="task?.gid ?? ''"
+            :web-seeds="task?.bittorrent?.webSeeds"
+            :editable="optCanModify"
+            :tooltip="t('about.click-to-copy')"
+            :on-copy="copyDetailValue"
+          />
+        </div>
+      </div>
+      <template v-if="task" #footer>
+        <div class="detail-action-bar">
+          <NButton
+            secondary
+            class="detail-action"
+            :aria-label="t('task.show-in-folder')"
+            :title="t('task.show-in-folder')"
+            @click="emit('folder', task)"
+          >
+            <template #icon
+              ><NIcon><FolderOpenOutline /></NIcon
+            ></template>
+          </NButton>
+          <NButton
+            secondary
+            class="detail-action"
+            :disabled="task.status !== 'error'"
+            :aria-label="t('task.retry-task')"
+            :title="t('task.retry-task')"
+            @click="emit('retry', task)"
+          >
+            <template #icon
+              ><NIcon><RefreshOutline /></NIcon
+            ></template>
+          </NButton>
+          <NButton
+            secondary
+            class="detail-action"
+            :aria-label="t('task.task-tab-checksum')"
+            :title="t('task.task-tab-checksum')"
+            @click="emit('checksum', task)"
+          >
+            <template #icon
+              ><NIcon><ShieldCheckmarkOutline /></NIcon
+            ></template>
+          </NButton>
+          <NButton
+            secondary
+            class="detail-action"
+            :aria-label="t('task.copy-link')"
+            :title="t('task.copy-link')"
+            @click="emit('copy-link', task)"
+          >
+            <template #icon
+              ><NIcon><LinkOutline /></NIcon
+            ></template>
+          </NButton>
+          <NButton
+            secondary
+            class="detail-action"
+            :aria-label="t('task.share-file')"
+            :title="t('task.share-file')"
+            @click="emit('share-file', task)"
+          >
+            <template #icon
+              ><NIcon><ShareSocialOutline /></NIcon
+            ></template>
+          </NButton>
+          <NButton
+            secondary
+            type="error"
+            class="detail-action"
+            :aria-label="t('task.delete-task')"
+            :title="t('task.delete-task')"
+            @click="emit('delete', task)"
+          >
+            <template #icon
+              ><NIcon><TrashOutline /></NIcon
+            ></template>
+          </NButton>
         </div>
       </template>
     </NDrawerContent>
@@ -926,8 +934,20 @@ async function onFileRenamed() {
 
 <style scoped>
 .detail-action-bar {
-  display: flex;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.detail-action {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 0;
+}
+.detail-action :deep(.n-button__content) {
+  gap: 0;
 }
 .detail-status-value {
   display: flex;
@@ -970,14 +990,34 @@ async function onFileRenamed() {
   border-bottom-color: var(--m3-primary);
 }
 
-.tab-content-wrapper {
-  overflow: hidden;
-  position: relative;
+.detail-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 .tab-content {
-  padding: 16px 0;
+  padding: 14px;
   min-width: 0;
+}
+.detail-card {
+  background: var(--m3-surface-container-low);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--radius-lg);
+}
+.detail-card-title {
+  margin: 0 0 10px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--m3-on-surface-variant);
+}
+:deep(.detail-card .n-descriptions-table) {
+  background: transparent;
+}
+:deep(.detail-card .n-descriptions-table th),
+:deep(.detail-card .n-descriptions-table td) {
+  background: transparent;
+  border-bottom-color: var(--m3-outline-variant);
 }
 
 :deep(.n-drawer-body-content-wrapper) {

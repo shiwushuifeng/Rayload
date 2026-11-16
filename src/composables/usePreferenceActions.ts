@@ -16,6 +16,10 @@ export function providePreferenceActions() {
   return actions
 }
 
+export function usePreferenceActions() {
+  return inject(key, null)
+}
+
 export function registerPreferenceActions(actions: PreferenceActions) {
   const owner = inject(key)
   if (!owner) throw new Error('Preference actions require the application layout')

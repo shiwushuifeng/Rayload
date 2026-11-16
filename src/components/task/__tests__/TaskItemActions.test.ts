@@ -234,17 +234,17 @@ describe('TaskItemActions', () => {
     expect(wrapper.find('[aria-label="task.pause-task"]').exists()).toBe(false)
   })
 
-  it('limits compact rows to task details and delete', () => {
+  it('limits compact rows to task details without delete', () => {
     const active = mount(TaskItemActions, { props: { task: makeTask('active'), density: 'compact', minimal: true } })
-    expect(active.findAll('.task-item-action')).toHaveLength(2)
+    expect(active.findAll('.task-item-action')).toHaveLength(1)
     expect(active.find('[aria-label="task.task-detail-title"]').exists()).toBe(true)
-    expect(active.find('[aria-label="task.delete-task"]').exists()).toBe(true)
+    expect(active.find('[aria-label="task.delete-task"]').exists()).toBe(false)
     expect(active.find('[aria-label="task.pause-task"]').exists()).toBe(false)
 
     const complete = mount(TaskItemActions, {
       props: { task: makeTask('complete'), density: 'compact', minimal: true },
     })
-    expect(complete.find('[aria-label="task.remove-record"]').exists()).toBe(true)
+    expect(complete.find('[aria-label="task.remove-record"]').exists()).toBe(false)
     expect(complete.find('[aria-label="task.sha256"]').exists()).toBe(false)
 
     const remote = mount(TaskItemActions, {

@@ -45,6 +45,31 @@
   padding-left: 50px;
 }
 
+/* One vertical card flow for every preference page. Section dividers become
+   plain headings so the legacy ruled forms do not reappear. */
+.form-preference .n-form-item {
+  margin-bottom: 10px;
+  padding: 12px 14px;
+  background: var(--m3-surface-container-low);
+  border: 1px solid var(--m3-outline-variant);
+  border-radius: var(--radius-lg);
+}
+
+.form-preference .n-form-item .n-form-item {
+  margin-bottom: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+
+.form-preference .n-divider:not(.n-divider--vertical) {
+  margin: 18px 0 10px;
+}
+
+.form-preference .n-divider:not(.n-divider--vertical) .n-divider__line {
+  display: none;
+}
+
 .form-preference .collapse-indent {
   position: relative;
   margin-left: 16px;
@@ -148,6 +173,10 @@
   .form-preference .pref-section-note {
     display: block;
     padding-left: 0;
+  }
+
+  .form-preference .n-form-item {
+    padding: 12px 14px;
   }
 
   .form-preference .n-form-item-label {

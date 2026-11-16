@@ -30,6 +30,7 @@ import TaskTextTransition from './TaskTextTransition.vue'
 import type { Aria2Task } from '@shared/types'
 import { friendlyErrorKind } from '@shared/utils/friendlyError'
 import { bytesToSize } from '@shared/utils/format'
+import { getTaskAccentColor } from '@shared/utils/task'
 
 const props = withDefaults(defineProps<{ task: Aria2Task; actionPending?: boolean }>(), { actionPending: false })
 const emit = defineEmits<{
@@ -76,6 +77,7 @@ const {
   transferSummary,
 } = useTaskCardModel(taskRef)
 const fileIcon = useTaskFileIcon(taskFullName)
+const cardStyle = computed(() => ({ '--task-device-accent': getTaskAccentColor(props.task) }))
 
 const formatSpeed = (value: number) => bytesToSize(Math.max(0, Math.round(value)))
 const formatPercent = (value: number) => `${Math.round(value)}%`
@@ -202,6 +204,7 @@ const contentDraggable = computed(
 <template>
   <div
     class="task-item"
+    :style="cardStyle"
     :class="{
       'is-sharing': isSharing,
       'is-remote-offline': remoteOffline,
@@ -305,10 +308,15 @@ const contentDraggable = computed(
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   min-height: 78px;
-  background-color: var(--task-item-bg);
+  background:
+    linear-gradient(
+      270deg,
+      color-mix(in srgb, var(--task-device-accent, var(--m3-primary)) 13%, transparent) 0%,
+      transparent 62%
+    ),
+    var(--task-item-bg);
   border: 1px solid var(--m3-outline-variant);
-  /* Reserve 3px left border at base color so sharing only animates color */
-  border-left: 3px solid var(--m3-outline-variant);
+  border-left: 3px solid var(--task-device-accent, var(--m3-outline-variant));
   border-radius: var(--radius-sm);
   overflow: hidden;
   transition: border-color 0.2s cubic-bezier(0.2, 0, 0, 1);
@@ -326,14 +334,13 @@ const contentDraggable = computed(
 }
 /* ── Seeding state (static) ────────────────────────────────────────── */
 .task-item.is-sharing {
-  border-left-color: var(--m3-success);
+  border-left-color: var(--task-device-accent, var(--m3-success));
 }
 .task-item.is-sharing::before {
   opacity: 1;
 }
 .task-item.is-remote-offline {
   opacity: 0.55;
-  border-left-color: var(--m3-outline);
 }
 .remote-badge {
   display: inline-block;

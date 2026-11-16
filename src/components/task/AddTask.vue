@@ -971,6 +971,12 @@ async function duplicatesToSkip(): Promise<DuplicateSkipResult | null> {
 
 /** Sends every URI to the paired device; nothing is created locally. */
 async function submitToDevice(deviceId: string): Promise<void> {
+  const target = lan.devices.find((device) => device.id === deviceId)
+  if (!target?.online) {
+    message.warning(t('task.remote-target-offline'))
+    submitting.value = false
+    return
+  }
   const uris = normalizeUriLines(form.value.uris)
   const singleName = uris.length === 1 ? outputName().trim() : ''
   for (const url of uris) {

@@ -2,7 +2,7 @@
 /** @fileoverview Android first-run wizard: personalization, engine, authorization and legal consent. */
 import { computed, nextTick, onMounted, ref, watch, type Component } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NButton, NCheckbox, NIcon, NInput, NInputNumber, NSwitch, NTag, useDialog } from 'naive-ui'
+import { NButton, NCheckbox, NIcon, NInput, NInputNumber, NSwitch, useDialog } from 'naive-ui'
 import {
   ArchiveOutline,
   BatteryHalfOutline,
@@ -43,7 +43,11 @@ import {
 } from '@shared/utils/autoArchive'
 import { useTaskDestinations } from '@/components/layout/navigation'
 import { triggerHaptic } from '@/composables/useHaptics'
-import { restartAndroidApp } from '@/composables/useAndroidNative'
+import {
+  readAndroidPermissionStatuses,
+  requestAndroidStoragePermission,
+  restartAndroidApp,
+} from '@/composables/useAndroidNative'
 import { useTheme } from '@/composables/useTheme'
 import { useNavigationVisibility, type NavigationItemKey } from '@/composables/useNavigationVisibility'
 import { useEngineStore } from '@/stores/engine'
@@ -56,6 +60,7 @@ import brandLogoGold from '@/assets/logo.svg'
 import { getVersion } from '@tauri-apps/api/app'
 import LegalDialog from '@/components/legal/LegalDialog.vue'
 import { markWhatsNewSeen, whatsNewFor } from '@shared/whatsNew'
+import { resolveUserVisibleDownloadDir } from '@shared/utils/userVisibleDirectory'
 
 const ONBOARDING_STORAGE_KEY = 'rayload-onboarding-v3'
 const { t, locale } = useI18n()
@@ -73,16 +78,18 @@ const step = ref(0)
 const appVersion = ref('')
 const consentAccepted = ref(false)
 const legalShow = ref(false)
-const legalKind = ref<'eula' | 'privacy'>('eula')
+const legalKind = ref<'eula' | 'privacy' | 'disclaimer'>('eula')
 const whatsNew = computed(() => whatsNewFor(appVersion.value))
-const stepCount = computed(() => (whatsNew.value ? 9 : 8))
+const stepCount = 7
 const selectedLocale = ref(preferenceStore.locale || 'auto')
 const selectedTheme = ref(preferenceStore.config.theme)
 const selectedColorScheme = ref(preferenceStore.config.colorScheme)
+const taskCardMode = ref(preferenceStore.config.taskCardMode)
 const maxConcurrent = ref<number | null>(preferenceStore.config.maxConcurrentDownloads)
 const maxConnections = ref<number | null>(preferenceStore.config.streamMaxConnections)
 const bittorrentEnabled = ref(preferenceStore.config.bittorrentEnabled)
 const floatingOrbEnabled = ref(preferenceStore.config.showSpeedometer)
+const defaultDownloadPath = ref('')
 const { visibility: navigationVisibility, setItemVisible } = useNavigationVisibility()
 const taskDestinations = useTaskDestinations()
 const autoArchiveEnabled = ref(preferenceStore.config.fileCategoryEnabled)
@@ -282,6 +289,7 @@ async function finish(): Promise<void> {
       locale: selectedLocale.value,
       theme: selectedTheme.value,
       colorScheme: selectedColorScheme.value,
+      taskCardMode: taskCardMode.value,
       maxConcurrentDownloads: clampInteger(maxConcurrent.value, 6, 1, 100),
       streamMaxConnections: clampInteger(maxConnections.value, 16, 1, 256),
       bittorrentEnabled: bittorrentEnabled.value,
@@ -297,6 +305,11 @@ async function finish(): Promise<void> {
     markOnboardingSeen()
     markWhatsNewSeen(appVersion.value)
     visible.value = false
+    // The skip path can bypass the permission page; writing to the public
+    // Download folder still needs all-files access on Android 11+.
+    if (isAndroid.value && readAndroidPermissionStatuses().storage !== 'granted') {
+      requestAndroidStoragePermission()
+    }
   }
   if (selectedLocale.value !== initialLocale) {
     window.setTimeout(() => showLanguageRestartDialog(), 260)
@@ -392,14 +405,16 @@ function applyPreset(id: EnginePresetId): void {
 }
 
 const CONSENT_STEP = 6
-const DISCLAIMER_STEP = 7
 
 function next(): void {
-  if (step.value === CONSENT_STEP && !consentAccepted.value) return
-  if (step.value < stepCount.value - 1) step.value += 1
+  if (step.value < CONSENT_STEP) step.value += 1
 }
 
-function openLegal(kind: 'eula' | 'privacy'): void {
+function skipToConsent(): void {
+  step.value = CONSENT_STEP
+}
+
+function openLegal(kind: 'eula' | 'privacy' | 'disclaimer'): void {
   legalKind.value = kind
   legalShow.value = true
 }
@@ -440,6 +455,11 @@ onMounted(() => {
     visible.value = true
     resetScroll()
   }, 350)
+  void resolveUserVisibleDownloadDir({ configuredDir: preferenceStore.config.dir })
+    .then((resolved) => {
+      defaultDownloadPath.value = resolved.path
+    })
+    .catch((error: unknown) => logger.debug('Onboarding.downloadDir', error))
 })
 </script>
 
@@ -457,13 +477,12 @@ onMounted(() => {
         >
           <div class="onboarding__accent" />
           <div class="onboarding__topbar">
-            <div
-              class="onboarding__progress"
-              :style="{ gridTemplateColumns: `repeat(${stepCount}, 1fr)` }"
-              aria-hidden="true"
-            >
-              <span v-for="index in stepCount" :key="index" :class="{ active: index - 1 <= step }" />
+            <div class="onboarding__progress" aria-hidden="true">
+              <span :style="{ width: `${((step + 1) / stepCount) * 100}%` }" />
             </div>
+            <button v-if="step < CONSENT_STEP" type="button" class="onboarding__skip" @click="skipToConsent">
+              {{ t('onboarding.skip') }}
+            </button>
           </div>
 
           <div ref="bodyRef" class="onboarding__body">
@@ -500,6 +519,9 @@ onMounted(() => {
                       <span>{{ t('onboarding.feature-private') }}</span>
                     </div>
                   </div>
+                  <ul v-if="whatsNew" class="onboarding__release-list">
+                    <li v-for="key in whatsNew.highlights" :key="key">{{ t(key) }}</li>
+                  </ul>
                 </template>
 
                 <template v-else-if="step === 1">
@@ -548,6 +570,33 @@ onMounted(() => {
                           @click="selectedColorScheme = scheme.id"
                         >
                           <span aria-hidden="true" />
+                        </button>
+                      </div>
+                    </div>
+                    <div class="onboarding__field">
+                      <span>{{ t('preferences.task-card-mode') }}</span>
+                      <div
+                        class="onboarding__segmented"
+                        role="radiogroup"
+                        :aria-label="t('preferences.task-card-mode')"
+                      >
+                        <button
+                          type="button"
+                          :class="{ active: taskCardMode === 'compact' }"
+                          role="radio"
+                          :aria-checked="taskCardMode === 'compact'"
+                          @click="taskCardMode = 'compact'"
+                        >
+                          {{ t('preferences.task-card-mode-compact') }}
+                        </button>
+                        <button
+                          type="button"
+                          :class="{ active: taskCardMode === 'full' }"
+                          role="radio"
+                          :aria-checked="taskCardMode === 'full'"
+                          @click="taskCardMode = 'full'"
+                        >
+                          {{ t('preferences.task-card-mode-full') }}
                         </button>
                       </div>
                     </div>
@@ -689,6 +738,10 @@ onMounted(() => {
                       <p class="onboarding__archive-hint">{{ t('onboarding.archive-category-hint') }}</p>
                     </template>
                   </div>
+                  <div class="onboarding__card onboarding__card--wide">
+                    <span class="onboarding__section-label">{{ t('onboarding.default-download-path') }}</span>
+                    <code class="onboarding__path">{{ defaultDownloadPath || '—' }}</code>
+                  </div>
                 </template>
 
                 <template v-else-if="step === 5">
@@ -768,6 +821,18 @@ onMounted(() => {
                         <ChevronForwardOutline />
                       </NIcon>
                     </button>
+                    <button type="button" class="onboarding__legal-card" @click="openLegal('disclaimer')">
+                      <span class="onboarding__legal-icon" aria-hidden="true">
+                        <NIcon :size="20"><InformationCircleOutline /></NIcon>
+                      </span>
+                      <span class="onboarding__legal-copy">
+                        <strong>{{ t('onboarding.disclaimer-title') }}</strong>
+                        <small>{{ t('onboarding.consent-disclaimer-hint') }}</small>
+                      </span>
+                      <NIcon :size="18" class="onboarding__legal-open" aria-hidden="true">
+                        <ChevronForwardOutline />
+                      </NIcon>
+                    </button>
                   </div>
                   <label
                     class="onboarding__consent onboarding__consent--page"
@@ -776,34 +841,6 @@ onMounted(() => {
                     <NCheckbox v-model:checked="consentAccepted" size="large" :aria-label="t('legal.consent-label')" />
                     <span>{{ t('legal.consent-label') }}</span>
                   </label>
-                </template>
-                <template v-else-if="step === DISCLAIMER_STEP">
-                  <div class="onboarding__heading">
-                    <h2>{{ t('onboarding.disclaimer-title') }}</h2>
-                  </div>
-                  <div class="onboarding__disclaimer">
-                    <article>
-                      <strong>{{ t('legal.technical-title') }}</strong>
-                      <p>{{ t('legal.technical-body') }}</p>
-                    </article>
-                    <article>
-                      <strong>{{ t('legal.copyright-title') }}</strong>
-                      <p>{{ t('legal.copyright-body') }}</p>
-                    </article>
-                    <article>
-                      <strong>{{ t('legal.liability-title') }}</strong>
-                      <p>{{ t('legal.liability-body') }}</p>
-                    </article>
-                  </div>
-                </template>
-                <template v-else>
-                  <div class="onboarding__heading">
-                    <h2>{{ t('whats-new.title') }}</h2>
-                    <NTag size="small" :bordered="false" type="success">v{{ appVersion }}</NTag>
-                  </div>
-                  <ul class="onboarding__release-list">
-                    <li v-for="key in whatsNew?.highlights ?? []" :key="key">{{ t(key) }}</li>
-                  </ul>
                 </template>
               </div>
             </Transition>
@@ -893,17 +930,23 @@ onMounted(() => {
   background: var(--m3-surface-container-high);
 }
 .onboarding__progress {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-}
-.onboarding__progress span {
   height: 4px;
+  overflow: hidden;
   background: var(--m3-surface-container-highest);
   border-radius: var(--radius-full);
 }
-.onboarding__progress span.active {
+.onboarding__progress span {
+  display: block;
+  height: 4px;
   background: var(--m3-primary);
+  border-radius: var(--radius-full);
+  transition: width 0.25s ease;
+}
+.onboarding__path {
+  overflow-wrap: anywhere;
+  color: var(--m3-on-surface-variant);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
 }
 .onboarding__skip {
   min-height: 44px;

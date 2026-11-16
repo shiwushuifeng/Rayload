@@ -50,7 +50,7 @@ const statisticsVisible = computed(() => !props.compact || isItemVisible('statis
 const isLanDevices = computed(() => route.name === 'lan-devices')
 const isPlugins = computed(() => route.name === 'plugins')
 const lanVisible = computed(() => buildInfo.info.lan && (!props.compact || isItemVisible('lan-devices')))
-const pluginsVisible = computed(() => buildInfo.info.pluginEngine && (!props.compact || isItemVisible('plugins')))
+const pluginsVisible = computed(() => !props.compact || isItemVisible('plugins'))
 
 function showAbout(): void {
   triggerHaptic()

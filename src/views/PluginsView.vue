@@ -4,7 +4,6 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { invoke } from '@tauri-apps/api/core'
 import { open as openDialog } from '@tauri-apps/plugin-dialog'
-import { readTextFile } from '@tauri-apps/plugin-fs'
 import { NButton, NCard, NCheckbox, NIcon, NModal, NTag } from 'naive-ui'
 import {
   AddCircleOutline,
@@ -38,7 +37,23 @@ interface PluginEntry {
 interface PendingImport {
   filename: string
   content: string
+  scriptContent: string | null
   name: string
+  version: string
+  description: string
+  kind: PluginKind
+  permissions: PermissionKey[]
+  domains: string[]
+  script: boolean
+}
+
+interface PluginInspection {
+  filename: string
+  content: string
+  scriptContent: string | null
+  name: string
+  version: string
+  description: string
   kind: PluginKind
   permissions: PermissionKey[]
   domains: string[]
@@ -79,10 +94,6 @@ function safeName(value: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-function basename(path: string): string {
-  return path.split(/[\\/]/).pop() ?? path
-}
-
 function parsePermissions(value: unknown): PermissionKey[] {
   if (!Array.isArray(value)) return []
   return PERMISSIONS.filter((permission) => value.includes(permission))
@@ -106,52 +117,47 @@ async function requestImport(): Promise<void> {
     const selected = await openDialog({
       title: t('plugins.import'),
       multiple: false,
-      filters: [
-        { name: 'JSON', extensions: ['json'] },
-        { name: 'Shell', extensions: ['sh'] },
-      ],
+      filters: [{ name: 'Plugin', extensions: ['json', 'sh', 'zip'] }],
     })
     if (typeof selected !== 'string') return
-    const content = await readTextFile(selected)
-    reviewImport(content, basename(selected))
+    const inspected = await invoke<PluginInspection>('plugin_inspect_import', { path: selected })
+    reviewImport({
+      ...inspected,
+      permissions: parsePermissions(inspected.permissions),
+    })
   } catch (error) {
     logger.warn('Plugins.read', error)
     message.error(t('plugins.import-failed'))
   }
 }
 
-/** Parses a manifest or script into the shared permission-review dialog. */
-function reviewImport(content: string, file: string): void {
+/** Opens the permission-review dialog for a Rust-inspected import. */
+function reviewImport(inspected: PluginInspection): void {
+  pending.value = { ...inspected }
+  riskAcknowledged.value = false
+  reviewShow.value = true
+}
+
+/** Parses the bundled sample JSON locally; imports always go through Rust. */
+function reviewSample(content: string): void {
   try {
-    if (file.toLowerCase().endsWith('.sh')) {
-      const stem = safeName(file.replace(/\.sh$/iu, '')) || 'plugin'
-      pending.value = {
-        filename: `${stem}.sh`,
-        content,
-        name: stem,
-        kind: 'script',
-        permissions: [],
-        domains: [],
-        script: true,
-      }
-    } else {
-      const manifest = JSON.parse(content) as Record<string, unknown>
-      const kind: PluginKind = manifest.type === 'script' || manifest.runtime === 'script' ? 'script' : 'rule'
-      const stem = safeName(String(manifest.name ?? 'plugin')) || 'plugin'
-      pending.value = {
-        filename: `${stem}.json`,
-        content,
-        name: String(manifest.name ?? stem),
-        kind,
-        permissions: parsePermissions(manifest.permissions),
-        domains: Array.isArray(manifest.allowedDomains)
-          ? manifest.allowedDomains.filter((domain): domain is string => typeof domain === 'string')
-          : [],
-        script: false,
-      }
-    }
-    riskAcknowledged.value = false
-    reviewShow.value = true
+    const manifest = JSON.parse(content) as Record<string, unknown>
+    const kind: PluginKind = manifest.type === 'script' || manifest.runtime === 'script' ? 'script' : 'rule'
+    const stem = safeName(String(manifest.name ?? 'plugin')) || 'plugin'
+    reviewImport({
+      filename: `${stem}.json`,
+      content,
+      scriptContent: null,
+      name: String(manifest.name ?? stem),
+      version: String(manifest.version ?? ''),
+      description: String(manifest.description ?? ''),
+      kind,
+      permissions: parsePermissions(manifest.permissions),
+      domains: Array.isArray(manifest.allowedDomains)
+        ? manifest.allowedDomains.filter((domain): domain is string => typeof domain === 'string')
+        : [],
+      script: kind === 'script',
+    })
   } catch (error) {
     logger.warn('Plugins.review', error)
     message.error(t('plugins.import-failed'))
@@ -163,15 +169,12 @@ async function confirmImport(): Promise<void> {
   if (importing.value || !item || !canConfirm.value) return
   importing.value = true
   try {
-    if (item.script) {
-      await invoke('plugin_save_script', { filename: item.filename, content: item.content })
-    } else {
-      await invoke('plugin_save', {
-        filename: item.filename,
-        content: item.content,
-        grantedPermissions: item.permissions,
-      })
-    }
+    await invoke('plugin_save', {
+      filename: item.filename,
+      content: item.content,
+      grantedPermissions: item.permissions,
+      scriptContent: item.scriptContent,
+    })
     message.success(t('plugins.imported', { name: item.name }))
     reviewShow.value = false
     pending.value = null
@@ -202,7 +205,7 @@ async function remove(plugin: PluginEntry): Promise<void> {
 async function installSample(): Promise<void> {
   try {
     const content = await invoke<string>('plugin_sample_manifest')
-    reviewImport(content, 'rayload-download-test.json')
+    reviewSample(content)
   } catch (error) {
     message.error(getErrorMessage(error))
   }

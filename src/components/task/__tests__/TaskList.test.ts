@@ -32,7 +32,7 @@ vi.mock('../TaskSwipeRow.vue', () => ({
   default: {
     name: 'TaskSwipeRow',
     props: ['task', 'selectionMode', 'disabled'],
-    emits: ['activate', 'long-press', 'swipe-pause', 'swipe-delete'],
+    emits: ['activate', 'long-press', 'swipe-primary', 'swipe-delete'],
     template: '<div class="task-swipe-row"><slot /></div>',
   },
 }))
@@ -188,6 +188,33 @@ describe('TaskList', () => {
     taskStore.taskList = ['a'].map(createTaskWithGid)
     await wrapper.vm.$nextTick()
     expect(wrapper.findAll('.full-task-item')).toHaveLength(2)
+    wrapper.unmount()
+  })
+
+  it('restores local cards after a transient empty snapshot', async () => {
+    const wrapper = mount(TaskList, {
+      global: { plugins: [pinia] },
+      props: {
+        remoteTasks: [
+          {
+            ...createTaskWithGid('remote:nas:abc'),
+            remote: { deviceId: 'nas', deviceName: 'NAS', gid: 'abc', online: true },
+          },
+        ],
+      },
+    })
+    const taskStore = useTaskStore()
+    taskStore.setTaskPageSize(2)
+    taskStore.taskList = ['a', 'b', 'c'].map(createTaskWithGid)
+    await wrapper.vm.$nextTick()
+
+    taskStore.taskList = []
+    await wrapper.vm.$nextTick()
+    expect(wrapper.findAll('.full-task-item')).toHaveLength(1)
+
+    taskStore.taskList = ['a', 'b', 'c'].map(createTaskWithGid)
+    await wrapper.vm.$nextTick()
+    expect(wrapper.findAll('.full-task-item')).toHaveLength(3)
     wrapper.unmount()
   })
 

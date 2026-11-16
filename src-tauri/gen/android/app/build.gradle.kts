@@ -53,6 +53,8 @@ android {
     }
     packaging {
         jniLibs {
+            // The Aria2 sidecar is exec'd from nativeLibraryDir; Android 10+
+            // refuses to execute binaries that the installer did not unpack.
             useLegacyPackaging = true
             if (!includeSmokeX86_64Engine) {
                 excludes.add("x86_64/**")

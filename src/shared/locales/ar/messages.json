@@ -727,7 +727,16 @@
     "permission-local-network-hint": "Required on Android 17 to discover and pair devices on the same network",
     "downloader": "Downloader",
     "categories": "File categories",
-    "plugins": "Plugins"
+    "plugins": "Plugins",
+    "group-account": "Account & connectivity",
+    "group-account-hint": "LAN devices, pairing and system permissions",
+    "group-download": "Downloads",
+    "group-download-hint": "Downloader, file categories and network",
+    "group-appearance": "Appearance & experience",
+    "group-appearance-hint": "Language, theme and interface behavior",
+    "group-advanced": "Advanced & extensions",
+    "group-advanced-hint": "Advanced options, plugins and maintenance tools",
+    "plugin-management": "Plugin management"
   },
   "task": {
     "scope-all": "الكل",
@@ -739,7 +748,6 @@
     "uri-task": "URL",
     "torrent-task": "Torrent",
     "uri-task-tips": "عنوان URL واحد لكل سطر (magnet مدعوم)",
-    "file-priority": "Priority",
     "file-priority-off": "Do not download",
     "file-priority-normal": "Normal",
     "file-priority-high": "High",
@@ -751,9 +759,7 @@
     "bt-source-one-per-line": "One URL per line",
     "bt-recheck": "Recheck data",
     "file-name": "الاسم",
-    "file-extension": "الامتداد",
     "file-size": "الحجم",
-    "file-completed": "مكتمل",
     "file-index": "رقم",
     "task-gid": "GID",
     "task-name": "اسم المهمة",
@@ -1017,7 +1023,6 @@
     "restart-not-available": "لا تتوفر روابط تحميل لإعادة التشغيل",
     "torrent-trashed": "اكتمل تنزيل \"{taskName}\"، تم نقل ملف التورنت إلى سلة المهملات",
     "sort-manual": "يدوي",
-    "sort-by": "ترتيب حسب",
     "sort-added-at": "وقت الإضافة",
     "sort-completed-at": "وقت الاكتمال",
     "sort-name": "الاسم",
@@ -1153,7 +1158,15 @@
     "remote-file-path": "Location",
     "copy-file-name": "Copy file name",
     "copy-file-path": "Copy file path",
-    "file-actions": "File actions"
+    "file-actions": "File actions",
+    "task-tab-file-details": "File details",
+    "task-tab-checksum-files": "Checksums",
+    "section-transfer": "Transfer",
+    "section-files": "Files",
+    "section-options": "Download options",
+    "section-peers": "Peers",
+    "section-trackers": "Trackers",
+    "remote-target-offline": "The target device is currently offline"
   },
   "media": {
     "probing": "جارٍ فحص الوسائط",
@@ -1195,7 +1208,6 @@
   "navigation": {
     "about": "حول",
     "settings": "الإعدادات",
-    "extensions": "الإضافات",
     "trash": "Trash",
     "keep-awake": "إبقاء الشاشة مضاءة",
     "statistics": "Statistics",
@@ -1273,7 +1285,10 @@
     "consent-title": "المراجعة والقبول",
     "consent-description": "يرجى قراءة اتفاقية المستخدم وسياسة الخصوصية قبل المتابعة. يجب قبولهما لإكمال الإعداد.",
     "consent-eula-hint": "شروط الاستخدام والترخيص والمسؤولية",
-    "consent-privacy-hint": "كيف تبقى بياناتك على جهازك"
+    "consent-privacy-hint": "كيف تبقى بياناتك على جهازك",
+    "skip": "Skip",
+    "default-download-path": "Default download path",
+    "consent-disclaimer-hint": "Technical use, copyright and liability"
   },
   "trash": {
     "title": "Trash",
@@ -1385,12 +1400,12 @@
     "local-fingerprint": "بصمة هذا الجهاز",
     "device-name-label": "اسم الجهاز",
     "device-name-save": "حفظ الاسم",
-    "device-name-saved": "تم حفظ اسم الجهاز"
+    "device-name-saved": "تم حفظ اسم الجهاز",
+    "choose-color": "Choose device color"
   },
   "plugins": {
     "title": "Plugin management",
     "description": "Import JSON plugin manifests and manage the ones stored on this device.",
-    "manage": "Manage plugins",
     "import": "Import plugin",
     "imported": "{name} imported",
     "import-failed": "Could not import this plugin manifest",

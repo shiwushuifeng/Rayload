@@ -28,7 +28,6 @@ import { useEscapeKey } from '@/composables/useEscapeKey'
 import { painted } from '@/composables/useWindowReveal'
 import { throttledResizeHandler, cancelPendingResize } from '@/layouts/resizeThrottle'
 import AppSidebar from '@/components/layout/AppSidebar.vue'
-import PreferenceActionBar from '@/components/preference/PreferenceActionBar.vue'
 import { providePreferenceActions } from '@/composables/usePreferenceActions'
 import { useNavigationVisibility } from '@/composables/useNavigationVisibility'
 import { useExtensionPanel } from '@/composables/useExtensionPanel'
@@ -189,10 +188,7 @@ const isTaskPage = computed(() => route.path.startsWith('/task'))
 const isPreferencePage = computed(() => route.matched.some((record) => record.name === 'preference'))
 const isStatisticsPage = computed(() => route.name === 'statistics')
 const isPluginsPage = computed(() => route.name === 'plugins')
-const preferenceActions = providePreferenceActions()
-const activePreferenceActions = computed(() =>
-  preferenceActions.value?.routeName === route.name ? preferenceActions.value : null,
-)
+providePreferenceActions()
 const taskScope = computed(() => {
   const status = route.params.status
   return status === 'progress' || status === 'failed' || status === 'completed' ? status : 'all'
@@ -1042,16 +1038,6 @@ onUnmounted(() => {
       @close="requestClose"
       @maximize-toggled="onMaximizeToggled"
     />
-    <footer v-if="isPreferencePage" class="content-footer" :inert="mobileModalOpen">
-      <div id="preference-actions">
-        <PreferenceActionBar
-          :is-dirty="activePreferenceActions?.isDirty ?? false"
-          :is-valid="activePreferenceActions?.isValid ?? false"
-          @save="activePreferenceActions?.save()"
-          @discard="activePreferenceActions?.discard()"
-        />
-      </div>
-    </footer>
     <Speedometer v-if="preferenceStore.config.showSpeedometer && !isPreferencePage && route.name !== 'statistics'" />
     <KeepAwakeOverlay />
     <AboutPanel :show="showAbout" @close="showAbout = false" />
@@ -1251,26 +1237,6 @@ onUnmounted(() => {
   min-height: 0;
   overflow: hidden;
 }
-.content-footer {
-  container: footer / inline-size;
-  min-height: 64px;
-  grid-column: 2;
-  grid-row: 4;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  padding: 8px var(--content-gutter) 10px;
-}
-#preference-actions {
-  grid-column: 1;
-  grid-row: 1;
-  min-width: 0;
-}
-#preference-actions {
-  width: 100%;
-}
 .window-controls {
   z-index: 100;
 }
@@ -1404,12 +1370,6 @@ onUnmounted(() => {
   grid-column: 1;
   grid-row: 2;
   width: 100%;
-}
-#container.compact-navigation .content-footer {
-  grid-column: 1;
-  grid-row: 3;
-  min-height: 56px;
-  padding: 6px 16px;
 }
 #container.compact-navigation .sidebar-slot {
   grid-column: 1;

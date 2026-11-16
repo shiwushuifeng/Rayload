@@ -16,6 +16,7 @@ import TaskItemActions from './TaskItemActions.vue'
 import TaskTextTransition from './TaskTextTransition.vue'
 import type { Component } from 'vue'
 import type { Aria2Task } from '@shared/types'
+import { getTaskAccentColor } from '@shared/utils/task'
 
 const props = withDefaults(defineProps<{ task: Aria2Task; actionPending?: boolean }>(), { actionPending: false })
 const emit = defineEmits<{
@@ -44,6 +45,7 @@ const { isAndroid } = usePlatform()
 const taskRef = computed(() => props.task)
 const { taskFullName, isSharing, statusBadge, isActive, indeterminate, percent } = useTaskCardModel(taskRef)
 const fileIcon = useTaskFileIcon(taskFullName)
+const cardStyle = computed(() => ({ '--task-device-accent': getTaskAccentColor(props.task) }))
 const formatPercent = (value: number) => `${Math.round(value)}%`
 const { fileMissing, fileState } = useTaskFileMissing(taskRef)
 // The rail orders the list; the rest of a finished card drags its file out.
@@ -122,6 +124,7 @@ const compactStatusColor = computed(() => {
 <template>
   <div
     class="task-compact-item"
+    :style="cardStyle"
     :class="{
       'is-sharing': isSharing,
       'is-remote-offline': remoteOffline,
@@ -191,9 +194,15 @@ const compactStatusColor = computed(() => {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   min-height: 44px;
-  background-color: var(--task-item-bg);
+  background:
+    linear-gradient(
+      270deg,
+      color-mix(in srgb, var(--task-device-accent, var(--m3-primary)) 13%, transparent) 0%,
+      transparent 62%
+    ),
+    var(--task-item-bg);
   border: 1px solid var(--m3-outline-variant);
-  border-left: 3px solid var(--m3-outline-variant);
+  border-left: 3px solid var(--task-device-accent, var(--m3-outline-variant));
   border-radius: var(--radius-sm);
   overflow: hidden;
   transition: border-color 0.2s cubic-bezier(0.2, 0, 0, 1);
@@ -209,7 +218,7 @@ const compactStatusColor = computed(() => {
   transition: opacity var(--task-motion-state) var(--task-motion-ease);
 }
 .task-compact-item.is-sharing {
-  border-left-color: var(--m3-success);
+  border-left-color: var(--task-device-accent, var(--m3-success));
 }
 .task-compact-item.is-sharing::before {
   opacity: 1;

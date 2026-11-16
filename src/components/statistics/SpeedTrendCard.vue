@@ -25,7 +25,7 @@ function niceSpeedCeiling(value: number): number {
 
 const chart = computed(() => {
   const width = 320
-  const height = 136
+  const height = 190
   const left = 46
   const right = width - 12
   const top = 12
@@ -99,65 +99,67 @@ const speedLabel = (value: number): string => `${bytesToSize(value, 1)}/s`
         {{ t('statistics.speed-trend-peak', { speed: speedLabel(chart.peak) }) }}
       </NTag>
     </div>
-    <svg
-      v-if="ready"
-      class="speed-trend-svg"
-      :viewBox="`0 0 ${chart.width} ${chart.height}`"
-      role="img"
-      :aria-label="title"
-    >
-      <defs>
-        <linearGradient id="rayload-speed-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="currentColor" stop-opacity="0.24" />
-          <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
-        </linearGradient>
-      </defs>
-      <g class="speed-trend-grid">
-        <line
-          v-for="line in chart.gridLines"
-          :key="`speed-grid-${line.y}`"
-          :x1="chart.left"
-          :y1="line.y"
-          :x2="chart.right"
-          :y2="line.y"
-        />
-      </g>
-      <g class="speed-trend-axis">
-        <text v-for="line in chart.gridLines" :key="`speed-label-${line.y}`" x="6" :y="line.y + 3">
-          {{ line.label }}
-        </text>
-        <text :x="chart.left" :y="chart.height - 6">{{ chart.windowLabel }}</text>
-        <text :x="chart.right" :y="chart.height - 6" text-anchor="end">{{ t('statistics.speed-trend-now') }}</text>
-      </g>
-      <line
-        v-if="chart.average > 0"
-        class="speed-trend-avg"
-        :x1="chart.left"
-        :x2="chart.right"
-        :y1="chart.averageY"
-        :y2="chart.averageY"
-      />
-      <text
-        v-if="chart.average > 0"
-        class="speed-trend-avg-label"
-        :x="chart.left + 2"
-        :y="Math.max(12, chart.averageY - 5)"
-        text-anchor="start"
+    <div class="speed-trend-chart">
+      <svg
+        v-if="ready"
+        class="speed-trend-svg"
+        :viewBox="`0 0 ${chart.width} ${chart.height}`"
+        role="img"
+        :aria-label="title"
       >
-        {{ t('statistics.speed-trend-average', { speed: speedLabel(chart.average) }) }}
-      </text>
-      <path :d="chart.area" fill="url(#rayload-speed-fill)" />
-      <path
-        :d="chart.line"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2.5"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
-      <circle v-if="chart.last" class="is-live" :cx="chart.last.x" :cy="chart.last.y" r="3.6" />
-    </svg>
-    <p v-else class="speed-trend-empty">{{ emptyText }}</p>
+        <defs>
+          <linearGradient id="rayload-speed-fill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="currentColor" stop-opacity="0.24" />
+            <stop offset="100%" stop-color="currentColor" stop-opacity="0" />
+          </linearGradient>
+        </defs>
+        <g class="speed-trend-grid">
+          <line
+            v-for="line in chart.gridLines"
+            :key="`speed-grid-${line.y}`"
+            :x1="chart.left"
+            :y1="line.y"
+            :x2="chart.right"
+            :y2="line.y"
+          />
+        </g>
+        <g class="speed-trend-axis">
+          <text v-for="line in chart.gridLines" :key="`speed-label-${line.y}`" x="6" :y="line.y + 3">
+            {{ line.label }}
+          </text>
+          <text :x="chart.left" :y="chart.height - 6">{{ chart.windowLabel }}</text>
+          <text :x="chart.right" :y="chart.height - 6" text-anchor="end">{{ t('statistics.speed-trend-now') }}</text>
+        </g>
+        <line
+          v-if="chart.average > 0"
+          class="speed-trend-avg"
+          :x1="chart.left"
+          :x2="chart.right"
+          :y1="chart.averageY"
+          :y2="chart.averageY"
+        />
+        <text
+          v-if="chart.average > 0"
+          class="speed-trend-avg-label"
+          :x="chart.left + 2"
+          :y="Math.max(12, chart.averageY - 5)"
+          text-anchor="start"
+        >
+          {{ t('statistics.speed-trend-average', { speed: speedLabel(chart.average) }) }}
+        </text>
+        <path :d="chart.area" fill="url(#rayload-speed-fill)" />
+        <path
+          :d="chart.line"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <circle v-if="chart.last" class="is-live" :cx="chart.last.x" :cy="chart.last.y" r="3.6" />
+      </svg>
+      <p v-else class="speed-trend-empty">{{ emptyText }}</p>
+    </div>
   </NCard>
 </template>
 
@@ -184,10 +186,17 @@ const speedLabel = (value: number): string => `${bytesToSize(value, 1)}/s`
   color: var(--m3-on-surface-variant);
   font-size: var(--font-size-sm);
 }
+.speed-trend-chart {
+  position: relative;
+  aspect-ratio: 320 / 190;
+  width: 100%;
+}
 .speed-trend-svg {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
   color: var(--m3-tertiary);
 }
 .speed-trend-grid line {
@@ -217,7 +226,11 @@ const speedLabel = (value: number): string => `${bytesToSize(value, 1)}/s`
   stroke-width: 1.6;
 }
 .speed-trend-empty {
-  margin: 6px 0 0;
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  margin: 0;
   color: var(--m3-on-surface-variant);
   font-size: var(--font-size-xs);
   text-align: center;

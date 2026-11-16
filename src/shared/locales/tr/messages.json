@@ -727,7 +727,16 @@
     "permission-local-network-hint": "Required on Android 17 to discover and pair devices on the same network",
     "downloader": "Downloader",
     "categories": "File categories",
-    "plugins": "Plugins"
+    "plugins": "Plugins",
+    "group-account": "Account & connectivity",
+    "group-account-hint": "LAN devices, pairing and system permissions",
+    "group-download": "Downloads",
+    "group-download-hint": "Downloader, file categories and network",
+    "group-appearance": "Appearance & experience",
+    "group-appearance-hint": "Language, theme and interface behavior",
+    "group-advanced": "Advanced & extensions",
+    "group-advanced-hint": "Advanced options, plugins and maintenance tools",
+    "plugin-management": "Plugin management"
   },
   "task": {
     "scope-all": "Tümü",
@@ -739,7 +748,6 @@
     "uri-task": "URL",
     "torrent-task": "Torrent",
     "uri-task-tips": "Satır başına bir URL (magnet desteklenir)",
-    "file-priority": "Priority",
     "file-priority-off": "Do not download",
     "file-priority-normal": "Normal",
     "file-priority-high": "High",
@@ -751,9 +759,7 @@
     "bt-source-one-per-line": "One URL per line",
     "bt-recheck": "Recheck data",
     "file-name": "Ad",
-    "file-extension": "Uzantı",
     "file-size": "Boyut",
-    "file-completed": "Tamamlandı",
     "file-index": "No.",
     "task-gid": "GID",
     "task-name": "Görev adı",
@@ -1017,7 +1023,6 @@
     "restart-not-available": "Yeniden başlatmak için indirme bağlantısı yok",
     "torrent-trashed": "\"{taskName}\" indirmesi tamamlandı, torrent dosyası çöp kutusuna taşındı",
     "sort-manual": "Manuel",
-    "sort-by": "Sırala",
     "sort-added-at": "Eklenme Zamanı",
     "sort-completed-at": "Tamamlanma Zamanı",
     "sort-name": "Ad",
@@ -1153,7 +1158,15 @@
     "remote-file-path": "Location",
     "copy-file-name": "Copy file name",
     "copy-file-path": "Copy file path",
-    "file-actions": "File actions"
+    "file-actions": "File actions",
+    "task-tab-file-details": "File details",
+    "task-tab-checksum-files": "Checksums",
+    "section-transfer": "Transfer",
+    "section-files": "Files",
+    "section-options": "Download options",
+    "section-peers": "Peers",
+    "section-trackers": "Trackers",
+    "remote-target-offline": "The target device is currently offline"
   },
   "media": {
     "probing": "Medya inceleniyor",
@@ -1195,7 +1208,6 @@
   "navigation": {
     "about": "Hakkında",
     "settings": "Ayarlar",
-    "extensions": "Uzantılar",
     "trash": "Trash",
     "keep-awake": "Ekranı açık tut",
     "statistics": "Statistics",
@@ -1273,7 +1285,10 @@
     "consent-title": "İncele ve kabul et",
     "consent-description": "Devam etmeden önce Kullanıcı Sözleşmesi'ni ve Gizlilik Politikası'nı okuyun. Kurulumu tamamlamak için kabul etmeniz gerekir.",
     "consent-eula-hint": "Kullanım koşulları, lisans ve sorumluluk",
-    "consent-privacy-hint": "Verilerinizin cihazınızda nasıl kaldığı"
+    "consent-privacy-hint": "Verilerinizin cihazınızda nasıl kaldığı",
+    "skip": "Skip",
+    "default-download-path": "Default download path",
+    "consent-disclaimer-hint": "Technical use, copyright and liability"
   },
   "trash": {
     "title": "Trash",
@@ -1385,12 +1400,12 @@
     "local-fingerprint": "Bu cihazın parmak izi",
     "device-name-label": "Cihaz adı",
     "device-name-save": "Adı kaydet",
-    "device-name-saved": "Cihaz adı kaydedildi"
+    "device-name-saved": "Cihaz adı kaydedildi",
+    "choose-color": "Choose device color"
   },
   "plugins": {
     "title": "Plugin management",
     "description": "Import JSON plugin manifests and manage the ones stored on this device.",
-    "manage": "Manage plugins",
     "import": "Import plugin",
     "imported": "{name} imported",
     "import-failed": "Could not import this plugin manifest",

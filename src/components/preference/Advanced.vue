@@ -407,21 +407,21 @@ onMounted(async () => {
               </NButton>
             </NInputGroup>
           </NFormItem>
-          <NFormItem :label="t('navigation.extensions')">
+          <NFormItem :label="t('preferences.extension-section')">
             <NButton class="pref-action-button" @click="openExtensionPanel">
               <template #icon>
                 <NIcon :size="16"><ExtensionPuzzleOutline /></NIcon>
               </template>
-              {{ t('navigation.extensions') }}
+              {{ t('extension.install') }}
             </NButton>
           </NFormItem>
-          <NFormItem v-if="buildInfo.info.pluginEngine" :label="t('navigation.plugins')">
+          <NFormItem :label="t('navigation.plugins')">
             <NSpace>
-              <NButton class="pref-action-button" @click="router.push({ name: 'plugins' })">
+              <NButton class="pref-action-button" @click="router.push({ name: 'preference-plugins' })">
                 <template #icon>
                   <NIcon :size="16"><ExtensionPuzzleOutline /></NIcon>
                 </template>
-                {{ t('plugins.manage') }}
+                {{ t('preferences.plugin-management') }}
               </NButton>
               <NButton v-if="buildInfo.info.lan" @click="router.push({ name: 'lan-devices' })">
                 <template #icon>

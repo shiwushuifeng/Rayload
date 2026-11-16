@@ -727,7 +727,16 @@
     "permission-local-network-hint": "Required on Android 17 to discover and pair devices on the same network",
     "downloader": "Downloader",
     "categories": "File categories",
-    "plugins": "Plugins"
+    "plugins": "Plugins",
+    "group-account": "Account & connectivity",
+    "group-account-hint": "LAN devices, pairing and system permissions",
+    "group-download": "Downloads",
+    "group-download-hint": "Downloader, file categories and network",
+    "group-appearance": "Appearance & experience",
+    "group-appearance-hint": "Language, theme and interface behavior",
+    "group-advanced": "Advanced & extensions",
+    "group-advanced-hint": "Advanced options, plugins and maintenance tools",
+    "plugin-management": "Plugin management"
   },
   "task": {
     "scope-all": "すべて",
@@ -739,7 +748,6 @@
     "uri-task": "URL",
     "torrent-task": "トレント",
     "uri-task-tips": "1行に1つのダウンロードURL（マグネットリンク対応）",
-    "file-priority": "Priority",
     "file-priority-off": "Do not download",
     "file-priority-normal": "Normal",
     "file-priority-high": "High",
@@ -751,9 +759,7 @@
     "bt-source-one-per-line": "One URL per line",
     "bt-recheck": "Recheck data",
     "file-name": "ファイル名",
-    "file-extension": "拡張子",
     "file-size": "サイズ",
-    "file-completed": "完了",
     "file-index": "番号",
     "task-gid": "GID",
     "task-name": "タスク名",
@@ -1017,7 +1023,6 @@
     "restart-not-available": "再ダウンロードに利用できるURLがありません",
     "torrent-trashed": "\"{taskName}\" のダウンロードが完了しました。トレントファイルはゴミ箱に移動されました",
     "sort-manual": "手動",
-    "sort-by": "並び替え",
     "sort-added-at": "追加日時",
     "sort-completed-at": "完了日時",
     "sort-name": "名前",
@@ -1153,7 +1158,15 @@
     "remote-file-path": "Location",
     "copy-file-name": "Copy file name",
     "copy-file-path": "Copy file path",
-    "file-actions": "File actions"
+    "file-actions": "File actions",
+    "task-tab-file-details": "File details",
+    "task-tab-checksum-files": "Checksums",
+    "section-transfer": "Transfer",
+    "section-files": "Files",
+    "section-options": "Download options",
+    "section-peers": "Peers",
+    "section-trackers": "Trackers",
+    "remote-target-offline": "The target device is currently offline"
   },
   "media": {
     "probing": "メディアを解析中",
@@ -1195,7 +1208,6 @@
   "navigation": {
     "about": "このアプリについて",
     "settings": "設定",
-    "extensions": "拡張機能",
     "trash": "Trash",
     "keep-awake": "画面スリープ防止",
     "statistics": "Statistics",
@@ -1273,7 +1285,10 @@
     "consent-title": "確認と同意",
     "consent-description": "セットアップを完了する前に、利用規約とプライバシーポリシーをお読みください。同意が必要です。",
     "consent-eula-hint": "利用条件・ライセンス・責任について",
-    "consent-privacy-hint": "データが端末内に保持される仕組み"
+    "consent-privacy-hint": "データが端末内に保持される仕組み",
+    "skip": "Skip",
+    "default-download-path": "Default download path",
+    "consent-disclaimer-hint": "Technical use, copyright and liability"
   },
   "trash": {
     "title": "Trash",
@@ -1385,12 +1400,12 @@
     "local-fingerprint": "このデバイスの指紋",
     "device-name-label": "デバイス名",
     "device-name-save": "名前を保存",
-    "device-name-saved": "デバイス名を保存しました"
+    "device-name-saved": "デバイス名を保存しました",
+    "choose-color": "Choose device color"
   },
   "plugins": {
     "title": "Plugin management",
     "description": "Import JSON plugin manifests and manage the ones stored on this device.",
-    "manage": "Manage plugins",
     "import": "Import plugin",
     "imported": "{name} imported",
     "import-failed": "Could not import this plugin manifest",

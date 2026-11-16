@@ -15,7 +15,7 @@ vi.mock('@/stores/task', () => ({
 vi.mock('@/stores/preference', () => ({ usePreferenceStore: () => preferences }))
 vi.mock('@/stores/build', () => ({
   useBuildInfoStore: () => ({
-    info: { variant: 'lite', lan: false, pluginEngine: false, fdroid: false },
+    info: { variant: 'full', lan: true, pluginEngine: true, fdroid: false },
     load: vi.fn(),
   }),
 }))
@@ -42,6 +42,8 @@ async function setup(path: string) {
     history: createMemoryHistory(),
     routes: [
       { path: '/statistics', name: 'statistics', component: page },
+      { path: '/plugins', name: 'plugins', component: page },
+      { path: '/lan', name: 'lan-devices', component: page },
       { path: '/task/:status', name: 'task', component: page },
       {
         path: '/preference',
@@ -49,8 +51,13 @@ async function setup(path: string) {
         component: PreferenceView,
         children: [
           { path: 'general', name: 'preference-general', component: page },
+          { path: 'downloader', name: 'preference-downloader', component: page },
+          { path: 'categories', name: 'preference-categories', component: page },
+          { path: 'lan', name: 'preference-lan', component: page },
+          { path: 'permissions', name: 'preference-permissions', component: page },
           { path: 'network', name: 'preference-network', component: page },
           { path: 'advanced', name: 'preference-advanced', component: page },
+          { path: 'plugins', name: 'preference-plugins', component: page },
         ],
       },
     ],
@@ -107,6 +114,16 @@ describe('unified navigation', () => {
     expect(wrapper.get('a[href="/task/progress"]').element).toBe(link)
     wrapper.unmount()
     setItemVisible('progress', false)
+  })
+
+  it('shows the LAN destination after it is enabled for compact navigation', async () => {
+    const { setItemVisible } = useNavigationVisibility()
+    setItemVisible('lan-devices', true)
+    const router = await setup('/task/progress')
+    const wrapper = mount(AppSidebar, { props: { compact: true }, global: { plugins: [router] } })
+    expect(wrapper.get('a[href="/lan"]').attributes('aria-label')).toBe('navigation.lan-devices')
+    wrapper.unmount()
+    setItemVisible('lan-devices', false)
   })
 
   it('keeps settings selected throughout its child routes and opens About', async () => {
@@ -178,19 +195,21 @@ describe('unified navigation', () => {
     wrapper.unmount()
   })
 
-  it('changes the selected settings tab only after navigation succeeds', async () => {
+  it('changes the selected settings section only after navigation succeeds', async () => {
     const router = await setup('/preference/general')
     let allowNavigation = false
     router.beforeEach(() => allowNavigation)
     const wrapper = mount(PreferenceView, { global: { plugins: [router] } })
-    const tabs = wrapper.getComponent({ name: 'NTabs' })
-    tabs.vm.$emit('update:value', 'preference-network')
+    const network = wrapper.get('a[href="/preference/downloader"]')
+    await network.trigger('click')
     await flushPromises()
-    expect(tabs.props('value')).toBe('preference-general')
+    expect(router.currentRoute.value.name).toBe('preference-general')
+    expect(wrapper.get('a.active').attributes('href')).toBe('/preference/general')
     allowNavigation = true
-    tabs.vm.$emit('update:value', 'preference-network')
+    await network.trigger('click')
     await flushPromises()
-    expect(tabs.props('value')).toBe('preference-network')
+    expect(router.currentRoute.value.name).toBe('preference-downloader')
+    expect(wrapper.get('a.active').attributes('href')).toBe('/preference/downloader')
     wrapper.unmount()
   })
 })

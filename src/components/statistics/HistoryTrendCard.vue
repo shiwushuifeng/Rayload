@@ -17,7 +17,7 @@ const hasData = computed(() => props.values.some((value) => value > 0))
 
 const geometry = computed(() => {
   const width = 320
-  const height = 136
+  const height = 190
   const left = 46
   const right = width - 12
   const top = 12
@@ -94,7 +94,7 @@ const geometry = computed(() => {
           v-for="index in 7"
           :key="index"
           :x="index === 7 ? geometry.width - 12 : 14 + (index - 1) * ((geometry.width - 26) / 6)"
-          y="132"
+          y="184"
           :text-anchor="index === 1 ? 'start' : index === 7 ? 'end' : 'middle'"
         >
           {{ dayLabel(index - 1) }}

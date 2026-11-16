@@ -163,7 +163,7 @@ import { useTaskStore } from '@/stores/task'
 
 const createWrapper = (scope = useTaskStore().currentList) => mount(TaskActions, { props: { scope } })
 
-/** Exclude the menu trigger while exercising batch actions through dropdown selection. */
+/** Exclude the mobile overflow trigger while exercising toolbar actions. */
 function actionButtons(wrapper: ReturnType<typeof createWrapper>) {
   return wrapper.findAll('button').filter((button) => button.attributes('aria-label') !== 'task.more-actions')
 }
@@ -203,7 +203,7 @@ describe('TaskActions', () => {
   it('exposes progress operations through the batch menu', () => {
     const wrapper = createWrapper()
     const buttons = actionButtons(wrapper)
-    expect(buttons.length).toBe(7)
+    expect(buttons.length).toBe(6)
   })
 
   it('renders the destination scope before the store catches up', async () => {
@@ -218,17 +218,11 @@ describe('TaskActions', () => {
     wrapper.unmount()
   })
 
-  it('dispatches sort selections through the dropdown and rejects unsupported fields', async () => {
-    const store = useTaskStore()
-    const changeSort = vi.spyOn(store, 'changeCurrentSort').mockResolvedValue(undefined)
+  it('refreshes the list from the toolbar', async () => {
     const wrapper = createWrapper()
-    const dropdown = wrapper.findAllComponents({ name: 'NDropdown' })[0]
-    dropdown.vm.$emit('select', 'name')
-    expect(changeSort).toHaveBeenCalledWith('name')
-    dropdown.vm.$emit('select', 'unsupported')
-    expect(changeSort).toHaveBeenCalledTimes(1)
+    await wrapper.find('button[aria-label="task.refresh-list"]').trigger('click')
+    expect(mockFetchList).toHaveBeenCalledOnce()
     wrapper.unmount()
-    changeSort.mockRestore()
   })
 
   it('does not dispatch disabled batch buttons', () => {
@@ -248,7 +242,7 @@ describe('TaskActions', () => {
       taskStore.taskList = [{ gid: 'p1', status: 'paused' }] as never
       const wrapper = createWrapper()
 
-      await clickButton(wrapper, 3) // Resume All
+      await clickButton(wrapper, 2) // Resume All
 
       expect(mockMessageWarning).toHaveBeenCalledOnce()
       expect(mockDialogWarning).not.toHaveBeenCalled() // Dialog should NOT open
@@ -260,7 +254,7 @@ describe('TaskActions', () => {
       taskStore.taskList = [{ gid: 'a1', status: 'active' }] as never
       const wrapper = createWrapper()
 
-      await clickButton(wrapper, 4) // Pause All
+      await clickButton(wrapper, 3) // Pause All
 
       expect(mockMessageWarning).toHaveBeenCalledOnce()
       expect(mockDialogWarning).not.toHaveBeenCalled()
@@ -273,7 +267,7 @@ describe('TaskActions', () => {
       taskStore.taskList = [{ gid: 'done', status: 'complete' }] as never
       const wrapper = createWrapper()
 
-      await clickButton(wrapper, 4) // Purge, after the missing-file purge
+      await clickButton(wrapper, 3) // Purge, after the missing-file purge
 
       // No engine gate — dialog should open regardless
       expect(mockMessageWarning).not.toHaveBeenCalled()
@@ -285,7 +279,7 @@ describe('TaskActions', () => {
       taskStore.taskList = [{ gid: 'p1', status: 'paused' }] as never
       const wrapper = createWrapper()
 
-      await clickButton(wrapper, 3) // Resume All
+      await clickButton(wrapper, 2) // Resume All
 
       expect(mockMessageWarning).not.toHaveBeenCalled()
       expect(mockDialogWarning).toHaveBeenCalledOnce()
@@ -296,7 +290,7 @@ describe('TaskActions', () => {
       taskStore.taskList = [{ gid: 'a1', status: 'active' }] as never
       const wrapper = createWrapper()
 
-      await clickButton(wrapper, 4) // Pause All
+      await clickButton(wrapper, 3) // Pause All
 
       expect(mockMessageWarning).not.toHaveBeenCalled()
       expect(mockDialogWarning).toHaveBeenCalledOnce()
@@ -308,7 +302,7 @@ describe('TaskActions', () => {
       taskStore.taskList = [{ gid: 'done', status: 'complete' }] as never
       const wrapper = createWrapper()
 
-      await clickButton(wrapper, 4) // Purge
+      await clickButton(wrapper, 3) // Purge
 
       expect(mockMessageWarning).not.toHaveBeenCalled()
       expect(mockDialogWarning).toHaveBeenCalledOnce()
@@ -320,13 +314,13 @@ describe('TaskActions', () => {
   describe('disabled state guards', () => {
     it('Resume All button is disabled when taskList is empty', () => {
       const wrapper = createWrapper()
-      const resumeBtn = actionButtons(wrapper)[3]
+      const resumeBtn = actionButtons(wrapper)[2]
       expect(resumeBtn.attributes('disabled')).toBeDefined()
     })
 
     it('Pause All button is disabled when taskList is empty', () => {
       const wrapper = createWrapper()
-      const pauseBtn = actionButtons(wrapper)[4]
+      const pauseBtn = actionButtons(wrapper)[3]
       expect(pauseBtn.attributes('disabled')).toBeDefined()
     })
 
@@ -337,7 +331,7 @@ describe('TaskActions', () => {
         { gid: 'a2', status: 'active' },
       ] as never
       const wrapper = createWrapper()
-      const resumeBtn = actionButtons(wrapper)[3]
+      const resumeBtn = actionButtons(wrapper)[2]
       expect(resumeBtn.attributes('disabled')).toBeDefined()
     })
 
@@ -348,7 +342,7 @@ describe('TaskActions', () => {
         { gid: 'p2', status: 'paused' },
       ] as never
       const wrapper = createWrapper()
-      const pauseBtn = actionButtons(wrapper)[4]
+      const pauseBtn = actionButtons(wrapper)[3]
       expect(pauseBtn.attributes('disabled')).toBeDefined()
     })
 
@@ -359,7 +353,7 @@ describe('TaskActions', () => {
         { gid: 'p1', status: 'paused' },
       ] as never
       const wrapper = createWrapper()
-      const resumeBtn = actionButtons(wrapper)[3]
+      const resumeBtn = actionButtons(wrapper)[2]
       expect(resumeBtn.attributes('disabled')).toBeUndefined()
     })
 
@@ -370,7 +364,7 @@ describe('TaskActions', () => {
         { gid: 'p1', status: 'paused' },
       ] as never
       const wrapper = createWrapper()
-      const pauseBtn = actionButtons(wrapper)[4]
+      const pauseBtn = actionButtons(wrapper)[3]
       expect(pauseBtn.attributes('disabled')).toBeUndefined()
     })
 
@@ -378,7 +372,7 @@ describe('TaskActions', () => {
       const taskStore = useTaskStore()
       taskStore.taskList = [{ gid: 'w1', status: 'waiting' }] as never
       const wrapper = createWrapper()
-      const pauseBtn = actionButtons(wrapper)[4]
+      const pauseBtn = actionButtons(wrapper)[3]
       expect(pauseBtn.attributes('disabled')).toBeUndefined()
     })
 
@@ -390,21 +384,21 @@ describe('TaskActions', () => {
         { gid: 's1', status: 'active', bittorrent: { info: { name: 'x' } }, seeder: 'true' },
       ] as never
       const wrapper = createWrapper()
-      const resumeBtn = actionButtons(wrapper)[3]
+      const resumeBtn = actionButtons(wrapper)[2]
       expect(resumeBtn.attributes('disabled')).toBeDefined()
     })
 
     it('disabled Resume All does not open a dialog when clicked', async () => {
       // Empty task list → Resume All should be disabled
       const wrapper = createWrapper()
-      await clickButton(wrapper, 3) // Resume All
+      await clickButton(wrapper, 2) // Resume All
       expect(mockDialogWarning).not.toHaveBeenCalled()
     })
 
     it('disabled Pause All does not open a dialog when clicked', async () => {
       // Empty task list → Pause All should be disabled
       const wrapper = createWrapper()
-      await clickButton(wrapper, 4) // Pause All
+      await clickButton(wrapper, 3) // Pause All
       expect(mockDialogWarning).not.toHaveBeenCalled()
     })
 
@@ -415,7 +409,7 @@ describe('TaskActions', () => {
         { gid: 'bt', status: 'paused', seeder: 'true', bittorrent: { info: { name: 'x' } } },
       ] as never
       const wrapper = createWrapper()
-      expect(actionButtons(wrapper)[5].attributes('disabled')).toBeUndefined()
+      expect(actionButtons(wrapper)[4].attributes('disabled')).toBeUndefined()
     })
   })
 
@@ -425,7 +419,7 @@ describe('TaskActions', () => {
     it('calls fetchList on refresh click', async () => {
       const wrapper = createWrapper()
 
-      await clickButton(wrapper, 2) // Refresh
+      await clickButton(wrapper, 1) // Refresh
 
       expect(mockFetchList).toHaveBeenCalledOnce()
     })
@@ -440,22 +434,22 @@ describe('TaskActions', () => {
       )
       const wrapper = createWrapper()
 
-      await clickButton(wrapper, 2)
-      await clickButton(wrapper, 2)
+      await clickButton(wrapper, 1)
+      await clickButton(wrapper, 1)
       expect(mockFetchList).toHaveBeenCalledOnce()
-      expect(actionButtons(wrapper)[2].attributes('disabled')).toBeDefined()
+      expect(actionButtons(wrapper)[1].attributes('disabled')).toBeDefined()
 
       resolveFetch?.()
       await Promise.resolve()
       await wrapper.vm.$nextTick()
-      expect(actionButtons(wrapper)[2].attributes('disabled')).toBeUndefined()
+      expect(actionButtons(wrapper)[1].attributes('disabled')).toBeUndefined()
     })
 
     it('shows success message when fetchList succeeds', async () => {
       mockFetchList.mockResolvedValueOnce(undefined)
       const wrapper = createWrapper()
 
-      await clickButton(wrapper, 2)
+      await clickButton(wrapper, 1)
       await Promise.resolve()
 
       expect(mockMessageSuccess).toHaveBeenCalled()
@@ -470,7 +464,7 @@ describe('TaskActions', () => {
       taskStore.taskList = [{ gid: 'p1', status: 'paused' }] as never
       const wrapper = createWrapper()
 
-      await clickButton(wrapper, 3) // Resume All
+      await clickButton(wrapper, 2) // Resume All
       expect(lastDialogOptions).not.toBeNull()
 
       // Simulate user clicking "Yes"
@@ -485,7 +479,7 @@ describe('TaskActions', () => {
       taskStore.taskList = [{ gid: 'p1', status: 'paused' }] as never
       const wrapper = createWrapper()
 
-      await clickButton(wrapper, 3)
+      await clickButton(wrapper, 2)
       const onPositiveClick = lastDialogOptions!.onPositiveClick as () => Promise<false>
       await onPositiveClick()
 
@@ -498,7 +492,7 @@ describe('TaskActions', () => {
       taskStore.taskList = [{ gid: 'p1', status: 'paused' }] as never
       const wrapper = createWrapper()
 
-      await clickButton(wrapper, 3)
+      await clickButton(wrapper, 2)
       const onPositiveClick = lastDialogOptions!.onPositiveClick as () => Promise<false>
       await onPositiveClick()
 
@@ -510,7 +504,7 @@ describe('TaskActions', () => {
       taskStore.taskList = [{ gid: 'a1', status: 'active' }] as never
       const wrapper = createWrapper()
 
-      await clickButton(wrapper, 4) // Pause All
+      await clickButton(wrapper, 3) // Pause All
       const onPositiveClick = lastDialogOptions!.onPositiveClick as () => Promise<false>
       await onPositiveClick()
 
@@ -523,7 +517,7 @@ describe('TaskActions', () => {
       taskStore.taskList = [{ gid: 'done', status: 'complete' }] as never
       const wrapper = createWrapper()
 
-      await clickButton(wrapper, 4) // Purge
+      await clickButton(wrapper, 3) // Purge
       expect(lastDialogOptions?.title).toBe('Clear History Records')
       expect(renderDialogText(lastDialogOptions?.content)).toContain(
         'This will remove all completed, failed, or removed task records.',
@@ -544,7 +538,7 @@ describe('TaskActions', () => {
       ] as never
       const wrapper = createWrapper()
 
-      await clickButton(wrapper, 5)
+      await clickButton(wrapper, 4)
       expect(lastDialogOptions?.title).toBe('Stop All Sharing')
       expect(renderDialogText(lastDialogOptions?.content)).toContain('Stop 2 seeding or sharing task(s)')
       const onPositiveClick = lastDialogOptions!.onPositiveClick as () => Promise<false>
@@ -561,7 +555,7 @@ describe('TaskActions', () => {
     it('does nothing when task list is empty', async () => {
       const wrapper = createWrapper()
       // taskList is empty by default — the delete-all button should be disabled
-      const deleteBtn = actionButtons(wrapper)[6]
+      const deleteBtn = actionButtons(wrapper)[5]
       expect(deleteBtn.attributes('disabled')).toBeDefined()
     })
 
@@ -570,7 +564,7 @@ describe('TaskActions', () => {
       taskStore.taskList = [{ gid: 'g1' }, { gid: 'g2' }] as never
 
       const wrapper = createWrapper()
-      await clickButton(wrapper, 6) // Delete All
+      await clickButton(wrapper, 5) // Delete All
 
       expect(mockDialogWarning).toHaveBeenCalledOnce()
       expect(lastDialogOptions?.title).toBe('Clear Download Queue')
@@ -587,7 +581,7 @@ describe('TaskActions', () => {
       taskStore.taskList = [{ gid: 'g1' }] as never
 
       const wrapper = createWrapper()
-      await clickButton(wrapper, 6)
+      await clickButton(wrapper, 5)
 
       expect(renderDialogText(lastDialogOptions?.content)).toContain('Permanently delete files')
     })
@@ -597,7 +591,7 @@ describe('TaskActions', () => {
       taskStore.taskList = [{ gid: 'g1' }, { gid: 'g2' }, { gid: 'g3' }] as never
 
       const wrapper = createWrapper()
-      await clickButton(wrapper, 6) // Delete All
+      await clickButton(wrapper, 5) // Delete All
 
       const onPositiveClick = lastDialogOptions!.onPositiveClick as () => Promise<false>
       await onPositiveClick()
@@ -610,7 +604,7 @@ describe('TaskActions', () => {
       taskStore.taskList = [{ gid: 'g1' }] as never
 
       const wrapper = createWrapper()
-      await clickButton(wrapper, 6)
+      await clickButton(wrapper, 5)
 
       const onPositiveClick = lastDialogOptions!.onPositiveClick as () => Promise<false>
       await onPositiveClick()

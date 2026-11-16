@@ -727,7 +727,16 @@
     "permission-local-network-hint": "Android 17 上用于发现并配对同一网络中的设备",
     "downloader": "下载器设置",
     "categories": "文件分类",
-    "plugins": "插件管理"
+    "plugins": "插件管理",
+    "group-account": "账号与互联",
+    "group-account-hint": "局域网设备、配对与系统权限",
+    "group-download": "下载设置",
+    "group-download-hint": "下载器、文件分类与网络",
+    "group-appearance": "外观与体验",
+    "group-appearance-hint": "语言、主题与界面行为",
+    "group-advanced": "高级与扩展",
+    "group-advanced-hint": "高级选项、插件与维护工具",
+    "plugin-management": "插件管理"
   },
   "task": {
     "scope-all": "全部",
@@ -739,7 +748,6 @@
     "uri-task": "链接任务",
     "torrent-task": "种子任务",
     "uri-task-tips": "每行一个下载链接（支持磁力链）",
-    "file-priority": "优先级",
     "file-priority-off": "不下载",
     "file-priority-normal": "普通",
     "file-priority-high": "高",
@@ -751,9 +759,7 @@
     "bt-source-one-per-line": "每行一个 URL",
     "bt-recheck": "重新校验数据",
     "file-name": "文件名",
-    "file-extension": "扩展名",
     "file-size": "大小",
-    "file-completed": "已完成",
     "file-index": "序号",
     "task-gid": "GID",
     "task-name": "任务名称",
@@ -1017,7 +1023,6 @@
     "restart-not-available": "没有可用的下载链接，无法重新下载",
     "torrent-trashed": "\"{taskName}\" 下载完成，种子文件已移至废纸篓",
     "sort-manual": "手动排序",
-    "sort-by": "排序方式",
     "sort-added-at": "添加时间",
     "sort-completed-at": "完成时间",
     "sort-name": "名称",
@@ -1153,7 +1158,15 @@
     "remote-file-path": "位置",
     "copy-file-name": "复制文件名",
     "copy-file-path": "复制文件路径",
-    "file-actions": "文件操作"
+    "file-actions": "文件操作",
+    "task-tab-file-details": "文件详情",
+    "task-tab-checksum-files": "校验文件",
+    "section-transfer": "传输信息",
+    "section-files": "文件列表",
+    "section-options": "下载选项",
+    "section-peers": "节点",
+    "section-trackers": "Tracker",
+    "remote-target-offline": "目标设备当前离线"
   },
   "media": {
     "probing": "正在探测媒体",
@@ -1195,7 +1208,6 @@
   "navigation": {
     "about": "关于",
     "settings": "设置",
-    "extensions": "扩展",
     "trash": "回收站",
     "keep-awake": "不息屏挂机",
     "statistics": "数据统计",
@@ -1273,7 +1285,10 @@
     "consent-title": "阅读并同意",
     "consent-description": "完成设置前，请阅读《用户使用协议》与《隐私政策》。同意后才能继续。",
     "consent-eula-hint": "使用条款、许可与责任说明",
-    "consent-privacy-hint": "了解你的数据如何保留在本机"
+    "consent-privacy-hint": "了解你的数据如何保留在本机",
+    "skip": "跳过",
+    "default-download-path": "默认下载路径",
+    "consent-disclaimer-hint": "技术用途、版权与责任说明"
   },
   "trash": {
     "title": "回收站",
@@ -1385,12 +1400,12 @@
     "local-fingerprint": "本机指纹",
     "device-name-label": "本机名称",
     "device-name-save": "保存名称",
-    "device-name-saved": "本机名称已保存"
+    "device-name-saved": "本机名称已保存",
+    "choose-color": "选择设备颜色"
   },
   "plugins": {
     "title": "插件管理",
     "description": "导入 JSON 插件清单，并管理本机已保存的插件。",
-    "manage": "管理插件",
     "import": "导入插件",
     "imported": "已导入 {name}",
     "import-failed": "无法导入该插件清单",

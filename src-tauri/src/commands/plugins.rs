@@ -5,9 +5,11 @@
 //! separate shell process and receive only the capabilities the user approved.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::io::{Cursor, Read};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::{AppHandle, Manager};
@@ -61,6 +63,22 @@ pub struct PluginEntry {
     pub size: u64,
 }
 
+/// Parsed import candidate returned to the permission-review dialog.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PluginInspection {
+    pub filename: String,
+    pub content: String,
+    pub script_content: Option<String>,
+    pub name: String,
+    pub version: String,
+    pub description: String,
+    pub kind: String,
+    pub permissions: Vec<String>,
+    pub domains: Vec<String>,
+    pub script: bool,
+}
+
 fn plugins_dir(app: &AppHandle) -> Result<PathBuf, AppError> {
     let directory = app
         .path()
@@ -102,6 +120,283 @@ fn safe_script_name(filename: &str) -> Result<&str, AppError> {
         return Err(AppError::InvalidInput("Invalid plugin script name".into()));
     }
     Ok(name)
+}
+
+fn decode_utf8(bytes: Vec<u8>, label: &str) -> Result<String, AppError> {
+    String::from_utf8(bytes)
+        .map_err(|_| AppError::InvalidInput(format!("{label} is not valid UTF-8")))
+}
+
+/// Percent-decodes the file stem and keeps the readable UTF-8 name used when a
+/// plugin carries no metadata. This is what removes `%E5%8E%9F...` style names.
+fn readable_stem(path: &Path) -> String {
+    let raw = path
+        .file_stem()
+        .and_then(|value| value.to_str())
+        .unwrap_or("plugin");
+    let decoded = urlencoding::decode(raw)
+        .map(|value| value.into_owned())
+        .unwrap_or_else(|_| raw.to_string());
+    let cleaned: String = decoded
+        .chars()
+        .map(|ch| {
+            if ch.is_alphanumeric() || matches!(ch, '.' | '_' | '-') {
+                ch
+            } else {
+                '-'
+            }
+        })
+        .collect();
+    let cleaned = cleaned.trim_matches('-').trim();
+    if cleaned.is_empty() {
+        "plugin".into()
+    } else {
+        cleaned.into()
+    }
+}
+
+#[derive(Default)]
+struct ScriptMetadata {
+    name: Option<String>,
+    version: String,
+    description: String,
+    permissions: Vec<PluginPermission>,
+    domains: Vec<String>,
+}
+
+fn permission_from_str(raw: &str) -> Option<PluginPermission> {
+    match raw.trim().to_ascii_lowercase().as_str() {
+        "network" => Some(PluginPermission::Network),
+        "cookies" => Some(PluginPermission::Cookies),
+        "modify_headers" | "modify-headers" => Some(PluginPermission::ModifyHeaders),
+        "read_clipboard" | "read-clipboard" => Some(PluginPermission::ReadClipboard),
+        _ => None,
+    }
+}
+
+/// Reads only the leading 20 comment lines, so a large script stays cheap to
+/// inspect while still exposing `# @name: ...` style metadata.
+fn parse_script_metadata(content: &str) -> ScriptMetadata {
+    let Ok(pattern) = Regex::new(r"(?i)^\s*#\s*@([a-z-]+)\s*:\s*(.+?)\s*$") else {
+        return ScriptMetadata::default();
+    };
+    let mut metadata = ScriptMetadata::default();
+    for line in content.lines().take(20) {
+        let Some(captures) = pattern.captures(line) else {
+            continue;
+        };
+        let key = captures[1].to_ascii_lowercase();
+        let value = captures[2].trim();
+        match key.as_str() {
+            "name" => metadata.name = Some(value.to_string()),
+            "version" => metadata.version = value.to_string(),
+            "description" | "desc" => metadata.description = value.to_string(),
+            "permission" | "permissions" => {
+                for permission in value.split([',', ' ', ';']).filter_map(permission_from_str) {
+                    if !metadata.permissions.contains(&permission) {
+                        metadata.permissions.push(permission);
+                    }
+                }
+            }
+            "domain" | "domains" | "allowed-domain" => {
+                for domain in value
+                    .split([',', ' ', ';'])
+                    .map(str::trim)
+                    .filter(|item| !item.is_empty())
+                {
+                    if !metadata.domains.iter().any(|existing| existing == domain) {
+                        metadata.domains.push(domain.to_string());
+                    }
+                }
+            }
+            _ => {}
+        }
+    }
+    metadata
+}
+
+fn inspection(
+    filename: String,
+    content: String,
+    script_content: Option<String>,
+    manifest: &PluginManifest,
+) -> PluginInspection {
+    PluginInspection {
+        filename,
+        content,
+        script_content,
+        name: manifest.name.clone(),
+        version: manifest.version.clone(),
+        description: manifest.description.clone(),
+        kind: match manifest.kind {
+            PluginKind::Rule => "rule",
+            PluginKind::Script => "script",
+        }
+        .into(),
+        permissions: manifest
+            .permissions
+            .iter()
+            .map(|permission| permission.as_str().to_string())
+            .collect(),
+        domains: manifest.allowed_domains.clone(),
+        script: manifest.kind == PluginKind::Script,
+    }
+}
+
+fn inspect_script(path: &Path, bytes: Vec<u8>) -> Result<PluginInspection, AppError> {
+    let content = decode_utf8(bytes, "Plugin script")?;
+    if content.trim().is_empty() {
+        return Err(AppError::InvalidInput("Plugin script is empty".into()));
+    }
+    let filename = path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .map(str::to_string)
+        .ok_or_else(|| AppError::InvalidInput("Plugin script name is invalid".into()))?;
+    safe_script_name(&filename)?;
+    let stem = readable_stem(path);
+    let metadata = parse_script_metadata(&content);
+    let name = metadata.name.unwrap_or_else(|| stem.clone());
+    let manifest = serde_json::json!({
+        "name": name,
+        "version": metadata.version,
+        "description": metadata.description,
+        "type": "script",
+        "runtime": "script",
+        "entry": filename,
+        "permissions": metadata.permissions.iter().map(|permission| permission.as_str()).collect::<Vec<_>>(),
+        "allowedDomains": metadata.domains,
+        "grantedPermissions": [],
+    });
+    let manifest_content = serde_json::to_string_pretty(&manifest)
+        .map_err(|_| AppError::InvalidInput("Plugin manifest could not be serialized".into()))?;
+    let parsed = PluginManifest::parse(&manifest_content)
+        .map_err(|error| AppError::InvalidInput(policy_message(&error)))?;
+    Ok(inspection(
+        filename,
+        manifest_content,
+        Some(content),
+        &parsed,
+    ))
+}
+
+fn inspect_zip(path: &Path, bytes: Vec<u8>) -> Result<PluginInspection, AppError> {
+    let mut archive = zip::ZipArchive::new(Cursor::new(bytes))
+        .map_err(|error| AppError::InvalidInput(format!("Plugin archive is invalid: {error}")))?;
+    let mut manifest_bytes = None;
+    let mut script_bytes = None;
+    for index in 0..archive.len() {
+        let mut item = archive.by_index(index).map_err(|error| {
+            AppError::InvalidInput(format!("Plugin archive entry is invalid: {error}"))
+        })?;
+        let Some(entry_path) = item.enclosed_name() else {
+            continue;
+        };
+        let Some(file_name) = entry_path.file_name().and_then(|value| value.to_str()) else {
+            continue;
+        };
+        match file_name.to_ascii_lowercase().as_str() {
+            "plugin.json" if manifest_bytes.is_none() => {
+                let mut buffer = Vec::new();
+                item.read_to_end(&mut buffer)
+                    .map_err(|error| AppError::Io(error.to_string()))?;
+                manifest_bytes = Some(buffer);
+            }
+            "main.sh" if script_bytes.is_none() => {
+                let mut buffer = Vec::new();
+                item.read_to_end(&mut buffer)
+                    .map_err(|error| AppError::Io(error.to_string()))?;
+                script_bytes = Some(buffer);
+            }
+            _ => {}
+        }
+    }
+    let manifest_text = decode_utf8(
+        manifest_bytes.ok_or_else(|| {
+            AppError::InvalidInput("Plugin archive is missing plugin.json".into())
+        })?,
+        "plugin.json",
+    )?;
+    let script_content = decode_utf8(
+        script_bytes
+            .ok_or_else(|| AppError::InvalidInput("Plugin archive is missing main.sh".into()))?,
+        "main.sh",
+    )?;
+    let mut value: Value = serde_json::from_str(&manifest_text)
+        .map_err(|_| AppError::InvalidInput("Plugin manifest is not valid JSON".into()))?;
+    let object = value
+        .as_object_mut()
+        .ok_or_else(|| AppError::InvalidInput("Plugin manifest must be an object".into()))?;
+    let stem = readable_stem(path);
+    if object
+        .get("name")
+        .and_then(Value::as_str)
+        .is_none_or(|name| name.trim().is_empty())
+    {
+        object.insert("name".into(), Value::String(stem.clone()));
+    }
+    object.insert("type".into(), Value::String("script".into()));
+    object.insert("runtime".into(), Value::String("script".into()));
+    object.insert("entry".into(), Value::String("main.sh".into()));
+    let content = serde_json::to_string_pretty(&value)
+        .map_err(|_| AppError::InvalidInput("Plugin manifest could not be serialized".into()))?;
+    let manifest = PluginManifest::parse(&content)
+        .map_err(|error| AppError::InvalidInput(policy_message(&error)))?;
+    Ok(inspection(
+        format!("{stem}.json"),
+        content,
+        Some(script_content),
+        &manifest,
+    ))
+}
+
+fn inspect_json(path: &Path, bytes: Vec<u8>) -> Result<PluginInspection, AppError> {
+    let content = decode_utf8(bytes, "Plugin manifest")?;
+    let mut value: Value = serde_json::from_str(&content)
+        .map_err(|_| AppError::InvalidInput("Plugin manifest is not valid JSON".into()))?;
+    let object = value
+        .as_object_mut()
+        .ok_or_else(|| AppError::InvalidInput("Plugin manifest must be an object".into()))?;
+    let stem = readable_stem(path);
+    if object
+        .get("name")
+        .and_then(Value::as_str)
+        .is_none_or(|name| name.trim().is_empty())
+    {
+        object.insert("name".into(), Value::String(stem));
+    }
+    let normalized = serde_json::to_string_pretty(&value)
+        .map_err(|_| AppError::InvalidInput("Plugin manifest could not be serialized".into()))?;
+    let manifest = PluginManifest::parse(&normalized)
+        .map_err(|error| AppError::InvalidInput(policy_message(&error)))?;
+    let filename = path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .map(str::to_string)
+        .filter(|value| safe_manifest_name(value).is_ok())
+        .unwrap_or_else(|| format!("{}.json", readable_stem(path)));
+    Ok(inspection(filename, normalized, None, &manifest))
+}
+
+/// Reads an import path in Rust so every entry is decoded as UTF-8 before the
+/// review dialog sees it, including files with non-ASCII names.
+#[tauri::command]
+pub fn plugin_inspect_import(path: String) -> Result<PluginInspection, AppError> {
+    let file_path = PathBuf::from(&path);
+    let bytes = std::fs::read(&file_path).map_err(|error| AppError::Io(error.to_string()))?;
+    let extension = file_path
+        .extension()
+        .and_then(|value| value.to_str())
+        .map(str::to_ascii_lowercase)
+        .unwrap_or_default();
+    match extension.as_str() {
+        "sh" => inspect_script(&file_path, bytes),
+        "zip" => inspect_zip(&file_path, bytes),
+        "json" => inspect_json(&file_path, bytes),
+        _ => Err(AppError::InvalidInput(
+            "Unsupported plugin file type; use .sh, .json or .zip".into(),
+        )),
+    }
 }
 
 fn policy_message(error: &PolicyError) -> String {
@@ -198,6 +493,7 @@ pub fn plugin_save(
     filename: String,
     content: String,
     granted_permissions: Vec<String>,
+    script_content: Option<String>,
 ) -> Result<PluginEntry, AppError> {
     let filename = safe_manifest_name(&filename)?;
     let manifest = PluginManifest::parse(&content)
@@ -220,7 +516,28 @@ pub fn plugin_save(
     );
     let normalized = serde_json::to_string_pretty(&value)
         .map_err(|_| AppError::InvalidInput("Plugin manifest could not be serialized".into()))?;
-    let path = plugins_dir(&app)?.join(filename);
+    let directory = plugins_dir(&app)?;
+    if let Some(script) = script_content {
+        if manifest.kind != PluginKind::Script {
+            return Err(AppError::InvalidInput(
+                "A rule plugin cannot carry a shell script".into(),
+            ));
+        }
+        if script.len() as u64 > MAX_SCRIPT_BYTES {
+            return Err(AppError::InvalidInput("Plugin script is too large".into()));
+        }
+        if script.trim().is_empty() {
+            return Err(AppError::InvalidInput("Plugin script is empty".into()));
+        }
+        let entry = manifest
+            .entry
+            .as_deref()
+            .ok_or_else(|| AppError::InvalidInput("Plugin script entry is missing".into()))?;
+        let script_name = safe_script_name(entry)?;
+        std::fs::write(directory.join(script_name), script)
+            .map_err(|error| AppError::Io(error.to_string()))?;
+    }
+    let path = directory.join(filename);
     std::fs::write(&path, normalized).map_err(|error| AppError::Io(error.to_string()))?;
     entry(&path).ok_or_else(|| AppError::InvalidInput("Plugin manifest could not be read".into()))
 }
@@ -761,5 +1078,23 @@ mod tests {
             extract_download_url("x download=https://cdn.test/a&y", &extraction).unwrap(),
             "https://cdn.test/a"
         );
+    }
+
+    #[test]
+    fn script_metadata_reads_header_comments() {
+        let metadata = parse_script_metadata(
+            "# @name: 原神启动\n# @version: 1.2.0\n# @description: test\n# @permission: network, read_clipboard\n# @domain: example.com\n",
+        );
+        assert_eq!(metadata.name.as_deref(), Some("原神启动"));
+        assert_eq!(metadata.version, "1.2.0");
+        assert_eq!(metadata.description, "test");
+        assert_eq!(metadata.permissions.len(), 2);
+        assert_eq!(metadata.domains, vec!["example.com"]);
+    }
+
+    #[test]
+    fn readable_stem_decodes_utf8_file_names() {
+        let path = Path::new("/tmp/%E5%8E%9F%E7%A5%9E%E5%90%AF%E5%8A%A8.sh");
+        assert_eq!(readable_stem(path), "原神启动");
     }
 }

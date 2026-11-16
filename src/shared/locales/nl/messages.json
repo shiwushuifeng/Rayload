@@ -727,7 +727,16 @@
     "permission-local-network-hint": "Required on Android 17 to discover and pair devices on the same network",
     "downloader": "Downloader",
     "categories": "File categories",
-    "plugins": "Plugins"
+    "plugins": "Plugins",
+    "group-account": "Account & connectivity",
+    "group-account-hint": "LAN devices, pairing and system permissions",
+    "group-download": "Downloads",
+    "group-download-hint": "Downloader, file categories and network",
+    "group-appearance": "Appearance & experience",
+    "group-appearance-hint": "Language, theme and interface behavior",
+    "group-advanced": "Advanced & extensions",
+    "group-advanced-hint": "Advanced options, plugins and maintenance tools",
+    "plugin-management": "Plugin management"
   },
   "task": {
     "scope-all": "Alle",
@@ -739,7 +748,6 @@
     "uri-task": "URL",
     "torrent-task": "Torrent",
     "uri-task-tips": "Eén URL per regel (magnet ondersteund)",
-    "file-priority": "Priority",
     "file-priority-off": "Do not download",
     "file-priority-normal": "Normal",
     "file-priority-high": "High",
@@ -751,9 +759,7 @@
     "bt-source-one-per-line": "One URL per line",
     "bt-recheck": "Recheck data",
     "file-name": "Naam",
-    "file-extension": "Extensie",
     "file-size": "Grootte",
-    "file-completed": "Voltooid",
     "file-index": "Nr.",
     "task-gid": "GID",
     "task-name": "Taaknaam",
@@ -1017,7 +1023,6 @@
     "restart-not-available": "Geen downloadlinks beschikbaar om opnieuw te starten",
     "torrent-trashed": "Download van \"{taskName}\" voltooid, torrentbestand verplaatst naar de prullenbak",
     "sort-manual": "Handmatig",
-    "sort-by": "Sorteren op",
     "sort-added-at": "Toegevoegd",
     "sort-completed-at": "Voltooid",
     "sort-name": "Naam",
@@ -1153,7 +1158,15 @@
     "remote-file-path": "Location",
     "copy-file-name": "Copy file name",
     "copy-file-path": "Copy file path",
-    "file-actions": "File actions"
+    "file-actions": "File actions",
+    "task-tab-file-details": "File details",
+    "task-tab-checksum-files": "Checksums",
+    "section-transfer": "Transfer",
+    "section-files": "Files",
+    "section-options": "Download options",
+    "section-peers": "Peers",
+    "section-trackers": "Trackers",
+    "remote-target-offline": "The target device is currently offline"
   },
   "media": {
     "probing": "Media onderzoeken",
@@ -1195,7 +1208,6 @@
   "navigation": {
     "about": "Over",
     "settings": "Instellingen",
-    "extensions": "Extensies",
     "trash": "Trash",
     "keep-awake": "Scherm aan laten",
     "statistics": "Statistics",
@@ -1273,7 +1285,10 @@
     "consent-title": "Controleren en accepteren",
     "consent-description": "Lees de Gebruikersovereenkomst en het Privacybeleid voordat je doorgaat. Je moet ze accepteren om de installatie te voltooien.",
     "consent-eula-hint": "Gebruiksvoorwaarden, licentie en aansprakelijkheid",
-    "consent-privacy-hint": "Hoe je gegevens op je apparaat blijven"
+    "consent-privacy-hint": "Hoe je gegevens op je apparaat blijven",
+    "skip": "Skip",
+    "default-download-path": "Default download path",
+    "consent-disclaimer-hint": "Technical use, copyright and liability"
   },
   "trash": {
     "title": "Trash",
@@ -1385,12 +1400,12 @@
     "local-fingerprint": "Vingerafdruk van dit apparaat",
     "device-name-label": "Apparaatnaam",
     "device-name-save": "Naam opslaan",
-    "device-name-saved": "Apparaatnaam opgeslagen"
+    "device-name-saved": "Apparaatnaam opgeslagen",
+    "choose-color": "Choose device color"
   },
   "plugins": {
     "title": "Plugin management",
     "description": "Import JSON plugin manifests and manage the ones stored on this device.",
-    "manage": "Manage plugins",
     "import": "Import plugin",
     "imported": "{name} imported",
     "import-failed": "Could not import this plugin manifest",
