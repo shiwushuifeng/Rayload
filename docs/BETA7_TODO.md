@@ -14,8 +14,9 @@ code; it is the single source of truth for the next session.
   device accent, HTTP panels, compact remote cards), module 1 (settings tabs,
   width caps, single-row bar), extra A (share on swipe) and B, extra C
   (transfer card overflow).
-- Next: module 3 (advanced checksum system), then module 4, then locales,
-  version bump, build and report.
+- All four modules and the extras are implemented. The beta7 APK is built and
+  staged locally, waiting for the user to review it before anything is pushed
+  or published.
 - Delivered beta6 artifact:
   `/home/qi/桌面/rayload/release/current/v1.0.4/beta6/v1.0.4-beta6-full-arm64.apk`
   (arm64-v8a only, 23,045,035 B, sha256
@@ -188,10 +189,19 @@ Nothing in this list has been implemented yet.
 
 ### Module 5 — test plugins and delivery
 
-17. Generate `test_safe.json` and `test_script.sh` in the repository root (the
-    beta6 copies live under `test_plugins/`), print their absolute paths.
-18. Build `v1.0.4-beta7-full-arm64.apk`, report paths and send the DingTalk
-    report. No AVD, no push, no release.
+17. ✅ `test_safe.json` and `test_script.sh` live in the repository root:
+    - `C:\AAAARayload\test_safe.json`
+    - `C:\AAAARayload\test_script.sh`
+18. ✅ Built `v1.0.4-beta7-full-arm64.apk` (arm64-v8a, versionCode 10013,
+    23,130,563 bytes, sha256
+    `c40c4d5894737bed038e4005c705ffd15c3250e49b5d9b08ba6da69e72572c36`) and
+    staged it at `release/current/v1.0.4/beta7/` with a SHA256SUMS file.
+    - Verified with `aapt2 dump badging`: `versionName='1.0.4-beta7'`, single
+      ABI, and with `apksigner verify`: V2 signer `CN=Rayload`.
+    - **Not uploaded and not pushed**: the user reviews the APK first and asks
+      for the upload explicitly. No GitHub release, no store upload.
+    - The DingTalk heartbeat is still skipped because the webhook helper was not
+      restored; the user will reconfigure the robot.
 
 ### Extra requests from the user (must ship in beta7)
 

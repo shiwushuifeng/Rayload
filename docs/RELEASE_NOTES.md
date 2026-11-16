@@ -1,3 +1,125 @@
+# Rayload v1.0.4 Beta 7
+
+> 这是 **v1.0.4 系列的最后一个测试版**。验收通过后版本号进入 v1.0.5。
+
+## 中文
+
+### 为什么中间跳过了好几个 beta 号
+
+- `v1.0.4` 当初是直接作为稳定版发布的，所以 `beta1` 从未存在过。
+- `beta2`、`beta3` 是内部迭代，产物归档在 `release/archive/` 里，说明见下文。
+- `beta4`、`beta5`、`beta6` 只在本机交付过测试 APK，没有在 GitHub 上建 Release，
+  因此仓库里看不到它们的发布记录。
+- 本次把 `beta4` → `beta6` 的全部改动与 `beta7` 的新功能合并成一个可验收的
+  构建，避免你还要逐个装五个包来确认。
+- **明确一点：这是最后一个测试版。** 再往后就是 v1.0.5 的正式开发。
+
+### 交互与逻辑
+
+- 真机滑动失效已定位并修复：手势改为 12px 死区、1.2 倍轴向优势比，长按只在
+  手指静止时触发、移动 8px 即取消，指针捕获改到横向锁定之后才取，并补上
+  `lostpointercapture` 兜底。左滑删除，右滑暂停/继续（本地）或推回本机（远程）。
+- 已完成本地任务右滑触发系统分享，与卡片菜单的「分享文件」一致。
+- 设备配色统一到单一来源：设置、列表、卡片都走同一个解析函数，不再出现
+  「设置里选的颜色和卡片不一致」。
+- 纯 HTTP/HTTPS 任务详情页不再渲染空的「节点」「Tracker」面板。
+- 紧凑远程卡片只保留一个右侧动作，设备徽标宽度上限从 26% 降到 16%，文件名
+  拿到更多空间；「推送到本机」改由右滑与详情页提供。
+
+### 响应式布局
+
+- 设置页在 768px 以下改为顶部横向 Tab（账户 / 下载 / 外观 / 高级）+ 分组卡片流；
+  768px 以上保持两列，右栏限宽 860px 并居中。
+- 宽屏下统计磁贴、看板各区块与任务列表统一 1120px 限宽居中。
+- 底栏不再换行：改为单行横向滚动。
+
+### 高级校验系统
+
+- 七种算法：MD5、SHA-1、SHA-256、SHA-512、BLAKE3、SM3、CRC32，可在
+  设置 → 高级 → 校验 里逐个开关，详情页只计算已启用的算法。
+- SQLite 哈希缓存以「路径 + 大小 + 修改时间」为键、每个算法一行，未变化的文件
+  直接命中缓存，新开算法只补算缺的部分，设置里可一键清空。
+- 下载后自动校验总开关 + 分类过滤；允许/拒绝规则支持通配符与正则，允许规则可
+  覆盖更宽的拒绝规则；在线查询默认只针对 GitHub 来源。
+- 在线查询链路：先读 GitHub Release 资产自带的 digest，再查 CIRCL Hash Lookup。
+- 校验界面：期望值粘贴即比对（对勾/叉）、运行中可取消、可导出 `.sha256` 形式的
+  校验文件、BT 多文件任务支持逐个文件计算。
+
+### 详情与功能补全
+
+- 引导页引擎页删除了「默认下载路径」输入框。
+- 统计数据页快捷入口换成「清理下载缓存」（清理孤儿 `.aria2` 控制文件与应用缓存，
+  并报告释放大小）与「存储空间分析」（下载目录、缓存、应用数据、临时文件与
+  可用空间）。
+- 已完成的 `.apk` 增加「安装应用」，通过 FileProvider + `REQUEST_INSTALL_PACKAGES`
+  打开系统安装程序；音频/视频增加「预览」，交给系统播放器。
+- 传输卡片溢出修复：碎片图在首帧容器宽度为 0 时会算出负的画布宽度，导致残留
+  过宽画布；现在有宽度保护，各层容器补齐 `min-width: 0`。
+
+### 安装信息
+
+- 包名 `com.shiwushuifeng.rayload`，`versionCode 10013`，`versionName 1.0.4-beta7`
+- ABI：`arm64-v8a`，minSdk 24，targetSdk 37
+- 签名：V2，`CN=Rayload, O=shiwushuifeng, C=CN`
+
+## English
+
+### Why several beta numbers are missing
+
+- `v1.0.4` shipped directly as a stable release, so `beta1` never existed.
+- `beta2` and `beta3` were internal iterations archived under `release/archive/`.
+- `beta4`, `beta5` and `beta6` were only delivered as local test APKs and never
+  got a GitHub release, which is why they are not visible here.
+- This build folds every `beta4` → `beta6` change together with the new
+  `beta7` work into one verifiable package.
+- **This is the last test build.** Development continues in v1.0.5.
+
+### Interaction and logic
+
+- Real-device swipe fixed: 12px dead zone, 1.2 axis dominance, long press only
+  while the finger rests and cancelled at 8px, pointer capture taken after the
+  horizontal lock, plus `lostpointercapture` recovery. Left deletes, right
+  pauses/resumes or sends the task back to this device.
+- Finished local tasks share through a right swipe, matching the card menu.
+- Device accent now resolves through one helper, so settings, list and cards
+  always agree.
+- Plain HTTP/HTTPS tasks no longer render empty Peers and Trackers panels.
+- Compact remote rows keep one action and cap the device badge at 16% width.
+
+### Responsive layout
+
+- Settings switch to a horizontal tab strip plus section cards below 768px; the
+  right pane is capped at 860px and centered above that.
+- Statistics tiles and dashboard sections share the 1120px task-list cap.
+- The bottom bar is a single horizontally scrolling row again.
+
+### Advanced checksum system
+
+- MD5, SHA-1, SHA-256, SHA-512, BLAKE3, SM3 and CRC32, each toggled in
+  Settings → Advanced → Checksums; the detail page computes only enabled ones.
+- SQLite cache keyed by path, size and mtime, one row per algorithm, cleared from
+  settings.
+- Optional verification after download with a category filter, allow/deny rules
+  (wildcard or regex) and published-digest lookup limited to GitHub sources.
+- Lookup order: GitHub release metadata, then CIRCL Hash Lookup.
+- Match/mismatch against a pasted value, cancel while running, export a checksum
+  file and per-file calculation for multi-file torrents.
+
+### Detail and feature completion
+
+- The onboarding engine page no longer shows the default download path box.
+- Statistics shortcuts became Clear download cache and Storage space analysis.
+- Finished APKs install through the system installer; audio and video open in the
+  system player from a Preview action.
+- Transfer card overflow fixed by guarding the piece-map canvas width and adding
+  `min-width: 0` down the container chain.
+
+### Build
+
+- `com.shiwushuifeng.rayload`, versionCode 10013, versionName 1.0.4-beta7
+- ABI `arm64-v8a`, minSdk 24, targetSdk 37
+- V2 signed with `CN=Rayload, O=shiwushuifeng, C=CN`
+
 # Rayload v1.0.4 Beta 2
 
 ## 中文
