@@ -2,13 +2,10 @@
  * Persisted accent colors for paired LAN devices.
  *
  * A device without an explicitly chosen color gets a stable color derived from
- * its identity, so the settings list, the task rail and the cards always agree
- * and each device looks different. Cards also get a contrasting hue for their
- * background gradient, which is what gives the rail and the card body their
- * deliberate clash instead of a flat wash of one color.
- *
- * Stored and generated colors alike are blended with the current theme surface,
- * so switching between light and dark keeps the hue without looking off.
+ * its identity, so the settings list, the color picker, the task rail and the
+ * cards all show exactly the same flat value. Flat hex is deliberate: mixing the
+ * color with the theme surface made the swatch in the picker differ from the
+ * icon and the rail, which read as "the color is not applied".
  */
 import { reactive } from 'vue'
 
@@ -18,8 +15,10 @@ let hydrated = false
 
 /** Accent used when nothing identifies the device: the theme's own accent. */
 export const DEFAULT_DEVICE_ACCENT = 'var(--m3-primary)'
-/** Hue difference between the rail and the card gradient. */
-const CONTRAST_HUE_SHIFT = 152
+
+/** Saturation and lightness of an identity-derived color. */
+const DERIVED_SATURATION = 62
+const DERIVED_LIGHTNESS = 52
 
 function hydrate(): void {
   if (hydrated || typeof window === 'undefined') return
@@ -43,7 +42,7 @@ function persist(): void {
   }
 }
 
-/** Raw stored color of one key, without any theme composition. */
+/** Raw stored color of one key, without any composition. */
 export function getDeviceColor(id: string): string | undefined {
   hydrate()
   return deviceColors[id]
@@ -85,59 +84,63 @@ export function identityHue(identity: string): number {
   return (hash >>> 0) % 360
 }
 
-function hsl(hue: number, saturation: number, lightness: number): string {
-  return `hsl(${Math.round((hue + 360) % 360)} ${saturation}% ${lightness}%)`
+/** HSL to `#rrggbb`, so every consumer and the picker share one notation. */
+function hslToHex(hue: number, saturation: number, lightness: number): string {
+  const h = ((hue % 360) + 360) % 360
+  const s = saturation / 100
+  const l = lightness / 100
+  const c = (1 - Math.abs(2 * l - 1)) * s
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
+  const m = l - c / 2
+  const [r, g, b] =
+    h < 60
+      ? [c, x, 0]
+      : h < 120
+        ? [x, c, 0]
+        : h < 180
+          ? [0, c, x]
+          : h < 240
+            ? [0, x, c]
+            : h < 300
+              ? [x, 0, c]
+              : [c, 0, x]
+  const toHex = (value: number) =>
+    Math.round((value + m) * 255)
+      .toString(16)
+      .padStart(2, '0')
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
 }
 
-/** Blends a color with the theme surface so light and dark keep the hue. */
-export function themedDeviceColor(base: string): string {
-  return `color-mix(in srgb, ${base} 86%, var(--m3-surface-container))`
+/** Identity-derived flat color of a device. */
+export function identityColor(identity: string): string {
+  return hslToHex(identityHue(identity), DERIVED_SATURATION, DERIVED_LIGHTNESS)
 }
 
-/** Hue of a stored `#rrggbb` color, or null when it cannot be parsed. */
-function hexHue(color: string): number | null {
-  const match = /^#([0-9a-f]{6})$/i.exec(color.trim())
-  if (!match) return null
-  const value = Number.parseInt(match[1], 16)
-  const red = ((value >> 16) & 255) / 255
-  const green = ((value >> 8) & 255) / 255
-  const blue = (value & 255) / 255
-  const max = Math.max(red, green, blue)
-  const min = Math.min(red, green, blue)
-  const delta = max - min
-  if (delta === 0) return 0
-  let hue: number
-  if (max === red) hue = ((green - blue) / delta) % 6
-  else if (max === green) hue = (blue - red) / delta + 2
-  else hue = (red - green) / delta + 4
-  return Math.round(hue * 60)
-}
-
-function resolveHue(keys: Array<string | null | undefined>): number | null {
+function storedColor(keys: Array<string | null | undefined>): string | undefined {
   hydrate()
   for (const key of keys) {
     if (!key) continue
     const stored = deviceColors[key]
-    if (stored) return hexHue(stored) ?? identityHue(key)
+    if (stored) return stored
   }
+  return undefined
+}
+
+/**
+ * Flat color of a device: the explicit choice when there is one, otherwise the
+ * identity-derived color. Used by the rail, the icon, the detail header and the
+ * color picker, so all of them agree.
+ */
+export function resolveDeviceColor(...keys: Array<string | null | undefined>): string | null {
+  const stored = storedColor(keys)
+  if (stored) return stored
   for (const key of keys) {
-    if (key) return identityHue(key)
+    if (key) return identityColor(key)
   }
   return null
 }
 
-/** Accent for the rail, the device icon and the detail header. */
+/** Accent of a device, falling back to the theme accent with no identity. */
 export function resolveDeviceAccent(...keys: Array<string | null | undefined>): string {
-  const hue = resolveHue(keys)
-  if (hue === null) return DEFAULT_DEVICE_ACCENT
-  hydrate()
-  const stored = keys.map((key) => (key ? deviceColors[key] : undefined)).find(Boolean)
-  return themedDeviceColor(stored ?? hsl(hue, 62, 52))
-}
-
-/** Contrasting accent used by the card background gradient. */
-export function resolveDeviceContrastAccent(...keys: Array<string | null | undefined>): string {
-  const hue = resolveHue(keys)
-  if (hue === null) return 'var(--m3-tertiary)'
-  return themedDeviceColor(hsl(hue + CONTRAST_HUE_SHIFT, 58, 56))
+  return resolveDeviceColor(...keys) ?? DEFAULT_DEVICE_ACCENT
 }

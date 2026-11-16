@@ -4,7 +4,7 @@ import { join } from '@tauri-apps/api/path'
 import type { Aria2Task, Aria2File } from '@shared/types'
 import type { I18nKey } from '@shared/i18nTypes'
 import { resolveTaskFilePath } from '@/composables/useTaskPaths'
-import { DEFAULT_DEVICE_ACCENT, resolveDeviceAccent, resolveDeviceContrastAccent } from './deviceColors'
+import { DEFAULT_DEVICE_ACCENT, resolveDeviceAccent } from './deviceColors'
 
 /** Download progress as a percentage with one decimal, rounded down so it never reads 100 early. */
 export const calcProgress = (totalLength: string | number, completedLength: string | number): number => {
@@ -85,12 +85,6 @@ export function getTaskAccentColor(task: Aria2Task): string {
   // Remote tasks carry either the device id or only its name depending on how
   // the peer answered, so both identities are tried before falling back.
   return resolveDeviceAccent(task.remote.deviceId, task.remote.deviceName)
-}
-
-/** Contrasting hue for the card gradient, so the rail visibly clashes with it. */
-export function getTaskContrastAccent(task: Aria2Task): string {
-  if (!task.remote) return 'var(--m3-tertiary)'
-  return resolveDeviceContrastAccent(task.remote.deviceId, task.remote.deviceName)
 }
 
 /** Returns true when native aria2 is still resolving torrent metadata. */

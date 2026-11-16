@@ -30,7 +30,7 @@ import {
 import { getErrorMessage } from '@shared/utils/errorMessage'
 import { deviceArchLabel } from '@/composables/usePlatform'
 import { logger } from '@shared/logger'
-import { getDeviceColor, resolveDeviceAccent, setDeviceColor } from '@shared/utils/deviceColors'
+import { resolveDeviceAccent, resolveDeviceColor, setDeviceColor } from '@shared/utils/deviceColors'
 import QrScanner from '@/components/lan/QrScanner.vue'
 
 interface HostCredentials {
@@ -288,8 +288,8 @@ function openRename(id: string, name: string, note: string): void {
 function openColor(id: string): void {
   coloring.value = id
   const device = confirmedDevices.value.find((item) => item.id === id)
-  const stored = getDeviceColor(id) ?? (device?.name ? getDeviceColor(device.name) : undefined)
-  colorDraft.value = stored && stored.startsWith('#') ? stored : '#2563EB'
+  // Same value the icon and the task rail use, so the swatch never surprises.
+  colorDraft.value = resolveDeviceColor(id, device?.name) ?? '#2563eb'
 }
 
 function saveColor(): void {
@@ -491,7 +491,7 @@ onBeforeUnmount(() => {
           type="button"
           class="lan-device-icon"
           :class="{ online: device.online }"
-          :style="{ '--device-color': resolveDeviceAccent(device.id) }"
+          :style="{ '--device-color': resolveDeviceAccent(device.id, device.name) }"
           :aria-label="t('lan-devices.choose-color')"
           @click="openColor(device.id)"
         >
@@ -799,9 +799,13 @@ onBeforeUnmount(() => {
   border-radius: 12px;
   cursor: pointer;
 }
+/* Filled with the device color itself so the tap target reads as the swatch
+   the color picker will show. */
 .lan-device-icon.online {
-  color: color-mix(in srgb, var(--device-color, var(--m3-primary)) 74%, var(--m3-on-surface-variant));
-  background: color-mix(in srgb, var(--device-color, var(--m3-primary)) 18%, var(--m3-surface-container-high));
+  color: #fff;
+  background: var(--device-color, var(--m3-primary));
+  border-color: transparent;
+  border-left-color: var(--device-color, var(--m3-primary));
 }
 .lan-device-copy {
   display: grid;

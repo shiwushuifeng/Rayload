@@ -1,48 +1,46 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
   clearDeviceColor,
+  identityColor,
   identityHue,
   resolveDeviceAccent,
-  resolveDeviceContrastAccent,
+  resolveDeviceColor,
   setDeviceColor,
 } from '../deviceColors'
 
-const IDs = ['nas-primary', 'phone-qi', 'laptop-office']
+const IDS = ['nas-primary', 'phone-qi', 'laptop-office', 'NAS']
 
 describe('device accent colors', () => {
   afterEach(() => {
-    for (const id of IDs) clearDeviceColor(id)
-    clearDeviceColor('nas-primary', 'NAS')
+    for (const id of IDS) clearDeviceColor(id)
   })
 
-  it('derives a stable hue from the device identity', () => {
-    expect(identityHue('nas-primary')).toBe(identityHue('nas-primary'))
+  it('derives a stable flat hex color from the device identity', () => {
+    expect(identityColor('nas-primary')).toBe(identityColor('nas-primary'))
+    expect(identityColor('nas-primary')).toMatch(/^#[0-9a-f]{6}$/)
     expect(identityHue('nas-primary')).toBeGreaterThanOrEqual(0)
     expect(identityHue('nas-primary')).toBeLessThan(360)
     // Different devices should not collapse onto one hue.
-    const hues = new Set(IDs.map((id) => identityHue(id)))
+    const hues = new Set(['nas-primary', 'phone-qi', 'laptop-office'].map((id) => identityHue(id)))
     expect(hues.size).toBeGreaterThan(1)
   })
 
-  it('resolves the same accent for every identity of one device', () => {
-    const byId = resolveDeviceAccent('nas-primary', 'NAS')
-    const byName = resolveDeviceAccent(undefined, 'nas-primary')
-    expect(byId).toBe(byName)
-    expect(byId).toContain('color-mix')
+  it('resolves the same flat color for every identity of one device', () => {
+    expect(resolveDeviceColor('nas-primary', 'NAS')).toBe(resolveDeviceColor('nas-primary'))
+    expect(resolveDeviceAccent('nas-primary', 'NAS')).toBe(resolveDeviceColor('nas-primary'))
+    // Flat hex, so a color picker can show exactly the displayed value.
+    expect(resolveDeviceAccent('nas-primary')).toMatch(/^#[0-9a-f]{6}$/)
   })
 
-  it('uses the stored color and still resolves it through the theme mix', () => {
+  it('returns the explicitly chosen color unchanged', () => {
     setDeviceColor('nas-primary', '#ff3366', 'NAS')
-    expect(resolveDeviceAccent('nas-primary')).toContain('#ff3366')
-    expect(resolveDeviceAccent('nas-primary', 'NAS')).toBe(resolveDeviceAccent('nas-primary'))
-  })
-
-  it('gives the card gradient a hue that clashes with the rail', () => {
-    expect(resolveDeviceContrastAccent('nas-primary')).not.toBe(resolveDeviceAccent('nas-primary'))
-    expect(resolveDeviceContrastAccent('nas-primary')).toContain('color-mix')
+    expect(resolveDeviceColor('nas-primary')).toBe('#ff3366')
+    expect(resolveDeviceColor(undefined as never, 'NAS')).toBe('#ff3366')
+    expect(resolveDeviceAccent('nas-primary')).toBe('#ff3366')
   })
 
   it('falls back to the theme accent when nothing identifies the device', () => {
+    expect(resolveDeviceColor(undefined, null)).toBeNull()
     expect(resolveDeviceAccent(undefined, null)).toBe('var(--m3-primary)')
   })
 })
