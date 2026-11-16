@@ -3,9 +3,11 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NIcon } from 'naive-ui'
-import { PauseOutline, PlayOutline, TrashOutline } from '@vicons/ionicons5'
+import { PauseOutline, PlayOutline, ShareSocialOutline, TrashOutline } from '@vicons/ionicons5'
 import { triggerHaptic } from '@/composables/useHaptics'
+import { usePlatform } from '@/composables/usePlatform'
 import { useReducedMotion } from '@/composables/useReducedMotion'
+import { TASK_STATUS } from '@shared/constants'
 import type { Aria2Task } from '@shared/types'
 
 const props = withDefaults(defineProps<{ task: Aria2Task; selectionMode: boolean; disabled?: boolean }>(), {
@@ -16,13 +18,21 @@ const emit = defineEmits<{
   'long-press': [task: Aria2Task]
   'swipe-primary': [task: Aria2Task]
   'swipe-delete': [task: Aria2Task]
+  'swipe-share': [task: Aria2Task]
 }>()
 
 const { t } = useI18n()
 const reduceMotion = useReducedMotion()
 const SWIPE_THRESHOLD = 48
 const MAX_OFFSET = 104
-const LONG_PRESS_MS = 480
+const LONG_PRESS_MS = 520
+// A real thumb wobbles before it travels sideways, so the drag needs a dead zone
+// and a forgiving axis decision. An emulator drag is a perfectly straight line
+// and hides both problems, which is why beta6 passed on the AVD but not on a
+// physical device.
+const DRAG_DEAD_ZONE = 12
+const AXIS_DOMINANCE = 1.2
+const LONG_PRESS_CANCEL_DISTANCE = 8
 
 const offset = ref(0)
 const dragging = ref(false)
@@ -37,6 +47,7 @@ const interactionTarget =
 const rowRef = ref<HTMLElement | null>(null)
 
 let pointerId: number | null = null
+let pointerCaptured = false
 let startX = 0
 let startY = 0
 let longPressTimer: number | null = null
@@ -55,13 +66,48 @@ const contentStyle = computed<Record<string, string>>(() => {
   return style
 })
 
-const primaryResumes = computed(() => Boolean(props.task.remote) || props.task.status === 'paused')
-const primaryDisabled = computed(
-  () => !props.task.remote && !['active', 'waiting', 'paused'].includes(props.task.status),
+type PrimaryAction = 'send-local' | 'share' | 'resume' | 'pause'
+
+const { isAndroid } = usePlatform()
+/** Finished local files can be shared through the system sheet, same as the card menu. */
+const canShareFinished = computed(
+  () =>
+    !props.task.remote &&
+    isAndroid.value &&
+    (props.task.status === TASK_STATUS.COMPLETE || props.task.status === TASK_STATUS.REMOVED),
 )
-const primaryLabel = computed(() =>
-  props.task.remote ? t('task.remote-send-local') : primaryResumes.value ? t('task.resume-task') : t('task.pause-task'),
-)
+const primaryAction = computed<PrimaryAction | null>(() => {
+  if (props.task.remote) return 'send-local'
+  if (canShareFinished.value) return 'share'
+  if (props.task.status === TASK_STATUS.PAUSED) return 'resume'
+  if (props.task.status === TASK_STATUS.ACTIVE || props.task.status === TASK_STATUS.WAITING) return 'pause'
+  return null
+})
+const primaryDisabled = computed(() => primaryAction.value === null)
+const primaryIcon = computed(() => {
+  switch (primaryAction.value) {
+    case 'share':
+      return ShareSocialOutline
+    case 'resume':
+      return PlayOutline
+    case 'pause':
+      return PauseOutline
+    default:
+      return PlayOutline
+  }
+})
+const primaryLabel = computed(() => {
+  switch (primaryAction.value) {
+    case 'send-local':
+      return t('task.remote-send-local')
+    case 'share':
+      return t('task.share-file')
+    case 'resume':
+      return t('task.resume-task')
+    default:
+      return t('task.pause-task')
+  }
+})
 
 function actionStyle(action: 'primary' | 'delete') {
   const visible = direction.value === action
@@ -79,6 +125,26 @@ function clearLongPressTimer() {
   }
 }
 
+function capturePointer(id: number) {
+  if (pointerCaptured) return
+  try {
+    rowRef.value?.setPointerCapture(id)
+    pointerCaptured = true
+  } catch {
+    // Pointer capture can be rejected for synthetic events; moves still work.
+  }
+}
+
+function releasePointer(id: number | null) {
+  if (id === null || !pointerCaptured) return
+  pointerCaptured = false
+  try {
+    rowRef.value?.releasePointerCapture(id)
+  } catch {
+    // Capture may already be gone, for example after pointercancel.
+  }
+}
+
 function clearDismissTimers() {
   if (dismissTimer !== null) {
     window.clearTimeout(dismissTimer)
@@ -93,7 +159,9 @@ function clearDismissTimers() {
 function resetGesture() {
   clearLongPressTimer()
   clearDismissTimers()
+  releasePointer(pointerId)
   pointerId = null
+  pointerCaptured = false
   dragging.value = false
   direction.value = null
   hapticFired.value = false
@@ -108,13 +176,9 @@ function onPointerDown(event: PointerEvent) {
   if (target instanceof Element && target.closest(interactionTarget)) return
 
   pointerId = event.pointerId
-  // Android WebView stops sending moves once the finger leaves the row unless
-  // the row owns the pointer for the whole gesture.
-  try {
-    rowRef.value?.setPointerCapture(event.pointerId)
-  } catch {
-    // Pointer capture can be rejected for synthetic events; moves still work.
-  }
+  // Capture is taken only once a horizontal drag is locked in. Capturing on
+  // pointerdown hands the whole gesture to the row, which cancels the list
+  // scroller and, on Android, makes the WebView emit pointercancel.
   startX = event.clientX
   startY = event.clientY
   longPressTriggered = false
@@ -132,15 +196,25 @@ function onPointerMove(event: PointerEvent) {
   if (event.pointerId !== pointerId || longPressTriggered) return
   const deltaX = event.clientX - startX
   const deltaY = event.clientY - startY
+  const absX = Math.abs(deltaX)
+  const absY = Math.abs(deltaY)
   if (!dragging.value) {
-    if (Math.abs(deltaY) > 8 && Math.abs(deltaY) >= Math.abs(deltaX)) {
+    // Any real movement proves the finger is not resting for a long press.
+    if (absX > LONG_PRESS_CANCEL_DISTANCE || absY > LONG_PRESS_CANCEL_DISTANCE) {
       clearLongPressTimer()
+    }
+    if (absX < DRAG_DEAD_ZONE && absY < DRAG_DEAD_ZONE) return
+    // Leave clearly vertical gestures to the list scroller. The dominance ratio
+    // matters: a horizontal swipe usually starts with a few pixels of vertical
+    // travel, so a strict |dy| >= |dx| test cancels most real swipes.
+    if (absY > absX * AXIS_DOMINANCE) {
       pointerId = null
       return
     }
-    if (Math.abs(deltaX) < 8 || Math.abs(deltaX) <= Math.abs(deltaY)) return
+    if (absX < DRAG_DEAD_ZONE) return
     clearLongPressTimer()
     dragging.value = true
+    capturePointer(event.pointerId)
   }
   offset.value = Math.max(-MAX_OFFSET, Math.min(MAX_OFFSET, deltaX))
   if (primaryDisabled.value && offset.value > 0) offset.value = 0
@@ -158,6 +232,7 @@ function finishSwipe() {
   suppressClickUntil.value = Date.now() + 480
   dragging.value = false
   direction.value = null
+  releasePointer(pointerId)
   pointerId = null
   if (!shouldAct || !action) {
     offset.value = 0
@@ -165,7 +240,8 @@ function finishSwipe() {
   }
   if (action === 'primary') {
     offset.value = 0
-    emit('swipe-primary', props.task)
+    if (primaryAction.value === 'share') emit('swipe-share', props.task)
+    else emit('swipe-primary', props.task)
     return
   }
   if (reduceMotion.value) {
@@ -192,11 +268,7 @@ function finishSwipe() {
 
 function onPointerUp(event: PointerEvent) {
   if (event.pointerId !== pointerId) return
-  try {
-    rowRef.value?.releasePointerCapture(event.pointerId)
-  } catch {
-    // Capture may already be gone.
-  }
+  releasePointer(event.pointerId)
   clearLongPressTimer()
   if (longPressTriggered) {
     resetGesture()
@@ -212,12 +284,32 @@ function onPointerUp(event: PointerEvent) {
 
 function onPointerCancel(event: PointerEvent) {
   if (event.pointerId !== pointerId) return
-  try {
-    rowRef.value?.releasePointerCapture(event.pointerId)
-  } catch {
-    // Capture may already be gone.
+  releasePointer(event.pointerId)
+  resetGesture()
+}
+
+/**
+ * The WebView can revoke capture mid-gesture, for example when the scroller
+ * takes over or the app is backgrounded. Without this handler the offset would
+ * stay stuck at its last dragged position.
+ */
+function onLostPointerCapture(event: PointerEvent) {
+  if (event.pointerId !== pointerId) return
+  pointerCaptured = false
+  if (longPressTriggered) {
+    resetGesture()
+    longPressTriggered = false
+    return
+  }
+  if (dragging.value) {
+    finishSwipe()
+    return
   }
   resetGesture()
+}
+
+function onContextMenu(event: MouseEvent) {
+  if (dragging.value || Date.now() < suppressClickUntil.value) event.preventDefault()
 }
 
 function onClick(event: MouseEvent) {
@@ -247,6 +339,8 @@ onBeforeUnmount(() => {
     @pointermove="onPointerMove"
     @pointerup="onPointerUp"
     @pointercancel="onPointerCancel"
+    @lostpointercapture="onLostPointerCapture"
+    @contextmenu="onContextMenu"
     @click="onClick"
   >
     <div
@@ -255,7 +349,7 @@ onBeforeUnmount(() => {
       :style="actionStyle('primary')"
       aria-hidden="true"
     >
-      <NIcon :size="20"><component :is="primaryResumes ? PlayOutline : PauseOutline" /></NIcon>
+      <NIcon :size="20"><component :is="primaryIcon" /></NIcon>
       <span>{{ primaryLabel }}</span>
     </div>
     <div class="task-swipe-action task-swipe-action--delete" :style="actionStyle('delete')" aria-hidden="true">
@@ -281,6 +375,9 @@ onBeforeUnmount(() => {
   overflow: hidden;
   border-radius: var(--radius-sm);
   touch-action: pan-y;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 .task-swipe-row--selecting {
   touch-action: manipulation;

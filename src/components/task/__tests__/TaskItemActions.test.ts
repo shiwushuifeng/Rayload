@@ -257,8 +257,11 @@ describe('TaskItemActions', () => {
         minimal: true,
       },
     })
-    expect(remote.find('[aria-label="task.remote-send-local"]').exists()).toBe(true)
+    // A compact remote row keeps one action so the filename keeps its space;
+    // "send to this device" moves to the right swipe and the detail page.
+    expect(remote.findAll('.task-item-action')).toHaveLength(1)
     expect(remote.find('[aria-label="task.remote-details"]').exists()).toBe(true)
+    expect(remote.find('[aria-label="task.remote-send-local"]').exists()).toBe(false)
   })
 
   it('moves full file actions into the detail bar without the info shortcut', () => {

@@ -30,7 +30,7 @@ import {
 import { getErrorMessage } from '@shared/utils/errorMessage'
 import { deviceArchLabel } from '@/composables/usePlatform'
 import { logger } from '@shared/logger'
-import { getDeviceColor, setDeviceColor, useDeviceColors } from '@shared/utils/deviceColors'
+import { getDeviceColor, resolveDeviceAccent, setDeviceColor } from '@shared/utils/deviceColors'
 import QrScanner from '@/components/lan/QrScanner.vue'
 
 interface HostCredentials {
@@ -49,8 +49,6 @@ interface PairingQr {
 const { t } = useI18n()
 const lan = useLanStore()
 const message = useAppMessage()
-const deviceColors = useDeviceColors()
-
 const address = ref('')
 const username = ref('')
 const password = ref('')
@@ -489,7 +487,7 @@ onBeforeUnmount(() => {
           type="button"
           class="lan-device-icon"
           :class="{ online: device.online }"
-          :style="{ '--device-color': deviceColors[device.id] ?? 'var(--m3-primary)' }"
+          :style="{ '--device-color': resolveDeviceAccent(device.id) }"
           :aria-label="t('lan-devices.choose-color')"
           @click="openColor(device.id)"
         >

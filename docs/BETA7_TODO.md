@@ -116,23 +116,27 @@ Nothing in this list has been implemented yet.
 
 ### Module 2 — interaction and logic
 
-4. Swipe gestures still reported as broken on device. Requirements: left =
-   delete, right = pause/resume (local) or send to this device (remote).
-   Files: `src/components/task/TaskSwipeRow.vue`,
-   `src/components/task/TaskList.vue` (`handleSwipePrimary`).
-   Note: AVD smoke test passed, so suspect a real-device-only cause (long-press
-   timer vs. list scroll, pointer capture lost when the list re-renders on
-   polling, or `touch-action` on a parent).
-5. Device colour desync: a colour chosen in settings shows up differently on
-   the list and cards. Unify through one source.
-   `src/shared/utils/task.ts` (`getTaskAccentColor`), `deviceColors.ts`,
-   `LanDevicesView.vue`, card components.
+4. ✅ Swipe gestures hardened for real devices. Root cause: the axis test
+   aborted the gesture as soon as the first few vertical pixels dominated
+   (`|dy| > 8 && |dy| >= |dx|`), the long-press timer fired at 480 ms while the
+   finger was still travelling, and pointer capture was taken on touch down,
+   which handed the gesture to the row and made the WebView cancel the list
+   scroll. Now: 12 px dead zone, `AXIS_DOMINANCE` 1.2 ratio, long press only
+   while the finger rests and cancelled at 8 px, capture taken at horizontal
+   lock only, plus `lostpointercapture` recovery. Left = delete, right =
+   pause/resume (local), send to this device (remote) or share (finished local).
+   Still needs one confirmation run on a physical device.
+5. ✅ Device colour desync: settings used `deviceColors[id] ?? primary` while
+   cards fell back to a hash palette, so an uncoloured device looked different
+   in the two places. Both now resolve through `resolveDeviceAccent()` in
+   `src/shared/utils/deviceColors.ts`.
 6. ✅ Plain HTTP/HTTPS tasks must hide the "Nodes" and "Tracker" panels in the
    detail page instead of rendering empty states. `TaskDetail.vue`.
    Done in the Windows migration kickoff: both cards now render only when the
    task is not a plain URI download (`!isURI`).
-7. Compact remote cards squeeze the filename; reduce the right-side icon set
-   and give the name the space. `TaskCompactItem.vue`.
+7. ✅ Compact remote cards squeezed the filename. The compact row now keeps a
+   single action and the device badge is capped at 16% width; "send to this
+   device" is reachable by swiping right and from the detail page.
 
 ### Module 3 — advanced checksum system
 
@@ -179,9 +183,9 @@ Nothing in this list has been implemented yet.
 
 ### Extra requests from the user (must ship in beta7)
 
-A. Completed local tasks also need a right-to-left sharing interaction.
-   Interpretation to confirm: right swipe on a completed local task triggers
-   share (right swipe currently does nothing for completed tasks), while left
+A. ✅ Completed local tasks also need a right-to-left sharing interaction.
+   Implemented as a right swipe that opens the system share sheet for finished
+   local tasks (Android), matching the card menu's `share-file` action; left
    swipe stays delete.
 
 B. ✅ Tapping a finished file currently offers "Open file" and "Show in folder".
@@ -190,9 +194,12 @@ B. ✅ Tapping a finished file currently offers "Open file" and "Show in folder"
    Done in the Windows migration kickoff: the toast, its dependencies and the
    unused `openFileFromNotification` helper were removed together.
 
-C. The "Transfer" card in the task detail page still overflows its box.
-   File: `src/components/task/TaskDetail.vue` (`.detail-card`, transfer rows)
-   and `src/components/task/detail/TaskDetailActivity.vue`.
+C. ✅ The "Transfer" card in the task detail page still overflows its box.
+   Cause: the piece map sized its canvas from a zero-width container during the
+   first paint, which produced an invalid negative width and left the previous
+   (too wide) canvas in place, and the activity grid had no `min-width: 0`
+   anywhere. Fixed in `TaskDetailActivity.vue`, `TaskGraphic.vue` and the
+   detail card container.
 
 ## Suggested order
 

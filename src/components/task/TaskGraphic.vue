@@ -49,7 +49,10 @@ const atomWG = computed(() => props.atomWidth + props.atomGutter)
 const atomHG = computed(() => props.atomHeight + props.atomGutter)
 
 const columnCount = computed(() => {
-  const cols = Math.floor((containerWidth.value - props.atomWidth) / atomWG.value) + 1
+  // A zero-width container during the first paint would otherwise produce a
+  // negative canvas width, which the browser rejects and leaves the previous
+  // (too wide) canvas in place.
+  const cols = Math.floor((Math.max(containerWidth.value, props.atomWidth) - props.atomWidth) / atomWG.value) + 1
   return Math.max(cols, 1)
 })
 
@@ -180,11 +183,14 @@ onMounted(() => nextTick(draw))
 <style scoped>
 .task-graphic-container {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: 8px 0;
   overflow: hidden;
 }
 .task-graphic {
   display: block;
+  max-width: 100%;
 }
 .no-bitfield {
   color: var(--m3-on-surface-variant);

@@ -410,6 +410,7 @@ function handleCardBeforeLeave(element: Element) {
             @long-press="handleLongPress"
             @swipe-primary="handleSwipePrimary(item)"
             @swipe-delete="emit('delete', item)"
+            @swipe-share="emit('share-file', item)"
           >
             <component
               :is="taskCardComponent"

@@ -88,23 +88,29 @@ const remainingText = computed(() => {
 <style scoped>
 .activity-cards {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 8px;
+  min-width: 0;
 }
 .activity-card {
   display: grid;
-  grid-template-columns: minmax(88px, 0.36fr) minmax(0, 1fr);
+  grid-template-columns: minmax(72px, 0.36fr) minmax(0, 1fr);
   gap: 10px;
   align-items: center;
+  min-width: 0;
   padding: 10px 12px;
   background: var(--m3-surface-container-low);
   border: 1px solid var(--m3-outline-variant);
   border-radius: var(--radius-md);
 }
 .activity-card > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
   color: var(--m3-on-surface-variant);
   font-size: var(--font-size-xs);
 }
 .activity-card strong {
+  min-width: 0;
   overflow-wrap: anywhere;
   font-weight: 500;
   font-variant-numeric: tabular-nums;
@@ -116,6 +122,11 @@ const remainingText = computed(() => {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+}
+.progress-row :deep(.linear-progress) {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 .progress-pct {
   white-space: nowrap;

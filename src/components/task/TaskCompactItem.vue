@@ -228,7 +228,7 @@ const compactStatusColor = computed(() => {
 }
 .compact-remote-badge {
   flex: 0 1 auto;
-  max-width: 26%;
+  max-width: 16%;
   overflow: hidden;
   padding: 1px 6px;
   color: var(--m3-on-tertiary-container);

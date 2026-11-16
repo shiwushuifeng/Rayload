@@ -123,9 +123,11 @@ function remoteActions(): ActionDef[] {
   }
   list.push({ key: 'delete', icon: TrashOutline, label: t('task.delete-task'), event: 'delete' })
   if (props.minimal) {
+    // The compact row keeps a single row action so the filename gets the space.
+    // "Send to this device" stays reachable by swiping the row right, and from
+    // the task detail page.
     const details = list.find((action) => action.key === 'details')
-    const send = list.find((action) => action.key === 'send-to-local')
-    return [details, send].filter((action): action is ActionDef => Boolean(action)).reverse()
+    return details ? [details] : []
   }
   return list.reverse()
 }

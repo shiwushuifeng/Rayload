@@ -3,6 +3,19 @@ import { reactive } from 'vue'
 
 const STORAGE_KEY = 'rayload.lan-device-colors.v1'
 export const deviceColors = reactive<Record<string, string>>({})
+/**
+ * Accent palette used when a device has no custom color. Settings, task list
+ * and cards must all resolve through {@link resolveDeviceAccent}; using a
+ * different default in one place is what made the chosen color look desynced.
+ */
+const ACCENT_PALETTE = [
+  'var(--m3-primary)',
+  'var(--m3-tertiary)',
+  'var(--m3-secondary)',
+  'var(--m3-success)',
+  'var(--m3-status-waiting)',
+  'var(--m3-error)',
+] as const
 let hydrated = false
 
 function hydrate(): void {
@@ -37,4 +50,17 @@ export function setDeviceColor(id: string, color: string): void {
   } catch {
     // Keep the color for this session when storage is unavailable.
   }
+}
+
+/**
+ * Resolves the accent for a device identity: the stored custom color when there
+ * is one, otherwise a stable color derived from the identity so the same device
+ * always gets the same accent across every view.
+ */
+export function resolveDeviceAccent(identity: string): string {
+  const custom = getDeviceColor(identity)
+  if (custom) return custom
+  let hash = 0
+  for (const char of identity) hash = (hash * 31 + char.charCodeAt(0)) >>> 0
+  return ACCENT_PALETTE[hash % ACCENT_PALETTE.length]
 }

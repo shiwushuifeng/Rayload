@@ -1003,6 +1003,7 @@ async function onFileRenamed() {
   min-width: 0;
 }
 .detail-card {
+  min-width: 0;
   background: var(--m3-surface-container-low);
   border: 1px solid var(--m3-outline-variant);
   border-radius: var(--radius-lg);
