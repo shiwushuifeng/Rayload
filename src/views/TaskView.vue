@@ -435,7 +435,12 @@ function deleteTask(task: Aria2Task): void {
   flex-direction: column;
 }
 .task-home-stats {
-  margin: 10px var(--content-gutter, 16px) 4px;
+  /* Match the task list cap so the tiles and the cards share one column. */
+  width: 100%;
+  max-width: 1120px;
+  margin: 10px auto 4px;
+  padding-inline: var(--content-gutter, 16px);
+  box-sizing: border-box;
 }
 .panel-content--selecting {
   padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));

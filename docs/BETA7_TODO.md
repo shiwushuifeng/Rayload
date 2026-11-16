@@ -99,20 +99,17 @@ Nothing in this list has been implemented yet.
 
 ### Module 1 — UI and responsive layout
 
-1. Settings page:
-   - Mobile (< 768px): replace the vertical long list with horizontal tabs at
-     the top (Account, Downloads, Appearance, Advanced) and show the card flow
-     underneath. Files: `src/views/PreferenceView.vue`,
-     `src/components/layout/navigation.ts` (`preferenceGroups`),
-     `src/styles/preferences.css`.
-   - Tablet: keep the two-column layout; cap and center the right pane width.
-2. Wide screens: cap and center task-list cards, header statistics tiles and
-   charts. `src/components/task/TaskList.vue` already sets `max-width: 1120px`;
-   check `HomeStatsBar.vue`, `SpeedTrendCard.vue`, `HistoryTrendCard.vue`.
-3. Bottom bar overflow: it wraps into two rows when many icons are enabled.
-   Keep one row only — max five items, extras behind "More", or a horizontally
-   scrollable row. File: `src/components/layout/AppSidebar.vue`
-   (`.sidebar.compact` uses `grid-template-columns: repeat(auto-fit, ...)`).
+1. ✅ Settings page:
+   - Mobile (< 768px): the vertical group list is replaced by a horizontal tab
+     strip (Account, Downloads, Appearance, Advanced) with the sections of the
+     active group flowing as cards underneath. `PreferenceView.vue`.
+   - Tablet and up: the two-column layout stays and the right pane is capped at
+     860px and centered.
+2. ✅ Wide screens: the stats tiles and the dashboard now share the task list's
+   1120px cap (`HomeStatsBar` in `TaskView.vue`, every section in
+   `StatisticsView.vue`).
+3. ✅ Bottom bar overflow: `.sidebar.compact` now lays out one scrolling row
+   (`grid-auto-flow: column`) instead of wrapping onto a second row.
 
 ### Module 2 — interaction and logic
 

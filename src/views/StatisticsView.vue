@@ -598,6 +598,11 @@ async function loadGlobalStat(): Promise<void> {
 }
 .statistics-view > * {
   flex: 0 0 auto;
+  /* Wide screens: cap and center every tile, chart and shortcut row so the
+     dashboard keeps the same reading width as the task list. */
+  width: 100%;
+  max-width: 1120px;
+  margin-inline: auto;
 }
 .statistics-tabs {
   max-width: 420px;

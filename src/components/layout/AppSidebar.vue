@@ -323,15 +323,25 @@ function enterKeepAwake(): void {
 }
 .sidebar.compact {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
+  /* A single row that scrolls horizontally. `auto-fit` with `1fr` used to wrap
+     the extra entries onto a second row as soon as more than five were
+     enabled, which pushed the bar over the task list. */
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(44px, 1fr);
+  grid-template-columns: none;
   align-items: stretch;
   gap: 2px;
   height: auto;
   min-height: 56px;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
   padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid var(--m3-outline-variant);
   background: var(--m3-surface-container);
+}
+.sidebar.compact::-webkit-scrollbar {
+  display: none;
 }
 .sidebar.compact .sidebar-scopes,
 .sidebar.compact .sidebar-bottom {
