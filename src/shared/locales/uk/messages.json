@@ -1200,7 +1200,11 @@
     "checksum-online-found": "Known as {name}",
     "checksum-online-unavailable": "Public lookup is unavailable right now",
     "checksum-auto-verify-match": "{taskName} matches the published checksum",
-    "checksum-auto-verify-mismatch": "{taskName} does not match the published checksum"
+    "checksum-auto-verify-mismatch": "{taskName} does not match the published checksum",
+    "install-apk": "Install package",
+    "install-apk-started": "The package installer is opening",
+    "install-apk-failed": "Could not start the package installer",
+    "preview-media": "Preview"
   },
   "media": {
     "probing": "Аналіз медіа",
@@ -1321,7 +1325,6 @@
     "consent-eula-hint": "Умови використання, ліцензія та відповідальність",
     "consent-privacy-hint": "Як ваші дані залишаються на пристрої",
     "skip": "Skip",
-    "default-download-path": "Default download path",
     "consent-disclaimer-hint": "Technical use, copyright and liability"
   },
   "trash": {
@@ -1355,8 +1358,6 @@
     "placeholder-tag": "Live",
     "categories-title": "Categories",
     "categories-hint": "Completed downloads grouped by file category",
-    "open-lan": "LAN connection",
-    "open-history": "Download history",
     "shortcuts-title": "Quick actions",
     "trend-empty": "No completed downloads in the last 7 days.",
     "category-tasks": "{count} tasks",
@@ -1382,7 +1383,19 @@
     "all-devices-active": "Active tasks",
     "all-history-hint": "Completed downloads across every paired device",
     "all-trend-hint": "Aggregated from local and paired-device download history",
-    "all-categories-hint": "Completed downloads grouped by category across all devices"
+    "all-categories-hint": "Completed downloads grouped by category across all devices",
+    "clear-cache": "Clear download cache",
+    "clear-cache-hint": "Remove finished control files and cached data",
+    "clear-cache-done": "Freed {size}",
+    "storage-analysis": "Storage space analysis",
+    "storage-analysis-title": "Storage space",
+    "storage-downloads": "Downloads",
+    "storage-cache": "Cache",
+    "storage-data": "App data",
+    "storage-temp": "Temp files",
+    "storage-free": "Free space",
+    "storage-missing": "Not created yet",
+    "storage-close": "Close"
   },
   "lan-devices": {
     "title": "LAN devices",

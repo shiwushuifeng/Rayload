@@ -22,6 +22,8 @@ import {
   ShareSocialOutline,
   ShieldCheckmarkOutline,
   DocumentTextOutline,
+  CubeOutline,
+  PlayCircleOutline,
 } from '@vicons/ionicons5'
 import SendToDeviceIcon from './SendToDeviceIcon.vue'
 import { type Component } from 'vue'
@@ -58,6 +60,8 @@ const emit = defineEmits<{
   'remote-details': []
   'remote-checksum': []
   'stop-seeding': []
+  'install-apk': []
+  'preview-media': []
 }>()
 
 const { t } = useI18n()
@@ -65,6 +69,34 @@ const { isAndroid } = usePlatform()
 const androidFolderLabel = computed(() => t('task.open-file'))
 const desktopFolderLabel = computed(() => t('task.show-in-folder'))
 const folderActionLabel = computed(() => (isAndroid.value ? androidFolderLabel.value : desktopFolderLabel.value))
+
+/** Package formats the Android installer understands. */
+const INSTALLABLE_EXTENSIONS = new Set(['apk', 'apks', 'xapk'])
+/** Formats the system player can preview. */
+const PREVIEWABLE_EXTENSIONS = new Set([
+  'mp4',
+  'mkv',
+  'webm',
+  'mov',
+  'm4v',
+  'avi',
+  'flv',
+  'ts',
+  'mp3',
+  'flac',
+  'm4a',
+  'ogg',
+  'opus',
+  'wav',
+  'aac',
+])
+
+/** Extension of the task's first file, lowercased and without the dot. */
+function taskFileExtension(task: Aria2Task): string {
+  const raw = task.files?.[0]?.path ?? task.files?.[0]?.uris?.[0]?.uri ?? ''
+  const name = raw.split(/[\\/]/).pop() ?? ''
+  return name.includes('.') ? name.split('.').pop()!.toLowerCase() : ''
+}
 
 interface ActionDef {
   key: string
@@ -247,6 +279,23 @@ const actions = computed(() => {
           },
         ]
       : []),
+    ...(isAndroid.value && (props.task.status === TASK_STATUS.COMPLETE || props.task.status === TASK_STATUS.REMOVED)
+      ? [
+          ...(INSTALLABLE_EXTENSIONS.has(taskFileExtension(props.task))
+            ? [{ key: 'install-apk', icon: CubeOutline, label: t('task.install-apk'), event: 'install-apk' }]
+            : []),
+          ...(PREVIEWABLE_EXTENSIONS.has(taskFileExtension(props.task))
+            ? [
+                {
+                  key: 'preview-media',
+                  icon: PlayCircleOutline,
+                  label: t('task.preview-media'),
+                  event: 'preview-media',
+                },
+              ]
+            : []),
+        ]
+      : []),
   ].filter((a) => !primaryKeys.has(a.key))
 
   const full = [...leading, ...common, ...trailing]
@@ -309,6 +358,12 @@ function onAction(event: string) {
       break
     case 'checksum':
       emit('checksum')
+      break
+    case 'install-apk':
+      emit('install-apk')
+      break
+    case 'preview-media':
+      emit('preview-media')
       break
     case 'share-file':
       emit('share-file')

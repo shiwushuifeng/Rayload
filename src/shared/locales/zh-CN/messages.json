@@ -1200,7 +1200,11 @@
     "checksum-online-found": "已知名称为 {name}",
     "checksum-online-unavailable": "当前无法进行公开查询",
     "checksum-auto-verify-match": "{taskName} 与公布校验值一致",
-    "checksum-auto-verify-mismatch": "{taskName} 与公布校验值不一致"
+    "checksum-auto-verify-mismatch": "{taskName} 与公布校验值不一致",
+    "install-apk": "安装应用",
+    "install-apk-started": "正在打开安装程序",
+    "install-apk-failed": "无法启动安装程序",
+    "preview-media": "预览"
   },
   "media": {
     "probing": "正在探测媒体",
@@ -1321,7 +1325,6 @@
     "consent-eula-hint": "使用条款、许可与责任说明",
     "consent-privacy-hint": "了解你的数据如何保留在本机",
     "skip": "跳过",
-    "default-download-path": "默认下载路径",
     "consent-disclaimer-hint": "技术用途、版权与责任说明"
   },
   "trash": {
@@ -1355,8 +1358,6 @@
     "placeholder-tag": "实时",
     "categories-title": "分类统计",
     "categories-hint": "按文件分类统计已完成的下载",
-    "open-lan": "局域网互联",
-    "open-history": "下载历史",
     "shortcuts-title": "快捷入口",
     "trend-empty": "近 7 天暂无已完成的任务。",
     "category-tasks": "{count} 个任务",
@@ -1382,7 +1383,19 @@
     "all-devices-active": "活动任务",
     "all-history-hint": "所有已绑定设备的历史完成任务",
     "all-trend-hint": "汇总本机与已绑定设备的下载历史",
-    "all-categories-hint": "按类别汇总所有设备的已完成下载"
+    "all-categories-hint": "按类别汇总所有设备的已完成下载",
+    "clear-cache": "清理下载缓存",
+    "clear-cache-hint": "删除已完成的控制文件与缓存数据",
+    "clear-cache-done": "已释放 {size}",
+    "storage-analysis": "存储空间分析",
+    "storage-analysis-title": "存储空间",
+    "storage-downloads": "下载目录",
+    "storage-cache": "缓存",
+    "storage-data": "应用数据",
+    "storage-temp": "临时文件",
+    "storage-free": "可用空间",
+    "storage-missing": "尚未创建",
+    "storage-close": "关闭"
   },
   "lan-devices": {
     "title": "局域网设备",

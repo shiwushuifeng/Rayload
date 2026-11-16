@@ -172,6 +172,7 @@ const {
   handleShowInFolder,
   handleVerifyChecksum,
   handleOpenFile,
+  handleInstallApk,
   handleShareFile,
   handleSelectFiles,
 } = useTaskActions({
@@ -331,6 +332,8 @@ function deleteTask(task: Aria2Task): void {
           @folder="handleShowInFolder"
           @checksum="handleVerifyChecksum"
           @open-file="handleOpenFile"
+          @install-apk="handleInstallApk"
+          @preview-media="handleOpenFile"
           @share-file="handleShareFile"
           @select-files="handleSelectFiles"
           @send-to-local="sendRemoteToLocal"

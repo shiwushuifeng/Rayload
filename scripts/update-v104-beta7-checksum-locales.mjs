@@ -9,6 +9,10 @@ const localesRoot = join(root, 'src', 'shared', 'locales')
 
 const english = {
   'task.checksum-cancel': 'Cancel calculation',
+  'task.install-apk': 'Install package',
+  'task.install-apk-started': 'The package installer is opening',
+  'task.install-apk-failed': 'Could not start the package installer',
+  'task.preview-media': 'Preview',
   'task.checksum-export': 'Export checksum file',
   'task.checksum-export-done': 'Checksum file saved to {path}',
   'task.checksum-export-failed': 'Could not write the checksum file',
@@ -42,11 +46,27 @@ const english = {
   'preferences.checksum-cache-clear': 'Clear digest cache',
   'preferences.checksum-cache-cleared': 'Removed {count} cached digests',
   'preferences.checksum-cache-clear-failed': 'Could not clear the digest cache',
+  'statistics.clear-cache': 'Clear download cache',
+  'statistics.clear-cache-hint': 'Remove finished control files and cached data',
+  'statistics.clear-cache-done': 'Freed {size}',
+  'statistics.storage-analysis': 'Storage space analysis',
+  'statistics.storage-analysis-title': 'Storage space',
+  'statistics.storage-downloads': 'Downloads',
+  'statistics.storage-cache': 'Cache',
+  'statistics.storage-data': 'App data',
+  'statistics.storage-temp': 'Temp files',
+  'statistics.storage-free': 'Free space',
+  'statistics.storage-missing': 'Not created yet',
+  'statistics.storage-close': 'Close',
 }
 
 const translations = {
   'zh-CN': {
     'task.checksum-cancel': '取消计算',
+    'task.install-apk': '安装应用',
+    'task.install-apk-started': '正在打开安装程序',
+    'task.install-apk-failed': '无法启动安装程序',
+    'task.preview-media': '预览',
     'task.checksum-export': '导出校验文件',
     'task.checksum-export-done': '校验文件已保存到 {path}',
     'task.checksum-export-failed': '无法写入校验文件',
@@ -80,9 +100,25 @@ const translations = {
     'preferences.checksum-cache-clear': '清空校验缓存',
     'preferences.checksum-cache-cleared': '已清除 {count} 条缓存校验值',
     'preferences.checksum-cache-clear-failed': '无法清空校验缓存',
+    'statistics.clear-cache': '清理下载缓存',
+    'statistics.clear-cache-hint': '删除已完成的控制文件与缓存数据',
+    'statistics.clear-cache-done': '已释放 {size}',
+    'statistics.storage-analysis': '存储空间分析',
+    'statistics.storage-analysis-title': '存储空间',
+    'statistics.storage-downloads': '下载目录',
+    'statistics.storage-cache': '缓存',
+    'statistics.storage-data': '应用数据',
+    'statistics.storage-temp': '临时文件',
+    'statistics.storage-free': '可用空间',
+    'statistics.storage-missing': '尚未创建',
+    'statistics.storage-close': '关闭',
   },
   'zh-TW': {
     'task.checksum-cancel': '取消計算',
+    'task.install-apk': '安裝應用程式',
+    'task.install-apk-started': '正在開啟安裝程式',
+    'task.install-apk-failed': '無法啟動安裝程式',
+    'task.preview-media': '預覽',
     'task.checksum-export': '匯出校驗檔',
     'task.checksum-export-done': '校驗檔已儲存到 {path}',
     'task.checksum-export-failed': '無法寫入校驗檔',
@@ -116,6 +152,18 @@ const translations = {
     'preferences.checksum-cache-clear': '清空校驗快取',
     'preferences.checksum-cache-cleared': '已清除 {count} 條快取校驗值',
     'preferences.checksum-cache-clear-failed': '無法清空校驗快取',
+    'statistics.clear-cache': '清理下載快取',
+    'statistics.clear-cache-hint': '刪除已完成的控制檔與快取資料',
+    'statistics.clear-cache-done': '已釋放 {size}',
+    'statistics.storage-analysis': '儲存空間分析',
+    'statistics.storage-analysis-title': '儲存空間',
+    'statistics.storage-downloads': '下載目錄',
+    'statistics.storage-cache': '缓存',
+    'statistics.storage-data': '應用資料',
+    'statistics.storage-temp': '暫存檔案',
+    'statistics.storage-free': '可用空間',
+    'statistics.storage-missing': '尚未建立',
+    'statistics.storage-close': '關閉',
   },
 }
 
@@ -129,6 +177,19 @@ function setPath(target, dottedKey, value) {
   cursor[parts.at(-1)] = value
 }
 
+function deletePath(target, dottedKey) {
+  const parts = dottedKey.split('.')
+  let cursor = target
+  for (const part of parts.slice(0, -1)) {
+    cursor = cursor?.[part]
+    if (!cursor || typeof cursor !== 'object') return
+  }
+  delete cursor[parts.at(-1)]
+}
+
+// The onboarding engine page no longer shows the default download path box.
+const removedKeys = ['onboarding.default-download-path', 'statistics.open-lan', 'statistics.open-history']
+
 for (const locale of readdirSync(localesRoot)) {
   const directory = join(localesRoot, locale)
   if (!statSync(directory).isDirectory()) continue
@@ -136,6 +197,7 @@ for (const locale of readdirSync(localesRoot)) {
   const messages = JSON.parse(readFileSync(messagesPath, 'utf8'))
   const copy = { ...english, ...(translations[locale] ?? {}) }
   for (const [key, value] of Object.entries(copy)) setPath(messages, key, value)
+  for (const key of removedKeys) deletePath(messages, key)
   writeFileSync(messagesPath, `${JSON.stringify(messages, null, 2)}\n`)
 }
 

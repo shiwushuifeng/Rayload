@@ -7,6 +7,7 @@ interface RayloadNativeBridge {
   chooseDirectory(): void
   shareFile(path: string): boolean
   openFile(path: string): boolean
+  installPackage(path: string): boolean
   setAppIcon(style: 'purple' | 'gold' | 'blue' | 'teal'): boolean
   storagePermissionStatus(): string
   requestStoragePermission(): void
@@ -152,6 +153,11 @@ export function shareAndroidFile(path: string): boolean {
 /** Launches an Android ACTION_VIEW intent for a local file through FileProvider. */
 export function openAndroidFile(path: string): boolean {
   return getRayloadNativeBridge()?.openFile(path) ?? false
+}
+
+/** Opens the system package installer for a downloaded APK. */
+export function installAndroidPackage(path: string): boolean {
+  return getRayloadNativeBridge()?.installPackage(path) ?? false
 }
 
 export function setAndroidAppIcon(style: 'purple' | 'gold' | 'blue' | 'teal'): boolean {

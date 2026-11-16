@@ -24,7 +24,7 @@ import { invoke } from '@tauri-apps/api/core'
 import { resolveTaskFilePath, requestFileRecheck } from '@/composables/useTaskPaths'
 import { resolveExistingTaskFile } from '@/composables/useTaskFileTarget'
 import { logger } from '@shared/logger'
-import { openAndroidFile, shareAndroidFile } from '@/composables/useAndroidNative'
+import { installAndroidPackage, openAndroidFile, shareAndroidFile } from '@/composables/useAndroidNative'
 import { usePlatform } from '@/composables/usePlatform'
 import { NButton, NCheckbox, useDialog } from 'naive-ui'
 import type { Aria2Task, AppConfig, TaskDeletionOptions } from '@shared/types'
@@ -379,6 +379,24 @@ export function useTaskActions(deps: TaskActionsDeps) {
     }
   }
 
+  /** Opens the system package installer for a finished APK download. */
+  async function handleInstallApk(task: Aria2Task) {
+    const target = await resolveOpenTarget(task)
+    if (!target) return
+    try {
+      const fileExists = await invoke<boolean>('check_path_exists', { path: target })
+      if (!fileExists) {
+        message.warning(t('task.file-not-exist'))
+        requestFileRecheck()
+        return
+      }
+      if (installAndroidPackage(target)) message.success(t('task.install-apk-started'))
+      else message.error(t('task.install-apk-failed'))
+    } catch (e) {
+      logger.warn('TaskView.installApk', e instanceof Error ? e.message : JSON.stringify(e))
+      message.error(t('task.install-apk-failed'))
+    }
+  }
   async function handleShareFile(task: Aria2Task) {
     const candidates = [
       resolveTaskFilePath(task),
@@ -425,6 +443,7 @@ export function useTaskActions(deps: TaskActionsDeps) {
     handleVerifyChecksum,
     handleOpenFile,
     handleShareFile,
+    handleInstallApk,
     handleSelectFiles,
   }
 }

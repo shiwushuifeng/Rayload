@@ -111,6 +111,24 @@ class MainActivity : TauriActivity() {
       return startActivitySafely(context, intent)
     }
 
+    /** Launches the package installer for an APK the user downloaded. */
+    @Keep
+    @JvmStatic
+    fun installPackage(context: Context, rawPath: String): Boolean {
+      val file = File(rawPath)
+      if (!file.isFile || !file.canRead()) return false
+      if (!file.extension.equals("apk", ignoreCase = true)) return false
+      val uri = fileProviderUri(context, file) ?: return false
+      val intent = Intent(Intent.ACTION_VIEW).apply {
+        setDataAndType(uri, "application/vnd.android.package-archive")
+        clipData = ClipData.newUri(context.contentResolver, file.name, uri)
+        addFlags(
+          Intent.FLAG_GRANT_READ_URI_PERMISSION or
+            Intent.FLAG_ACTIVITY_NEW_TASK,
+        )
+      }
+      return startActivitySafely(context, intent)
+    }
     /** Switches the Android home-screen shortcut between bundled icon aliases. */
     @Keep
     @JvmStatic
@@ -339,6 +357,9 @@ class MainActivity : TauriActivity() {
 
     @JavascriptInterface
     fun openFile(path: String): Boolean = Companion.openFile(this@MainActivity, path)
+
+    @JavascriptInterface
+    fun installPackage(path: String): Boolean = Companion.installPackage(this@MainActivity, path)
 
     @JavascriptInterface
     fun setAppIcon(style: String): Boolean = Companion.setAppIcon(this@MainActivity, style)

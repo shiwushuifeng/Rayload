@@ -29,6 +29,8 @@ const emit = defineEmits<{
   folder: [task: Aria2Task]
   checksum: [task: Aria2Task]
   'open-file': [task: Aria2Task]
+  'install-apk': [task: Aria2Task]
+  'preview-media': [task: Aria2Task]
   'share-file': [task: Aria2Task]
   'select-files': [task: Aria2Task]
   'send-to-local': [task: Aria2Task]
@@ -429,6 +431,8 @@ function handleCardBeforeLeave(element: Element) {
               @folder="emit('folder', item)"
               @checksum="emit('checksum', item)"
               @open-file="emit('open-file', item)"
+              @install-apk="emit('install-apk', item)"
+              @preview-media="emit('preview-media', item)"
               @share-file="emit('share-file', item)"
               @select-files="emit('select-files', item)"
               @send-to-local="emit('send-to-local', item)"

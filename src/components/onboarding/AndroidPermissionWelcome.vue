@@ -60,7 +60,6 @@ import brandLogoGold from '@/assets/logo.svg'
 import { getVersion } from '@tauri-apps/api/app'
 import LegalDialog from '@/components/legal/LegalDialog.vue'
 import { markWhatsNewSeen, whatsNewFor } from '@shared/whatsNew'
-import { resolveUserVisibleDownloadDir } from '@shared/utils/userVisibleDirectory'
 
 const ONBOARDING_STORAGE_KEY = 'rayload-onboarding-v3'
 const { t, locale } = useI18n()
@@ -89,7 +88,6 @@ const maxConcurrent = ref<number | null>(preferenceStore.config.maxConcurrentDow
 const maxConnections = ref<number | null>(preferenceStore.config.streamMaxConnections)
 const bittorrentEnabled = ref(preferenceStore.config.bittorrentEnabled)
 const floatingOrbEnabled = ref(preferenceStore.config.showSpeedometer)
-const defaultDownloadPath = ref('')
 const { visibility: navigationVisibility, setItemVisible } = useNavigationVisibility()
 const taskDestinations = useTaskDestinations()
 const autoArchiveEnabled = ref(preferenceStore.config.fileCategoryEnabled)
@@ -455,11 +453,6 @@ onMounted(() => {
     visible.value = true
     resetScroll()
   }, 350)
-  void resolveUserVisibleDownloadDir({ configuredDir: preferenceStore.config.dir })
-    .then((resolved) => {
-      defaultDownloadPath.value = resolved.path
-    })
-    .catch((error: unknown) => logger.debug('Onboarding.downloadDir', error))
 })
 </script>
 
@@ -738,10 +731,6 @@ onMounted(() => {
                       <p class="onboarding__archive-hint">{{ t('onboarding.archive-category-hint') }}</p>
                     </template>
                   </div>
-                  <div class="onboarding__card onboarding__card--wide">
-                    <span class="onboarding__section-label">{{ t('onboarding.default-download-path') }}</span>
-                    <code class="onboarding__path">{{ defaultDownloadPath || '—' }}</code>
-                  </div>
                 </template>
 
                 <template v-else-if="step === 5">
@@ -941,12 +930,6 @@ onMounted(() => {
   background: var(--m3-primary);
   border-radius: var(--radius-full);
   transition: width 0.25s ease;
-}
-.onboarding__path {
-  overflow-wrap: anywhere;
-  color: var(--m3-on-surface-variant);
-  font-size: var(--font-size-sm);
-  line-height: 1.5;
 }
 .onboarding__skip {
   min-height: 44px;

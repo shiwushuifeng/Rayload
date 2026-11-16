@@ -2,7 +2,6 @@
 /** @fileoverview Data dashboard with live session totals and local history aggregation. */
 import { computed, onActivated, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { RouterLink } from 'vue-router'
 import { NCard, NIcon, NSpin, NTab, NTabs, NTag } from 'naive-ui'
 import {
   ArchiveOutline,
@@ -16,7 +15,8 @@ import {
   ImageOutline,
   LayersOutline,
   MusicalNotesOutline,
-  TimeOutline,
+  ServerOutline,
+  TrashOutline,
   WifiOutline,
 } from '@vicons/ionicons5'
 import AnimatedNumber from '@/components/common/AnimatedNumber.vue'
@@ -29,7 +29,12 @@ import { useHistoryStore } from '@/stores/history'
 import { usePreferenceStore } from '@/stores/preference'
 import { useLanStore } from '@/stores/lan'
 import { deviceArchLabel } from '@/composables/usePlatform'
+import { invoke } from '@tauri-apps/api/core'
 import { getGlobalStat } from '@/api/aria2'
+import { useAppMessage } from '@/composables/useAppMessage'
+import { useDialog } from 'naive-ui'
+import { h } from 'vue'
+import { getErrorMessage } from '@shared/utils/errorMessage'
 import { bytesToSize } from '@shared/utils/format'
 import { buildDefaultCategories, BUILTIN_CATEGORY_TEMPLATES } from '@shared/constants'
 import { ensureStatisticsHistoryFile } from '@/composables/useStatisticsHistory'
@@ -50,6 +55,83 @@ const records = ref<HistoryRecord[]>([])
 const globalStat = ref<Aria2GlobalStat | null>(null)
 const loading = ref(true)
 const showShortcuts = ref(false)
+const message = useAppMessage()
+const dialog = useDialog()
+const clearingCache = ref(false)
+const loadingStorage = ref(false)
+
+interface StorageUsageEntry {
+  key: string
+  path: string
+  bytes: number
+  exists: boolean
+}
+
+const STORAGE_LABELS: Record<string, () => string> = {
+  downloads: () => t('statistics.storage-downloads'),
+  cache: () => t('statistics.storage-cache'),
+  data: () => t('statistics.storage-data'),
+  temp: () => t('statistics.storage-temp'),
+}
+
+/** Deletes orphaned control files plus cached data, then reports the freed size. */
+async function handleClearDownloadCache(): Promise<void> {
+  if (clearingCache.value) return
+  clearingCache.value = true
+  try {
+    const result = await invoke<{ files: number; bytes: number }>('clear_download_cache', {
+      downloadDir: preferenceStore.config.dir,
+    })
+    message.success(t('statistics.clear-cache-done', { size: bytesToSize(result.bytes, 1) }))
+  } catch (error) {
+    logger.warn('Statistics.clearDownloadCache', getErrorMessage(error))
+    message.error(getErrorMessage(error))
+  } finally {
+    clearingCache.value = false
+  }
+}
+
+/** Shows the size of each app directory next to the free space of the volume. */
+async function openStorageAnalysis(): Promise<void> {
+  if (loadingStorage.value) return
+  loadingStorage.value = true
+  try {
+    const entries = await invoke<StorageUsageEntry[]>('storage_usage', {
+      downloadDir: preferenceStore.config.dir,
+      tempDir: preferenceStore.config.tempFilesDir,
+    })
+    const free = await invoke<number | null>('disk_free_space', { path: preferenceStore.config.dir })
+    dialog.info({
+      title: t('statistics.storage-analysis-title'),
+      content: () =>
+        h('div', { style: 'display:grid;gap:10px' }, [
+          ...entries.map((entry) =>
+            h('div', { style: 'display:flex;justify-content:space-between;gap:12px' }, [
+              h('span', { style: 'color:var(--m3-on-surface-variant)' }, STORAGE_LABELS[entry.key]?.() ?? entry.key),
+              h('strong', null, entry.exists ? bytesToSize(entry.bytes, 2) : t('statistics.storage-missing')),
+            ]),
+          ),
+          h(
+            'div',
+            {
+              style:
+                'display:flex;justify-content:space-between;gap:12px;border-top:1px solid var(--m3-outline-variant);padding-top:8px',
+            },
+            [
+              h('span', { style: 'color:var(--m3-on-surface-variant)' }, t('statistics.storage-free')),
+              h('strong', null, typeof free === 'number' ? bytesToSize(free, 2) : '—'),
+            ],
+          ),
+        ]),
+      positiveText: t('statistics.storage-close'),
+    })
+  } catch (error) {
+    logger.warn('Statistics.storageUsage', getErrorMessage(error))
+    message.error(getErrorMessage(error))
+  } finally {
+    loadingStorage.value = false
+  }
+}
 const activeTab = ref<'local' | 'all'>('local')
 
 const allSpeedSamples = ref<number[]>([])
@@ -453,14 +535,20 @@ async function loadGlobalStat(): Promise<void> {
         </button>
         <Transition name="shortcuts">
           <div v-if="showShortcuts" class="statistics-links">
-            <RouterLink :to="{ name: 'lan-devices' }" class="statistics-link">
-              <NIcon :size="20"><WifiOutline /></NIcon>
-              <span>{{ t('statistics.open-lan') }}</span>
-            </RouterLink>
-            <RouterLink :to="{ name: 'task', params: { status: 'completed' } }" class="statistics-link">
-              <NIcon :size="20"><TimeOutline /></NIcon>
-              <span>{{ t('statistics.open-history') }}</span>
-            </RouterLink>
+            <button
+              type="button"
+              class="statistics-link"
+              :title="t('statistics.clear-cache-hint')"
+              :disabled="clearingCache"
+              @click="handleClearDownloadCache"
+            >
+              <NIcon :size="20"><TrashOutline /></NIcon>
+              <span>{{ t('statistics.clear-cache') }}</span>
+            </button>
+            <button type="button" class="statistics-link" :disabled="loadingStorage" @click="openStorageAnalysis">
+              <NIcon :size="20"><ServerOutline /></NIcon>
+              <span>{{ t('statistics.storage-analysis') }}</span>
+            </button>
           </div>
         </Transition>
       </section>

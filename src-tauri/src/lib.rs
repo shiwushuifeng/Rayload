@@ -892,6 +892,8 @@ pub fn run() {
             commands::online_checksum_lookup,
             commands::github_asset_digest,
             commands::disk_free_space,
+            commands::storage_usage,
+            commands::clear_download_cache,
             commands::read_local_file,
             commands::list_dir_files,
             commands::show_item_in_dir,

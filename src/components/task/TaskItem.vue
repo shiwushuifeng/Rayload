@@ -47,6 +47,8 @@ const emit = defineEmits<{
   folder: [task: Aria2Task]
   checksum: [task: Aria2Task]
   'open-file': [task: Aria2Task]
+  'install-apk': [task: Aria2Task]
+  'preview-media': [task: Aria2Task]
   'share-file': [task: Aria2Task]
   'select-files': [task: Aria2Task]
   'send-to-local': [task: Aria2Task]
@@ -288,6 +290,8 @@ const contentDraggable = computed(
           @folder="emit('folder', task)"
           @checksum="emit('checksum', task)"
           @share-file="emit('share-file', task)"
+          @install-apk="emit('install-apk', task)"
+          @preview-media="emit('preview-media', task)"
           @select-files="emit('select-files', task)"
           @send-to-local="emit('send-to-local', task)"
           @remote-details="emit('remote-details', task)"

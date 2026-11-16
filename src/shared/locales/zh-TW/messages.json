@@ -1200,7 +1200,11 @@
     "checksum-online-found": "已知名稱為 {name}",
     "checksum-online-unavailable": "目前無法進行公開查詢",
     "checksum-auto-verify-match": "{taskName} 與公布校驗值一致",
-    "checksum-auto-verify-mismatch": "{taskName} 與公布校驗值不一致"
+    "checksum-auto-verify-mismatch": "{taskName} 與公布校驗值不一致",
+    "install-apk": "安裝應用程式",
+    "install-apk-started": "正在開啟安裝程式",
+    "install-apk-failed": "無法啟動安裝程式",
+    "preview-media": "預覽"
   },
   "media": {
     "probing": "正在探測媒體",
@@ -1321,7 +1325,6 @@
     "consent-eula-hint": "使用條款、授權與責任說明",
     "consent-privacy-hint": "瞭解您的資料如何保留在本機",
     "skip": "略過",
-    "default-download-path": "預設下載路徑",
     "consent-disclaimer-hint": "技術用途、版權與責任說明"
   },
   "trash": {
@@ -1355,8 +1358,6 @@
     "placeholder-tag": "即時",
     "categories-title": "分類統計",
     "categories-hint": "依檔案分類統計已完成的下載",
-    "open-lan": "區域網路互聯",
-    "open-history": "下載歷史",
     "shortcuts-title": "快捷入口",
     "trend-empty": "近 7 天尚無已完成的任務。",
     "category-tasks": "{count} 個任務",
@@ -1382,7 +1383,19 @@
     "all-devices-active": "活動任務",
     "all-history-hint": "所有已綁定裝置的歷史完成任務",
     "all-trend-hint": "彙整本機與已綁定裝置的下載歷史",
-    "all-categories-hint": "依類別彙整所有裝置的已完成下載"
+    "all-categories-hint": "依類別彙整所有裝置的已完成下載",
+    "clear-cache": "清理下載快取",
+    "clear-cache-hint": "刪除已完成的控制檔與快取資料",
+    "clear-cache-done": "已釋放 {size}",
+    "storage-analysis": "儲存空間分析",
+    "storage-analysis-title": "儲存空間",
+    "storage-downloads": "下載目錄",
+    "storage-cache": "缓存",
+    "storage-data": "應用資料",
+    "storage-temp": "暫存檔案",
+    "storage-free": "可用空間",
+    "storage-missing": "尚未建立",
+    "storage-close": "關閉"
   },
   "lan-devices": {
     "title": "區域網路裝置",

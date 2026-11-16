@@ -1203,3 +1203,125 @@ mod tests {
         );
     }
 }
+
+/// One storage location shown in the space analysis.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StorageUsageEntry {
+    /// Stable identifier the UI translates: `downloads`, `cache`, `data`, `temp`.
+    pub key: String,
+    pub path: String,
+    pub bytes: u64,
+    pub exists: bool,
+}
+
+/// Reports how much space the downloads, the app cache, app data and the engine
+/// temp directory occupy. Missing directories report zero instead of failing.
+#[tauri::command]
+pub async fn storage_usage(
+    app: AppHandle,
+    download_dir: String,
+    temp_dir: String,
+) -> Result<Vec<StorageUsageEntry>, AppError> {
+    let cache_dir = app.path().app_cache_dir().ok();
+    let data_dir = app.path().app_data_dir().ok();
+    let mut entries = Vec::new();
+    let candidates = [
+        ("downloads", Some(PathBuf::from(download_dir))),
+        ("cache", cache_dir.clone()),
+        ("data", data_dir),
+        (
+            "temp",
+            if temp_dir.trim().is_empty() {
+                None
+            } else {
+                Some(PathBuf::from(temp_dir))
+            },
+        ),
+    ];
+    for (key, path) in candidates {
+        let Some(path) = path else { continue };
+        let exists = path.is_dir();
+        let bytes = if exists {
+            tauri::async_runtime::spawn_blocking({
+                let path = path.clone();
+                move || directory_size(&path)
+            })
+            .await
+            .unwrap_or(0)
+        } else {
+            0
+        };
+        entries.push(StorageUsageEntry {
+            key: key.to_string(),
+            path: path.display().to_string(),
+            bytes,
+            exists,
+        });
+    }
+    Ok(entries)
+}
+
+/// Result of clearing the download cache.
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ClearedDownloadCache {
+    pub files: usize,
+    pub bytes: u64,
+}
+
+/// Removes orphaned `.aria2` control files whose data file is gone and empties
+/// the app cache directory. Active downloads are never touched: their control
+/// file still has its data file next to it.
+#[tauri::command]
+pub async fn clear_download_cache(
+    app: AppHandle,
+    download_dir: String,
+) -> Result<ClearedDownloadCache, AppError> {
+    let cache_dir = app.path().app_cache_dir().ok();
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut cleared = ClearedDownloadCache { files: 0, bytes: 0 };
+        let download_root = PathBuf::from(download_dir);
+        if let Ok(entries) = std::fs::read_dir(&download_root) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().and_then(|value| value.to_str()) != Some("aria2") {
+                    continue;
+                }
+                let data_path = path.with_extension("");
+                if data_path.exists() {
+                    continue;
+                }
+                let bytes = entry.metadata().map(|metadata| metadata.len()).unwrap_or(0);
+                if std::fs::remove_file(&path).is_ok() {
+                    cleared.files += 1;
+                    cleared.bytes += bytes;
+                }
+            }
+        }
+        if let Some(cache_dir) = cache_dir {
+            if let Ok(entries) = std::fs::read_dir(&cache_dir) {
+                for entry in entries.flatten() {
+                    let path = entry.path();
+                    let bytes = if path.is_dir() {
+                        directory_size(&path)
+                    } else {
+                        entry.metadata().map(|metadata| metadata.len()).unwrap_or(0)
+                    };
+                    let removed = if path.is_dir() {
+                        std::fs::remove_dir_all(&path).is_ok()
+                    } else {
+                        std::fs::remove_file(&path).is_ok()
+                    };
+                    if removed {
+                        cleared.files += 1;
+                        cleared.bytes += bytes;
+                    }
+                }
+            }
+        }
+        Ok(cleared)
+    })
+    .await
+    .map_err(|error| AppError::Io(format!("Cache cleanup worker failed: {error}")))?
+}

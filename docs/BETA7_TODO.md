@@ -173,15 +173,18 @@ Nothing in this list has been implemented yet.
 
 ### Module 4 — detail and feature completion
 
-14. Onboarding engine page: delete the "default download path" box.
-    `src/components/onboarding/AndroidPermissionWelcome.vue`.
-15. Statistics quick entries: replace "LAN" and "Download history" with
-    "Clear download cache" and "Storage space analysis".
-    `src/views/StatisticsView.vue` (check the quick-action cards).
-16. Completion follow-up: completed `.apk` gets a one-tap install button in the
-    detail page; audio/video files get a preview button.
-    Reuse the existing Android bridge (`open_path_normalized`, FileProvider) and
-    media helpers in `src-tauri/src/services/media/`.
+14. ✅ Onboarding engine page: the "default download path" box is gone.
+    Removed from `AndroidPermissionWelcome.vue` together with its state, its
+    style rule and the unused locale key.
+15. ✅ Statistics quick entries replaced with "Clear download cache" (deletes
+    orphaned `.aria2` control files whose data file is gone plus the app cache,
+    and reports the freed size) and "Storage space analysis" (downloads, cache,
+    app data, temp files and free space). New commands:
+    `clear_download_cache` and `storage_usage`.
+16. ✅ Completion follow-up: a finished `.apk` gets an "Install package" action
+    that opens the system installer through `MainActivity.installPackage`
+    (FileProvider URI plus `REQUEST_INSTALL_PACKAGES`), and finished audio or
+    video get a "Preview" action that opens the system player.
 
 ### Module 5 — test plugins and delivery
 
