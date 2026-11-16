@@ -61,7 +61,9 @@ const groups = computed(() =>
                   ? t('preferences.general')
                   : item === 'plugins'
                     ? t('preferences.plugin-management')
-                    : t('preferences.advanced'),
+                    : item === 'checksum'
+                      ? t('preferences.checksum-title')
+                      : t('preferences.advanced'),
     })),
   })),
 )
@@ -114,6 +116,11 @@ const activeGroup = computed(() => groups.value.find((group) => group.key === ac
         </section>
       </nav>
       <div class="panel-body">
+        <router-view v-slot="{ Component, route: innerRoute }">
+          <Transition name="fade" mode="out-in">
+            <component :is="Component" :key="innerRoute.path" />
+          </Transition>
+        </router-view>
         <div v-if="actions?.isDirty" class="preference-actions-card">
           <PreferenceActionBar
             :is-dirty="actions.isDirty"
@@ -122,11 +129,6 @@ const activeGroup = computed(() => groups.value.find((group) => group.key === ac
             @discard="actions.discard()"
           />
         </div>
-        <router-view v-slot="{ Component, route: innerRoute }">
-          <Transition name="fade" mode="out-in">
-            <component :is="Component" :key="innerRoute.path" />
-          </Transition>
-        </router-view>
       </div>
     </div>
   </div>
@@ -216,9 +218,10 @@ const activeGroup = computed(() => groups.value.find((group) => group.key === ac
   min-height: 0;
 }
 .preference-actions-card {
+  /* Bottom dock: the form scrolls above it, so save/discard stay reachable. */
   flex: none;
   margin: 0 var(--content-gutter) 10px;
-  padding: 10px 12px;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
   background: var(--m3-surface-container-low);
   border: 1px solid var(--m3-outline-variant);
   border-radius: var(--radius-lg);

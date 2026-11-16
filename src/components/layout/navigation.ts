@@ -24,6 +24,7 @@ export const preferenceDestinations = [
   'lan',
   'permissions',
   'advanced',
+  'checksum',
   'plugins',
 ] as const
 
@@ -50,7 +51,7 @@ export const preferenceGroups = [
     key: 'advanced',
     labelKey: 'preferences.group-advanced',
     hintKey: 'preferences.group-advanced-hint',
-    items: ['advanced', 'plugins'],
+    items: ['advanced', 'checksum', 'plugins'],
   },
 ] as const satisfies ReadonlyArray<{
   key: string

@@ -46,7 +46,7 @@ const remainingText = computed(() => {
     <div class="activity-card">
       <span>{{ t('task.task-progress-info') || 'Progress' }}</span>
       <div class="progress-row">
-        <LinearProgress :percentage="percent" :height="10" />
+        <LinearProgress :percentage="percent" :height="10" :active="isActive" />
         <span class="progress-pct"><AnimatedNumber :value="percent" :formatter="formatPercent" /></span>
       </div>
     </div>

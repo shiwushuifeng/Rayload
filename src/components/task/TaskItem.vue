@@ -240,7 +240,13 @@ const contentDraggable = computed(
             {{ taskFullName }}
           </MTooltip>
           <div class="task-progress">
-            <LinearProgress v-if="!indeterminate" :percentage="percent" :color="progressColor" :height="6" />
+            <LinearProgress
+              v-if="!indeterminate"
+              :percentage="percent"
+              :color="progressColor"
+              :height="7"
+              :active="isActive"
+            />
             <div class="task-progress-info">
               <span class="progress-left" :class="{ 'info-hidden': !hasSizeInfo }">
                 <template v-if="!indeterminate">

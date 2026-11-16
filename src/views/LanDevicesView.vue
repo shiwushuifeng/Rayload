@@ -287,13 +287,17 @@ function openRename(id: string, name: string, note: string): void {
 
 function openColor(id: string): void {
   coloring.value = id
-  colorDraft.value = getDeviceColor(id) ?? '#2563EB'
+  const device = confirmedDevices.value.find((item) => item.id === id)
+  const stored = getDeviceColor(id) ?? (device?.name ? getDeviceColor(device.name) : undefined)
+  colorDraft.value = stored && stored.startsWith('#') ? stored : '#2563EB'
 }
 
 function saveColor(): void {
   if (!coloring.value) return
-  setDeviceColor(coloring.value, colorDraft.value)
+  const device = confirmedDevices.value.find((item) => item.id === coloring.value)
+  setDeviceColor(coloring.value, colorDraft.value, device?.name)
   coloring.value = null
+  void lan.refreshDevices()
 }
 
 async function saveRename(): Promise<void> {

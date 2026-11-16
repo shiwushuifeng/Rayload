@@ -555,12 +555,21 @@ async function loadGlobalStat(): Promise<void> {
     </template>
 
     <template v-else>
-      <SpeedTrendCard
-        :samples="allSpeedSamples"
-        :title="t('statistics.all-devices-speed')"
-        :hint="t('statistics.speed-trend-hint', { minutes: SPEED_WINDOW_MINUTES })"
-        :empty-text="t('statistics.speed-trend-empty')"
-      />
+      <div class="statistics-charts">
+        <SpeedTrendCard
+          :samples="allSpeedSamples"
+          :title="t('statistics.all-devices-speed')"
+          :hint="t('statistics.speed-trend-hint', { minutes: SPEED_WINDOW_MINUTES })"
+          :empty-text="t('statistics.speed-trend-empty')"
+        />
+        <HistoryTrendCard
+          :values="allTrendValues"
+          :title="t('statistics.trend-title')"
+          :hint="t('statistics.all-trend-hint')"
+          :empty-text="t('statistics.trend-empty')"
+          :day-label="trendDayLabel"
+        />
+      </div>
 
       <section class="statistics-cards">
         <NCard class="stat-card" :bordered="false">
@@ -605,14 +614,6 @@ async function loadGlobalStat(): Promise<void> {
           <span class="stat-card__hint">{{ t('statistics.all-history-hint') }}</span>
         </NCard>
       </section>
-
-      <HistoryTrendCard
-        :values="allTrendValues"
-        :title="t('statistics.trend-title')"
-        :hint="t('statistics.all-trend-hint')"
-        :empty-text="t('statistics.trend-empty')"
-        :day-label="trendDayLabel"
-      />
 
       <HistoryCategoryCard
         :rows="allCategories"
@@ -694,6 +695,19 @@ async function loadGlobalStat(): Promise<void> {
 }
 .statistics-tabs {
   max-width: 420px;
+}
+.statistics-charts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  min-width: 0;
+}
+@media (min-width: 900px) {
+  /* Tablets: the live speed and the seven-day trend share one row. */
+  .statistics-charts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
 }
 .statistics-all-devices {
   overflow: hidden;

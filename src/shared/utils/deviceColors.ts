@@ -1,21 +1,17 @@
-/** Persisted accent colors for paired LAN devices. */
+/**
+ * Persisted accent colors for paired LAN devices.
+ *
+ * One resolver owns the accent used by the settings list, the task rail and the
+ * cards. Stored colors are composed with the current theme surface so the hue
+ * the user picked survives a light/dark switch instead of looking like a
+ * different color, and a device without a stored color falls back to the theme
+ * accent rather than to a hash palette (which used to make the same device look
+ * green in one view and pink in another).
+ */
 import { reactive } from 'vue'
 
 const STORAGE_KEY = 'rayload.lan-device-colors.v1'
 export const deviceColors = reactive<Record<string, string>>({})
-/**
- * Accent palette used when a device has no custom color. Settings, task list
- * and cards must all resolve through {@link resolveDeviceAccent}; using a
- * different default in one place is what made the chosen color look desynced.
- */
-const ACCENT_PALETTE = [
-  'var(--m3-primary)',
-  'var(--m3-tertiary)',
-  'var(--m3-secondary)',
-  'var(--m3-success)',
-  'var(--m3-status-waiting)',
-  'var(--m3-error)',
-] as const
 let hydrated = false
 
 function hydrate(): void {
@@ -32,6 +28,15 @@ function hydrate(): void {
   }
 }
 
+function persist(): void {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(deviceColors))
+  } catch {
+    // Keep the color for this session when storage is unavailable.
+  }
+}
+
+/** Raw stored color of one key, without any theme composition. */
 export function getDeviceColor(id: string): string | undefined {
   hydrate()
   return deviceColors[id]
@@ -42,25 +47,41 @@ export function useDeviceColors(): Record<string, string> {
   return deviceColors
 }
 
-export function setDeviceColor(id: string, color: string): void {
+/**
+ * Stores a device color under its id and, when given, an alias such as the
+ * device name. Remote tasks only carry the id or the name, so writing both keeps
+ * the list and the cards in agreement.
+ */
+export function setDeviceColor(id: string, color: string, alias?: string): void {
   hydrate()
   deviceColors[id] = color
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(deviceColors))
-  } catch {
-    // Keep the color for this session when storage is unavailable.
-  }
+  const aliasKey = alias?.trim()
+  if (aliasKey && aliasKey !== id) deviceColors[aliasKey] = color
+  persist()
 }
 
 /**
- * Resolves the accent for a device identity: the stored custom color when there
- * is one, otherwise a stable color derived from the identity so the same device
- * always gets the same accent across every view.
+ * Blends a stored color with the current theme surface so it follows light and
+ * dark themes while keeping the chosen hue.
  */
-export function resolveDeviceAccent(identity: string): string {
-  const custom = getDeviceColor(identity)
-  if (custom) return custom
-  let hash = 0
-  for (const char of identity) hash = (hash * 31 + char.charCodeAt(0)) >>> 0
-  return ACCENT_PALETTE[hash % ACCENT_PALETTE.length]
+export function themedDeviceColor(base: string): string {
+  return `color-mix(in srgb, ${base} 86%, var(--m3-surface-container))`
+}
+
+/** Accent used when a device has no custom color: the theme's own accent. */
+export const DEFAULT_DEVICE_ACCENT = 'var(--m3-primary)'
+
+/**
+ * Resolves the accent from the first key that has a stored color. Callers pass
+ * every identity a device can appear under (id, name, fingerprint) so the same
+ * device always resolves to the same accent.
+ */
+export function resolveDeviceAccent(...keys: Array<string | null | undefined>): string {
+  hydrate()
+  for (const key of keys) {
+    if (!key) continue
+    const stored = deviceColors[key]
+    if (stored) return themedDeviceColor(stored)
+  }
+  return DEFAULT_DEVICE_ACCENT
 }

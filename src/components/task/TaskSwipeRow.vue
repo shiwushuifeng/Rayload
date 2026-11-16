@@ -1,6 +1,15 @@
 <script setup lang="ts">
-/** @fileoverview Touch gestures for one task card: long press, tap and swipe actions. */
-import { computed, onBeforeUnmount, ref } from 'vue'
+/**
+ * @fileoverview Touch gestures for one task card: long press, tap and swipe actions.
+ *
+ * Touch input is driven from `touchstart`/`touchmove`/`touchend` instead of
+ * pointer events. Android's WebView delivers `pointercancel` as soon as the
+ * scroller or SortableJS touches the gesture, which silently aborted every
+ * swipe on real devices while emulator drags kept working. A non-passive
+ * `touchmove` listener lets the row claim the gesture the moment it locks
+ * horizontally, so the list stops scrolling and the swipe survives.
+ */
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NIcon } from 'naive-ui'
 import { PauseOutline, PlayOutline, ShareSocialOutline, TrashOutline } from '@vicons/ionicons5'
@@ -8,6 +17,7 @@ import { triggerHaptic } from '@/composables/useHaptics'
 import { usePlatform } from '@/composables/usePlatform'
 import { useReducedMotion } from '@/composables/useReducedMotion'
 import { TASK_STATUS } from '@shared/constants'
+import { logger } from '@shared/logger'
 import type { Aria2Task } from '@shared/types'
 
 const props = withDefaults(defineProps<{ task: Aria2Task; selectionMode: boolean; disabled?: boolean }>(), {
@@ -22,17 +32,19 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const { isAndroid } = usePlatform()
 const reduceMotion = useReducedMotion()
 const SWIPE_THRESHOLD = 48
 const MAX_OFFSET = 104
 const LONG_PRESS_MS = 520
 // A real thumb wobbles before it travels sideways, so the drag needs a dead zone
 // and a forgiving axis decision. An emulator drag is a perfectly straight line
-// and hides both problems, which is why beta6 passed on the AVD but not on a
-// physical device.
+// and hides both problems.
 const DRAG_DEAD_ZONE = 12
 const AXIS_DOMINANCE = 1.2
 const LONG_PRESS_CANCEL_DISTANCE = 8
+
+type PrimaryAction = 'send-local' | 'share' | 'resume' | 'pause'
 
 const offset = ref(0)
 const dragging = ref(false)
@@ -46,29 +58,15 @@ const interactionTarget =
   'button, a, input, textarea, select, [data-no-drag], [data-task-drag-handle], .task-item-actions'
 const rowRef = ref<HTMLElement | null>(null)
 
-let pointerId: number | null = null
-let pointerCaptured = false
+let active = false
 let startX = 0
 let startY = 0
+let lastDeltaX = 0
 let longPressTimer: number | null = null
 let longPressTriggered = false
 let dismissTimer: number | null = null
 let restoreTimer: number | null = null
 
-const contentStyle = computed<Record<string, string>>(() => {
-  const style: Record<string, string> = {}
-  if (dismissing.value) {
-    style['--swipe-exit-from'] = `${exitFrom.value}px`
-  } else if (!restoring.value) {
-    style.transform = `translate3d(${offset.value}px, 0, 0)`
-    style.transition = dragging.value ? 'none' : 'transform 220ms cubic-bezier(0.2, 0, 0, 1)'
-  }
-  return style
-})
-
-type PrimaryAction = 'send-local' | 'share' | 'resume' | 'pause'
-
-const { isAndroid } = usePlatform()
 /** Finished local files can be shared through the system sheet, same as the card menu. */
 const canShareFinished = computed(
   () =>
@@ -109,6 +107,17 @@ const primaryLabel = computed(() => {
   }
 })
 
+const contentStyle = computed<Record<string, string>>(() => {
+  const style: Record<string, string> = {}
+  if (dismissing.value) {
+    style['--swipe-exit-from'] = `${exitFrom.value}px`
+  } else if (!restoring.value) {
+    style.transform = `translate3d(${offset.value}px, 0, 0)`
+    style.transition = dragging.value ? 'none' : 'transform 220ms cubic-bezier(0.2, 0, 0, 1)'
+  }
+  return style
+})
+
 function actionStyle(action: 'primary' | 'delete') {
   const visible = direction.value === action
   const progress = Math.min(1, Math.abs(offset.value) / SWIPE_THRESHOLD)
@@ -122,26 +131,6 @@ function clearLongPressTimer() {
   if (longPressTimer !== null) {
     window.clearTimeout(longPressTimer)
     longPressTimer = null
-  }
-}
-
-function capturePointer(id: number) {
-  if (pointerCaptured) return
-  try {
-    rowRef.value?.setPointerCapture(id)
-    pointerCaptured = true
-  } catch {
-    // Pointer capture can be rejected for synthetic events; moves still work.
-  }
-}
-
-function releasePointer(id: number | null) {
-  if (id === null || !pointerCaptured) return
-  pointerCaptured = false
-  try {
-    rowRef.value?.releasePointerCapture(id)
-  } catch {
-    // Capture may already be gone, for example after pointercancel.
   }
 }
 
@@ -159,9 +148,7 @@ function clearDismissTimers() {
 function resetGesture() {
   clearLongPressTimer()
   clearDismissTimers()
-  releasePointer(pointerId)
-  pointerId = null
-  pointerCaptured = false
+  active = false
   dragging.value = false
   direction.value = null
   hapticFired.value = false
@@ -170,21 +157,20 @@ function resetGesture() {
   offset.value = 0
 }
 
-function onPointerDown(event: PointerEvent) {
-  if (props.selectionMode || props.disabled || event.pointerType === 'mouse' || event.button !== 0) return
-  const target = event.target
+function beginGesture(target: EventTarget | null, x: number, y: number): void {
+  if (props.selectionMode || props.disabled) return
   if (target instanceof Element && target.closest(interactionTarget)) return
+  if (active) return
 
-  pointerId = event.pointerId
-  // Capture is taken only once a horizontal drag is locked in. Capturing on
-  // pointerdown hands the whole gesture to the row, which cancels the list
-  // scroller and, on Android, makes the WebView emit pointercancel.
-  startX = event.clientX
-  startY = event.clientY
+  active = true
+  startX = x
+  startY = y
+  lastDeltaX = 0
   longPressTriggered = false
   clearLongPressTimer()
   longPressTimer = window.setTimeout(() => {
     longPressTimer = null
+    if (dragging.value) return
     longPressTriggered = true
     suppressClickUntil.value = Date.now() + 700
     triggerHaptic()
@@ -192,52 +178,64 @@ function onPointerDown(event: PointerEvent) {
   }, LONG_PRESS_MS)
 }
 
-function onPointerMove(event: PointerEvent) {
-  if (event.pointerId !== pointerId || longPressTriggered) return
-  const deltaX = event.clientX - startX
-  const deltaY = event.clientY - startY
+/** Returns true when the move was consumed by the swipe. */
+function moveGesture(x: number, y: number): boolean {
+  if (!active || longPressTriggered) return false
+  const deltaX = x - startX
+  const deltaY = y - startY
   const absX = Math.abs(deltaX)
   const absY = Math.abs(deltaY)
+
   if (!dragging.value) {
     // Any real movement proves the finger is not resting for a long press.
-    if (absX > LONG_PRESS_CANCEL_DISTANCE || absY > LONG_PRESS_CANCEL_DISTANCE) {
-      clearLongPressTimer()
-    }
-    if (absX < DRAG_DEAD_ZONE && absY < DRAG_DEAD_ZONE) return
-    // Leave clearly vertical gestures to the list scroller. The dominance ratio
-    // matters: a horizontal swipe usually starts with a few pixels of vertical
-    // travel, so a strict |dy| >= |dx| test cancels most real swipes.
+    if (absX > LONG_PRESS_CANCEL_DISTANCE || absY > LONG_PRESS_CANCEL_DISTANCE) clearLongPressTimer()
+    if (absX < DRAG_DEAD_ZONE && absY < DRAG_DEAD_ZONE) return false
+    // Leave clearly vertical gestures to the list scroller.
     if (absY > absX * AXIS_DOMINANCE) {
-      pointerId = null
-      return
+      active = false
+      return false
     }
-    if (absX < DRAG_DEAD_ZONE) return
+    if (absX < DRAG_DEAD_ZONE) return false
     clearLongPressTimer()
     dragging.value = true
-    capturePointer(event.pointerId)
+    logger.debug('TaskSwipe.lock', `gid=${props.task.gid} dx=${Math.round(deltaX)} dy=${Math.round(deltaY)}`)
   }
-  offset.value = Math.max(-MAX_OFFSET, Math.min(MAX_OFFSET, deltaX))
-  if (primaryDisabled.value && offset.value > 0) offset.value = 0
+
+  lastDeltaX = Math.max(-MAX_OFFSET, Math.min(MAX_OFFSET, deltaX))
+  offset.value = primaryDisabled.value && lastDeltaX > 0 ? 0 : lastDeltaX
   direction.value = offset.value < 0 ? 'delete' : 'primary'
   if (!hapticFired.value && Math.abs(offset.value) >= SWIPE_THRESHOLD) {
     hapticFired.value = true
     triggerHaptic()
   }
+  return true
 }
 
-function finishSwipe() {
+function finishGesture(): void {
+  if (!active) return
+  active = false
+  clearLongPressTimer()
+  if (longPressTriggered) {
+    longPressTriggered = false
+    resetGesture()
+    return
+  }
+  if (!dragging.value) {
+    resetGesture()
+    return
+  }
+
   const action = direction.value
   const shouldAct = Math.abs(offset.value) >= SWIPE_THRESHOLD
   const releaseOffset = offset.value
   suppressClickUntil.value = Date.now() + 480
   dragging.value = false
   direction.value = null
-  releasePointer(pointerId)
-  pointerId = null
   if (!shouldAct || !action) {
     offset.value = 0
     return
   }
+  logger.debug('TaskSwipe.commit', `gid=${props.task.gid} action=${action} offset=${Math.round(releaseOffset)}`)
   if (action === 'primary') {
     offset.value = 0
     if (primaryAction.value === 'share') emit('swipe-share', props.task)
@@ -266,50 +264,59 @@ function finishSwipe() {
   }, 560)
 }
 
-function onPointerUp(event: PointerEvent) {
-  if (event.pointerId !== pointerId) return
-  releasePointer(event.pointerId)
-  clearLongPressTimer()
-  if (longPressTriggered) {
+/**
+ * An interrupted gesture that already passed the threshold still counts: the
+ * scroller or the drag library taking over must not swallow the user's intent.
+ */
+function interruptGesture(): void {
+  if (!dragging.value) {
     resetGesture()
-    longPressTriggered = false
     return
   }
-  if (dragging.value) {
-    finishSwipe()
-    return
+  finishGesture()
+}
+
+function onTouchStart(event: TouchEvent) {
+  const touch = event.touches[0]
+  if (!touch) return
+  beginGesture(event.target, touch.clientX, touch.clientY)
+}
+
+function onTouchMove(event: TouchEvent) {
+  const touch = event.touches[0]
+  if (!touch) return
+  if (moveGesture(touch.clientX, touch.clientY) && event.cancelable) {
+    // Claim the gesture once it is horizontal so the list stops scrolling.
+    event.preventDefault()
   }
-  resetGesture()
+}
+
+function onTouchEnd() {
+  finishGesture()
+}
+
+function onTouchCancel() {
+  interruptGesture()
+}
+
+function onPointerDown(event: PointerEvent) {
+  if (event.pointerType === 'touch' || event.button !== 0) return
+  beginGesture(event.target, event.clientX, event.clientY)
+}
+
+function onPointerMove(event: PointerEvent) {
+  if (event.pointerType === 'touch') return
+  moveGesture(event.clientX, event.clientY)
+}
+
+function onPointerUp(event: PointerEvent) {
+  if (event.pointerType === 'touch') return
+  finishGesture()
 }
 
 function onPointerCancel(event: PointerEvent) {
-  if (event.pointerId !== pointerId) return
-  releasePointer(event.pointerId)
-  resetGesture()
-}
-
-/**
- * The WebView can revoke capture mid-gesture, for example when the scroller
- * takes over or the app is backgrounded. Without this handler the offset would
- * stay stuck at its last dragged position.
- */
-function onLostPointerCapture(event: PointerEvent) {
-  if (event.pointerId !== pointerId) return
-  pointerCaptured = false
-  if (longPressTriggered) {
-    resetGesture()
-    longPressTriggered = false
-    return
-  }
-  if (dragging.value) {
-    finishSwipe()
-    return
-  }
-  resetGesture()
-}
-
-function onContextMenu(event: MouseEvent) {
-  if (dragging.value || Date.now() < suppressClickUntil.value) event.preventDefault()
+  if (event.pointerType === 'touch') return
+  interruptGesture()
 }
 
 function onClick(event: MouseEvent) {
@@ -324,7 +331,28 @@ function onClick(event: MouseEvent) {
   emit('activate', event)
 }
 
+function onContextMenu(event: MouseEvent) {
+  if (dragging.value || Date.now() < suppressClickUntil.value) event.preventDefault()
+}
+
+onMounted(() => {
+  const element = rowRef.value
+  if (!element) return
+  // Non-passive so a horizontal swipe can stop the scroller.
+  element.addEventListener('touchstart', onTouchStart, { passive: true })
+  element.addEventListener('touchmove', onTouchMove, { passive: false })
+  element.addEventListener('touchend', onTouchEnd, { passive: true })
+  element.addEventListener('touchcancel', onTouchCancel, { passive: true })
+})
+
 onBeforeUnmount(() => {
+  const element = rowRef.value
+  if (element) {
+    element.removeEventListener('touchstart', onTouchStart)
+    element.removeEventListener('touchmove', onTouchMove)
+    element.removeEventListener('touchend', onTouchEnd)
+    element.removeEventListener('touchcancel', onTouchCancel)
+  }
   clearLongPressTimer()
   clearDismissTimers()
 })
@@ -339,7 +367,6 @@ onBeforeUnmount(() => {
     @pointermove="onPointerMove"
     @pointerup="onPointerUp"
     @pointercancel="onPointerCancel"
-    @lostpointercapture="onLostPointerCapture"
     @contextmenu="onContextMenu"
     @click="onClick"
   >

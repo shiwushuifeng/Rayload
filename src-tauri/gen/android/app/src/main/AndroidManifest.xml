@@ -33,7 +33,7 @@
             android:launchMode="singleTask"
             android:label="@string/main_activity_title"
             android:name=".MainActivity"
-            android:screenOrientation="sensor"
+            android:screenOrientation="fullUser"
             android:windowSoftInputMode="adjustResize"
             android:exported="true">
             <intent-filter>

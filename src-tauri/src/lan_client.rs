@@ -569,14 +569,14 @@ pub fn forget(path: &Path, id: &str, auth: &AuthService) -> Result<(), String> {
 /// Drops every stored address record of one device, plus its tracked tasks.
 fn take_peer_records(path: &Path, id: &str) -> Result<Vec<Peer>, String> {
     let mut store = load(path);
-    let Some(fingerprint) = store
+    // Removing a device is idempotent: a stale list entry, an already dropped
+    // peer or an offline device must never turn into a "lan_" error in the UI.
+    let fingerprint = store
         .peers
         .iter()
         .find(|peer| peer.id == id)
         .map(|peer| peer.fingerprint.clone())
-    else {
-        return Err("device not found".into());
-    };
+        .unwrap_or_default();
     let removed: Vec<Peer> = store
         .peers
         .iter()
@@ -588,9 +588,11 @@ fn take_peer_records(path: &Path, id: &str) -> Result<Vec<Peer>, String> {
     store
         .peers
         .retain(|peer| !removed.iter().any(|dropped| dropped.id == peer.id));
-    store
-        .tasks
-        .retain(|task| !removed.iter().any(|peer| peer.id == task.device_id));
+    // Tasks of the removed device go away even when the peer record is already
+    // gone, so a half-finished removal still cleans up.
+    store.tasks.retain(|task| {
+        task.device_id != id && !removed.iter().any(|peer| peer.id == task.device_id)
+    });
     save(path, &store)?;
     Ok(removed)
 }

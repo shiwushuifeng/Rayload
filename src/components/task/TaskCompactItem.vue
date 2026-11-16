@@ -281,6 +281,10 @@ const compactStatusColor = computed(() => {
 }
 .compact-body :deep(.task-item-actions) {
   flex: 0 0 auto;
+  /* Pinned to the right edge of the row so it never looks glued to the name. */
+  margin-left: auto;
+  padding-left: 6px;
+  border-left: 1px solid color-mix(in srgb, var(--m3-outline-variant) 70%, transparent);
 }
 .compact-name {
   display: block;

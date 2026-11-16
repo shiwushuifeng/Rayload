@@ -90,6 +90,11 @@ const router = createRouter({
               name: 'preference-advanced',
               component: () => import('@/components/preference/Advanced.vue'),
             },
+            {
+              path: 'checksum',
+              name: 'preference-checksum',
+              component: () => import('@/components/preference/Checksum.vue'),
+            },
           ],
         },
       ],

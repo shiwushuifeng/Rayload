@@ -8,6 +8,8 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const localesRoot = join(root, 'src', 'shared', 'locales')
 
 const english = {
+  'task.checksum-expected-placeholder':
+    'Paste a checksum: MD5, SHA-1, SHA-256, SHA-512, BLAKE3, SM3 or CRC32, with or without a sha256: prefix',
   'task.checksum-cancel': 'Cancel calculation',
   'task.install-apk': 'Install package',
   'task.install-apk-started': 'The package installer is opening',
@@ -62,6 +64,8 @@ const english = {
 
 const translations = {
   'zh-CN': {
+    'task.checksum-expected-placeholder':
+      '粘贴校验值：支持 MD5、SHA-1、SHA-256、SHA-512、BLAKE3、SM3、CRC32，可带 sha256: 前缀',
     'task.checksum-cancel': '取消计算',
     'task.install-apk': '安装应用',
     'task.install-apk-started': '正在打开安装程序',
@@ -114,6 +118,8 @@ const translations = {
     'statistics.storage-close': '关闭',
   },
   'zh-TW': {
+    'task.checksum-expected-placeholder':
+      '貼上校驗值：支援 MD5、SHA-1、SHA-256、SHA-512、BLAKE3、SM3、CRC32，可帶 sha256: 前置字串',
     'task.checksum-cancel': '取消計算',
     'task.install-apk': '安裝應用程式',
     'task.install-apk-started': '正在開啟安裝程式',

@@ -67,6 +67,40 @@ Copy the result to
 `aapt2 dump badging` (single ABI, `versionName='1.0.4-beta7'`) and report size
 plus SHA-256 against beta6.
 
+## Device feedback round (after the first beta7 build)
+
+The user tested the first beta7 APK and reported nine issues. All of them are
+fixed in the rebuilt package:
+
+1. ✅ Swipe did not work on a real device and never vibrated. The row moved a
+   little and snapped back, which means the gesture started and was then
+   cancelled. Touch input is now driven from `touchstart`/`touchmove`/
+   `touchend` with a non-passive move listener that claims the gesture once it
+   is horizontal; a `touchcancel` after the threshold now finishes the action
+   instead of resetting it.
+2. ✅ The compact card pinned the "file details" action to the right edge with a
+   divider instead of leaving it glued to the filename.
+3. ✅ Settings save/discard moved to a bottom dock above the safe area.
+4. ✅ Checksum settings became their own section, a peer of Advanced and Plugin
+   management: route `preference-checksum`, `src/components/preference/Checksum.vue`
+   and `src/composables/useChecksumPreference.ts`.
+5. ✅ Android orientation changed from `sensor` to `fullUser` so the app follows
+   the system rotation including the user's rotation lock.
+6. ✅ Progress bars restyled: inset track, gradient fill with a top highlight and
+   a slow sheen while a download is in flight (disabled under reduced motion).
+7. ✅ Removing an offline device is idempotent: `take_peer_records` no longer
+   returns "device not found", and the tasks of that device are cleaned up even
+   when the peer record is already gone.
+8. ✅ Device accent has one source of truth: stored colors are blended with the
+   theme surface so light and dark keep the chosen hue, the picker and the list
+   read the same value, and a device without a color falls back to the theme
+   accent instead of a hash palette (that hash was what produced three different
+   colors for one device).
+9. ✅ Checksum placeholder now lists every supported algorithm and mentions the
+   optional `sha256:` prefix.
+10. ✅ On tablets the live speed card and the seven-day trend share one row
+    (`statistics-charts` grid at >= 900px).
+
 ## Test-build history (beta4 → beta6)
 
 ### beta4 — UI/UX restructure

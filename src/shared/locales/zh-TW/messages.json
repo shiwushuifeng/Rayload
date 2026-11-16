@@ -1135,7 +1135,7 @@
     "checksum-github-unavailable": "暫時無法使用 GitHub 校驗",
     "checksum-github-none": "找不到此檔案的 GitHub 發佈校驗值",
     "checksum-expected": "預期校驗值",
-    "checksum-expected-placeholder": "貼上 MD5、SHA-1、SHA-256 或 SHA-512",
+    "checksum-expected-placeholder": "貼上校驗值：支援 MD5、SHA-1、SHA-256、SHA-512、BLAKE3、SM3、CRC32，可帶 sha256: 前置字串",
     "checksum-expected-invalid": "校驗值格式不正確",
     "error-friendly-title": "下載出錯",
     "error-friendly-not-found": "下載連結已失效或檔案已被刪除（HTTP 404）。請檢查連結後重試。",

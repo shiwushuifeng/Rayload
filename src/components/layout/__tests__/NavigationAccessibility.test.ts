@@ -57,6 +57,7 @@ async function setup(path: string) {
           { path: 'permissions', name: 'preference-permissions', component: page },
           { path: 'network', name: 'preference-network', component: page },
           { path: 'advanced', name: 'preference-advanced', component: page },
+          { path: 'checksum', name: 'preference-checksum', component: page },
           { path: 'plugins', name: 'preference-plugins', component: page },
         ],
       },

@@ -27,8 +27,6 @@ import {
   NInputGroup,
   NSwitch,
   NSelect,
-  NCheckbox,
-  NCheckboxGroup,
   NButton,
   NSpace,
   NDivider,
@@ -55,9 +53,6 @@ import {
   WifiOutline,
 } from '@vicons/ionicons5'
 import { logger } from '@shared/logger'
-import { getErrorMessage } from '@shared/utils/errorMessage'
-import { clearChecksumCache } from '@/api/checksum'
-import { CHECKSUM_ALGORITHMS, type ChecksumAlgorithm } from '@shared/types'
 import PreferenceActionRegistration from './PreferenceActionRegistration.vue'
 import PreferenceHintLabel from './PreferenceHintLabel.vue'
 
@@ -91,52 +86,6 @@ const extensionTorrentActionOptions = computed(() => [
   { value: 'open', label: t('preferences.extension-torrent-open') },
   { value: 'save', label: t('preferences.extension-torrent-save') },
 ])
-
-const ALGORITHM_LABELS: Record<ChecksumAlgorithm, string> = {
-  md5: 'MD5',
-  sha1: 'SHA-1',
-  sha256: 'SHA-256',
-  sha512: 'SHA-512',
-  blake3: 'BLAKE3',
-  sm3: 'SM3',
-  crc32: 'CRC32',
-}
-const checksumAlgorithmOptions = CHECKSUM_ALGORITHMS.map((algorithm) => ({
-  value: algorithm,
-  label: ALGORITHM_LABELS[algorithm],
-}))
-const checksumCategoryOptions = computed(() =>
-  preferenceStore.config.fileCategories.map((category) => ({ value: category.label, label: category.label })),
-)
-const checksumRuleModeOptions = computed(() => [
-  { value: 'deny', label: t('preferences.checksum-rule-deny') },
-  { value: 'allow', label: t('preferences.checksum-rule-allow') },
-])
-const clearingChecksumCache = ref(false)
-
-function addChecksumRule() {
-  form.value.checksumRules = [
-    ...form.value.checksumRules,
-    { id: `checksum-rule-${Date.now()}`, enabled: true, pattern: '', regex: false, mode: 'deny' },
-  ]
-}
-
-function removeChecksumRule(index: number) {
-  form.value.checksumRules = form.value.checksumRules.filter((_, position) => position !== index)
-}
-
-async function handleClearChecksumCache() {
-  clearingChecksumCache.value = true
-  try {
-    const removed = await clearChecksumCache()
-    message.success(t('preferences.checksum-cache-cleared', { count: removed }))
-  } catch (error) {
-    logger.warn('Advanced.clearChecksumCache', getErrorMessage(error))
-    message.error(t('preferences.checksum-cache-clear-failed'))
-  } finally {
-    clearingChecksumCache.value = false
-  }
-}
 
 const aria2ConfPath = ref('')
 const engineStatePath = ref('')
@@ -697,97 +646,6 @@ onMounted(async () => {
             </div>
           </NFormItem>
 
-          <NDivider title-placement="left">{{ t('preferences.checksum-title') }}</NDivider>
-          <NFormItem :show-label="false">
-            <NText depth="3">{{ t('preferences.checksum-hint') }}</NText>
-          </NFormItem>
-          <NFormItem>
-            <template #label>
-              <PreferenceHintLabel
-                :label="t('preferences.checksum-algorithms')"
-                :hint="t('preferences.checksum-algorithms-hint')"
-              />
-            </template>
-            <NCheckboxGroup v-model:value="form.checksumAlgorithms">
-              <NSpace>
-                <NCheckbox
-                  v-for="algorithm in checksumAlgorithmOptions"
-                  :key="algorithm.value"
-                  :value="algorithm.value"
-                  :label="algorithm.label"
-                />
-              </NSpace>
-            </NCheckboxGroup>
-          </NFormItem>
-          <NFormItem>
-            <template #label>
-              <PreferenceHintLabel
-                :label="t('preferences.checksum-auto-verify')"
-                :hint="t('preferences.checksum-auto-verify-hint')"
-              />
-            </template>
-            <NSwitch v-model:value="form.checksumAutoVerify" />
-          </NFormItem>
-          <NFormItem v-if="form.checksumAutoVerify">
-            <template #label>
-              <PreferenceHintLabel
-                :label="t('preferences.checksum-categories')"
-                :hint="t('preferences.checksum-categories-hint')"
-              />
-            </template>
-            <NCheckboxGroup v-model:value="form.checksumAutoVerifyCategories">
-              <NSpace>
-                <NCheckbox
-                  v-for="category in checksumCategoryOptions"
-                  :key="category.value"
-                  :value="category.value"
-                  :label="category.label"
-                />
-              </NSpace>
-            </NCheckboxGroup>
-          </NFormItem>
-          <NFormItem>
-            <template #label>
-              <PreferenceHintLabel
-                :label="t('preferences.checksum-online-lookup')"
-                :hint="t('preferences.checksum-online-lookup-hint')"
-              />
-            </template>
-            <NSwitch v-model:value="form.checksumOnlineLookup" />
-          </NFormItem>
-          <NFormItem>
-            <template #label>
-              <PreferenceHintLabel
-                :label="t('preferences.checksum-rules')"
-                :hint="t('preferences.checksum-rules-hint')"
-              />
-            </template>
-            <div class="checksum-rules">
-              <div v-for="(rule, index) in form.checksumRules" :key="rule.id" class="checksum-rule-row">
-                <NInput
-                  v-model:value="rule.pattern"
-                  :placeholder="t('preferences.checksum-rule-pattern')"
-                  class="checksum-rule-pattern"
-                />
-                <NCheckbox v-model:checked="rule.regex" :label="t('preferences.checksum-rule-regex')" />
-                <NSelect v-model:value="rule.mode" :options="checksumRuleModeOptions" class="checksum-rule-mode" />
-                <NButton quaternary :title="t('app.delete')" @click="removeChecksumRule(index)">
-                  <template #icon>
-                    <NIcon :size="14"><TrashOutline /></NIcon>
-                  </template>
-                </NButton>
-              </div>
-              <NButton dashed size="small" @click="addChecksumRule">
-                {{ t('preferences.checksum-rule-add') }}
-              </NButton>
-            </div>
-          </NFormItem>
-          <NFormItem :label="t('preferences.checksum-cache-clear')">
-            <NButton secondary :loading="clearingChecksumCache" @click="handleClearChecksumCache">
-              {{ t('preferences.checksum-cache-clear') }}
-            </NButton>
-          </NFormItem>
-
           <NDivider title-placement="left">{{ t('preferences.maintenance-section') }}</NDivider>
           <NFormItem v-if="isLinux">
             <template #label>
@@ -1026,26 +884,5 @@ onMounted(async () => {
 }
 .proxy-collapse__inner {
   overflow: hidden;
-}
-.checksum-rules {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-  min-width: 0;
-}
-.checksum-rule-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  min-width: 0;
-}
-.checksum-rule-pattern {
-  flex: 1 1 220px;
-  min-width: 0;
-}
-.checksum-rule-mode {
-  flex: 0 0 120px;
 }
 </style>

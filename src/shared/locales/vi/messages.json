@@ -1135,7 +1135,7 @@
     "checksum-github-unavailable": "GitHub verification is unavailable right now",
     "checksum-github-none": "No GitHub release digest found for this file",
     "checksum-expected": "Expected checksum",
-    "checksum-expected-placeholder": "Paste MD5, SHA-1, SHA-256 or SHA-512",
+    "checksum-expected-placeholder": "Paste a checksum: MD5, SHA-1, SHA-256, SHA-512, BLAKE3, SM3 or CRC32, with or without a sha256: prefix",
     "checksum-expected-invalid": "This is not a valid checksum",
     "error-friendly-title": "Download error",
     "error-friendly-not-found": "The download link is no longer valid or the file was removed (HTTP 404). Check the link and try again.",
