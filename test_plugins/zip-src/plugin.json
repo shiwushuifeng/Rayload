@@ -3,5 +3,5 @@
   "version": "1.0.0",
   "description": "Safe script plugin for beta7 import testing. Speaks the newline-delimited JSON plugin protocol.",
   "permissions": ["network"],
-  "allowed_domains": ["example.com"]
+  "allowedDomains": ["example.com"]
 }

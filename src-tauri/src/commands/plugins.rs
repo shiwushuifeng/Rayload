@@ -109,6 +109,30 @@ fn safe_manifest_name(filename: &str) -> Result<&str, AppError> {
     Ok(name)
 }
 
+/// Normalizes an imported file name into the manifest stored in the plugins
+/// directory: `tool.zip`, `tool.sh` and `tool.json` all become `tool.json`.
+fn manifest_name_from_import(filename: &str) -> Result<String, AppError> {
+    let trimmed = filename.trim();
+    if trimmed.is_empty()
+        || trimmed.len() > 128
+        || trimmed.contains(['/', '\\'])
+        || trimmed.starts_with('.')
+        || trimmed.chars().any(char::is_control)
+    {
+        return Err(AppError::InvalidInput("Invalid plugin file name".into()));
+    }
+    let stem = trimmed
+        .strip_suffix(".json")
+        .or_else(|| trimmed.strip_suffix(".zip"))
+        .or_else(|| trimmed.strip_suffix(".sh"))
+        .unwrap_or(trimmed)
+        .trim();
+    if stem.is_empty() {
+        return Err(AppError::InvalidInput("Invalid plugin file name".into()));
+    }
+    Ok(format!("{stem}.json"))
+}
+
 fn safe_script_name(filename: &str) -> Result<&str, AppError> {
     let name = filename.trim();
     if name.is_empty()
@@ -495,7 +519,7 @@ pub fn plugin_save(
     granted_permissions: Vec<String>,
     script_content: Option<String>,
 ) -> Result<PluginEntry, AppError> {
-    let filename = safe_manifest_name(&filename)?;
+    let filename = manifest_name_from_import(&filename)?;
     let manifest = PluginManifest::parse(&content)
         .map_err(|error| AppError::InvalidInput(policy_message(&error)))?;
     manifest_policy(&manifest)?;
@@ -505,6 +529,24 @@ pub fn plugin_save(
     let object = value
         .as_object_mut()
         .ok_or_else(|| AppError::InvalidInput("Plugin manifest must be an object".into()))?;
+    // A script entry is namespaced by its manifest, otherwise every archive that
+    // ships `main.sh` would install over the previous one.
+    let script_entry = if manifest.kind == PluginKind::Script {
+        manifest.entry.as_deref().map(|entry| {
+            let stem = filename.trim_end_matches(".json");
+            let entry = entry.trim();
+            if entry.starts_with(stem) {
+                entry.to_string()
+            } else {
+                format!("{stem}.{entry}")
+            }
+        })
+    } else {
+        None
+    };
+    if let Some(entry) = script_entry.as_deref() {
+        object.insert("entry".into(), Value::String(entry.to_string()));
+    }
     object.insert(
         "grantedPermissions".into(),
         Value::Array(
@@ -529,11 +571,10 @@ pub fn plugin_save(
         if script.trim().is_empty() {
             return Err(AppError::InvalidInput("Plugin script is empty".into()));
         }
-        let entry = manifest
-            .entry
-            .as_deref()
+        let entry = script_entry
+            .clone()
             .ok_or_else(|| AppError::InvalidInput("Plugin script entry is missing".into()))?;
-        let script_name = safe_script_name(entry)?;
+        let script_name = safe_script_name(&entry)?;
         std::fs::write(directory.join(script_name), script)
             .map_err(|error| AppError::Io(error.to_string()))?;
     }
@@ -1096,5 +1137,20 @@ mod tests {
     fn readable_stem_decodes_utf8_file_names() {
         let path = Path::new("/tmp/%E5%8E%9F%E7%A5%9E%E5%90%AF%E5%8A%A8.sh");
         assert_eq!(readable_stem(path), "原神启动");
+    }
+    #[test]
+    fn import_file_names_normalize_to_manifest_names() {
+        // Archives and standalone scripts are imported under their own name and
+        // must land as a manifest the plugin list can see.
+        assert_eq!(manifest_name_from_import("tool.zip").unwrap(), "tool.json");
+        assert_eq!(manifest_name_from_import("tool.sh").unwrap(), "tool.json");
+        assert_eq!(manifest_name_from_import("tool.json").unwrap(), "tool.json");
+        assert_eq!(
+            manifest_name_from_import("原神启动.zip").unwrap(),
+            "原神启动.json"
+        );
+        assert!(manifest_name_from_import("../escape.zip").is_err());
+        assert!(manifest_name_from_import(".hidden.json").is_err());
+        assert!(manifest_name_from_import("   ").is_err());
     }
 }

@@ -181,7 +181,9 @@ async function confirmImport(): Promise<void> {
     await load()
   } catch (error) {
     logger.warn('Plugins.import', error)
-    message.error(t('plugins.import-failed'))
+    // Surface the backend reason: it names the failing field instead of just
+    // telling the user that the import failed.
+    message.error(getErrorMessage(error) || t('plugins.import-failed'))
   } finally {
     importing.value = false
   }

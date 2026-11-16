@@ -5,6 +5,6 @@
   "type": "rule",
   "runtime": "download",
   "permissions": [],
-  "allowed_domains": [],
-  "granted_permissions": []
+  "allowedDomains": [],
+  "grantedPermissions": []
 }
