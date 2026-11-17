@@ -86,7 +86,13 @@ async function handleClearCache() {
 <template>
   <div class="preference-form-wrapper">
     <div class="preference-form-scroll">
-      <NForm label-placement="left" label-align="left" :label-width="preferenceLabelWidth" size="small" class="form-preference">
+      <NForm
+        label-placement="left"
+        label-align="left"
+        :label-width="preferenceLabelWidth"
+        size="small"
+        class="form-preference"
+      >
         <NDivider title-placement="left">{{ t('preferences.checksum-title') }}</NDivider>
         <NFormItem :show-label="false">
           <NText depth="3">{{ t('preferences.checksum-hint') }}</NText>

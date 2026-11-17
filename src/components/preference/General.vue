@@ -330,7 +330,13 @@ onMounted(async () => {
 <template>
   <div class="preference-form-wrapper">
     <div class="preference-form-scroll">
-      <NForm label-placement="left" label-align="left" :label-width="preferenceLabelWidth" size="small" class="form-preference">
+      <NForm
+        label-placement="left"
+        label-align="left"
+        :label-width="preferenceLabelWidth"
+        size="small"
+        class="form-preference"
+      >
         <NFormItem :label="t('about.app-version')">
           <NSpace :size="8" align="center">
             <MTooltip>

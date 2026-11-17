@@ -286,7 +286,13 @@ onMounted(() => {
 <template>
   <div class="preference-form-wrapper">
     <div class="preference-form-scroll">
-      <NForm label-placement="left" label-align="left" :label-width="preferenceLabelWidth" size="small" class="form-preference">
+      <NForm
+        label-placement="left"
+        label-align="left"
+        :label-width="preferenceLabelWidth"
+        size="small"
+        class="form-preference"
+      >
         <NDivider title-placement="left">{{ t('preferences.ed2k-search') }}</NDivider>
         <NFormItem :label="t('preferences.ed2k-search-keyword')">
           <NInput v-model:value="searchKeyword" :disabled="searchActive" @keyup.enter="handleSearch" />

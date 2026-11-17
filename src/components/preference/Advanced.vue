@@ -343,7 +343,13 @@ onMounted(async () => {
 <template>
   <div class="preference-form-wrapper">
     <div class="preference-form-scroll">
-      <NForm label-placement="left" label-align="left" :label-width="preferenceLabelWidth" size="small" class="form-preference">
+      <NForm
+        label-placement="left"
+        label-align="left"
+        :label-width="preferenceLabelWidth"
+        size="small"
+        class="form-preference"
+      >
         <template v-if="props.variant === 'engine'">
           <NDivider title-placement="left">{{ t('preferences.extension-section') }}</NDivider>
           <NFormItem :label="t('preferences.extension-download-behavior')">
