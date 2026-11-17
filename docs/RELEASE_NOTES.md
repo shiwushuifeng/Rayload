@@ -8,13 +8,13 @@
 
 | 版本 | 状态 | 说明 |
 | --- | --- | --- |
-| v1.0.4 | 已发布（稳定版） | 直接作为稳定版发布，所以 `beta1` 从未存在 |
-| v1.0.4-beta2 / beta3 | 内部迭代 | 只在 `release/archive/` 留档，未在 GitHub 建 Release |
-| v1.0.4-beta4 / beta5 / beta6 | 本机测试包 | 只交付了本机 APK，没有对外发布 |
-| v1.0.4-beta7 | **首个对外测试版** | 把 beta4→beta6 的全部改动与 beta7 新功能合成一个可验收包 |
-| v1.0.4-beta8 | **本次（收官）** | 修掉 beta7 真机反馈的全部问题，并补齐插件导入链路 |
+| `v1.0.4`（GitHub 上现名 “Rayload v1.0.4 Beta”） | 已发布，**预发布** | 当初按稳定版发布；因前端问题偏多，已在 GitHub 上更名为 Beta 并标记为 pre-release。它承担了 `beta1` 的角色，所以没有单独的 `beta1` 标签 |
+| `v1.0.4-beta2` / `beta3` | 已发布，预发布 | 两者都在 GitHub 建过 Release（分别为 “Rayload v1.0.4 Beta 2” 与 “Rayload v1.0.4 Beta 3 — Final Test”） |
+| `v1.0.4-beta4` / `beta5` / `beta6` | 仅本机 | 只交付了本机 APK，没有对外发布 |
+| `v1.0.4-beta7` | 仅本机 | 未对外发布；其全部内容（模块 1–4 新功能）已包含在 beta8 |
+| `v1.0.4-beta8` | **本次（收官）** | beta7 + 真机反馈修复 + 插件导入链路修复 |
 
-换句话说：**beta8 = beta7 + 真机反馈修复**，beta7 = beta4~beta6 的合并成果 + 模块 1~4 新功能。
+换句话说：**beta8 = beta7 + 真机反馈修复 + 插件导入修复**，而 beta7 = beta4~beta6 的合并成果 + 模块 1~4 新功能。beta7 与 beta4~beta6 都没有对外发布过，本版是它们第一次也是唯一一次对外交付。
 
 ### beta7 → beta8：真机反馈修复（12 项）
 
@@ -81,11 +81,13 @@
 
 ### Version map
 
-`v1.0.4` shipped as a stable release, so there is no `beta1`. `beta2` and `beta3`
-stayed in `release/archive/`; `beta4`–`beta6` were local test packages. `beta7`
-was the first public test build, folding those together with the module 1–4 work.
-**`beta8` is beta7 plus every fix from the device review** and the plugin import
-repair.
+`v1.0.4` was published as a stable release and has since been renamed to
+"Rayload v1.0.4 Beta" and marked as a pre-release, because the front end needed
+too much polish; it effectively serves as `beta1`, which is why there is no
+separate `beta1` tag. `beta2` and `beta3` are public pre-releases. `beta4`–`beta6`
+were local test packages only, and `beta7` was never published either — its entire
+content is included here. **`beta8` is beta7 plus every device-review fix** and the
+plugin import repair, and it is the only public build of that work.
 
 ### Fixed since beta7
 
@@ -116,7 +118,8 @@ versionName `1.0.4-beta8`, versionCode `10014`, minSdk 24, targetSdk 37, V2 sign
 
 # Rayload v1.0.4 Beta 7
 
-> 这是 **v1.0.4 系列的最后一个测试版**。验收通过后版本号进入 v1.0.5。
+> 当时计划作为 **v1.0.4 系列的最后一个测试版**；后续因真机反馈继续修复，
+> 最终由 `v1.0.4-beta8` 收官，本版未曾对外发布。
 
 ## 中文
 
