@@ -1,7 +1,13 @@
 # Pins the Rust toolchain for every build, local and CI alike.
-# Keep this in sync with the version used to cut releases; `rustup` installs it
-# automatically when someone runs cargo inside the repository.
+#
+# `channel = "stable"` is deliberate: rustup re-downloads a numbered channel
+# whenever that exact toolchain is not installed, which stalls local builds on a
+# slow network. The version is pinned where it is actually consumed — CI installs
+# it explicitly (see .github/workflows/release.yml) and this file records it so
+# local and CI agree. Bump both together.
 [toolchain]
-channel = "1.100.0"
+channel = "stable"
 profile = "minimal"
 targets = ["aarch64-linux-android"]
+
+# Release builds are cut with rustc 1.100.0 (0ef1bc386 2026-11-09).

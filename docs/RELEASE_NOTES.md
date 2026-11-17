@@ -1,3 +1,91 @@
+# Rayload v1.0.4（正式版）
+
+> v1.0.4 系列正式发布。此前所有 `beta*` 标签均为测试版本。
+
+## 中文
+
+### 相对 v1.0.4-beta8 的修复
+
+真机测试反馈三个平板端问题，全部修复：
+
+- **设置项超出屏幕**：所有设置表单此前都写死 `label-width="260px"`，平板竖屏时右侧控件被挤出屏幕。现在标签列随视口收缩（96 / 150 / 200 / 260px）。
+- **安卓桌面图标选择框过宽**：Naive UI 的下拉框默认 `width: 100%`，把 `fit-content` 覆盖了，于是横跨整行。现在宽屏上限 320px，手机上仍是满宽。
+- **校验值超出屏幕底部**：同时勾选多种算法时，SHA-512 这类 128 字符的摘要会撑开行并顶出可视区。现在摘要按字符换行，行宽不超过面板。
+
+手机端在 beta8 已无已知问题。
+
+### 命令行（ray CLI）
+
+这一版把 CLI 做成真正可脚本化的工具：
+
+- **稳定退出码**：0 成功 / 1 通用失败 / **2 用法错误** / **3 守护进程未运行或无响应** / **4 没有匹配的任务** / **5 凭据被拒绝**。脚本可以据此决定重试还是放弃。
+- **全局参数**：`--json`（机器可读输出）、`-q/--quiet`（只输出结果）、`--color auto|always|never`（强制或关闭颜色，`NO_COLOR` 仍然生效）。
+- **批量添加**：`ray add` 支持多个 URL，或用 `--input-file` 从文件 / 标准输入读取；空行与 `#` 注释自动跳过，单个 URL 失败不影响其余，但整体仍以非零退出。
+- **选择器**：`pause` / `resume` / `rm` 支持完整 GID、至少 4 位的唯一 GID 前缀，或 `all`。
+- **新增 `ray watch`**：持续刷新任务表直到全部结束，`--interval-ms` 调刷新频率，`--json` 每拍输出一行 JSON。
+- **JSON 稳定化**：输出带 `schemaVersion`，字段改名不会静默打断下游脚本。
+- **错误分类**：连接失败标记为"守护进程未运行"，超时标记为"无响应"，HTTP 401/403 标记为凭据问题，不再一律报通用错误。
+
+```bash
+ray add https://a.example/x.zip https://b.example/y.zip
+printf '%s\n' https://a https://b | ray add --input-file -
+ray watch --interval-ms 500
+ray pause all
+```
+
+### 延续 beta8 的全部内容
+
+- 真机滑动（触摸事件驱动）、详情动作右对齐、设置保存条置底、校验设置独立成页、方向跟随系统、进度条美化、离线删除幂等、设备颜色按身份派生、校验粘贴提示、平板图表并排。
+- 高级校验系统：七种算法、SQLite 缓存、取消、导出、BT 多文件、在线查询、下载后自动校验。
+- 插件导入链路修复（`content://` URI、文件名归一、脚本入口隔离、行 JSON 长驻协议）。
+- 统计快捷入口（清理下载缓存 / 存储空间分析）、APK 一键安装、音视频预览。
+- 27 种语言同步。
+
+### 安装
+
+- 包名 `com.shiwushuifeng.rayload`，versionName `1.0.4`，versionCode `10015`
+- arm64-v8a，minSdk 24，targetSdk 37
+- V2 签名（`CN=Rayload, O=shiwushuifeng, C=CN`），可直接覆盖 beta8
+
+### 发布方式
+
+本版由 GitHub Actions 从 tag 构建并签名（见 `.github/workflows/release.yml`），
+工具链由 `rust-toolchain.toml` 与 `.node-version` 锁定。
+
+## English
+
+### Fixed since beta8
+
+Three tablet-only issues from device testing:
+
+- **Settings overflowed**: every form hardcoded `label-width="260px"`, pushing the
+  control past the right edge in tablet portrait. The label column now shrinks
+  with the viewport (96 / 150 / 200 / 260px).
+- **Android app-icon selector was too wide**: Naive UI's select is `width: 100%`
+  by default, overriding `fit-content`, so it spanned the whole row. It is now
+  capped at 320px on wide screens and full width on phones.
+- **Checksums ran off the bottom**: enabling several algorithms made 128-character
+  digests stretch the row past the viewport. Digests now wrap inside the row.
+
+No known issues remained on phones after beta8.
+
+### Command line (ray CLI)
+
+- Stable exit codes: 0 ok, 1 general, 2 usage, 3 daemon down or unresponsive,
+  4 no task matched, 5 credentials rejected.
+- Global `--json`, `-q/--quiet` and `--color auto|always|never`.
+- `add` takes several URLs or reads a file/stdin, skips comments, reports per-URL
+  results and still exits non-zero when any URL failed.
+- `pause`/`resume`/`rm` accept a GID prefix or `all`.
+- New `watch` command follows progress until tasks finish.
+- JSON payloads carry `schemaVersion`.
+- Connection, timeout and auth failures are classified separately.
+
+### Build
+
+`com.shiwushuifeng.rayload`, versionName `1.0.4`, versionCode `10015`,
+arm64-v8a, minSdk 24, targetSdk 37, V2 signed with the same certificate as beta8.
+
 # Rayload v1.0.4 Beta 8
 
 > v1.0.4 系列**收官测试版**。验收通过后版本号进入 v1.0.5。
