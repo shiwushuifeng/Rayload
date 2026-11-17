@@ -48,13 +48,22 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          # Single source of truth shared with local builds.
+          node-version-file: '.node-version'
           cache: pnpm
 
+      # rust-toolchain.toml pins the exact compiler and target, so CI and local
+      # builds use the same rustc instead of whatever stable happens to be.
       - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: aarch64-linux-android
+        run: |
+          CHANNEL=$(sed -n 's/^channel = "\(.*\)"/\1/p' rust-toolchain.toml)
+          if [ -z "$CHANNEL" ]; then
+            echo '::error::rust-toolchain.toml has no channel'
+            exit 1
+          fi
+          rustup toolchain install "$CHANNEL" --profile minimal --target aarch64-linux-android
+          rustup override set "$CHANNEL"
+          rustc -V
 
       - name: Cache Rust build artifacts
         uses: Swatinem/rust-cache@v2

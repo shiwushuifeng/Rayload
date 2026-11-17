@@ -1,0 +1,7 @@
+# Pins the Rust toolchain for every build, local and CI alike.
+# Keep this in sync with the version used to cut releases; `rustup` installs it
+# automatically when someone runs cargo inside the repository.
+[toolchain]
+channel = "1.100.0"
+profile = "minimal"
+targets = ["aarch64-linux-android"]
