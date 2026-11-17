@@ -161,3 +161,45 @@ pnpm tauri android build --apk --target aarch64 --features plugin_engine
 - husky 钩子在本挂载下无法执行（`Permission denied`），已本地
   `git config core.hooksPath .git/no-hooks`；提交前请手动跑 `pnpm lint`。
 - `core.fileMode=false`，避免迁移丢失执行位导致的 20 个假改动。
+
+## 六、CI 发布链路（2026-11-17 验证通过）
+
+workflow 文件：`.github/workflows/release.yml`。历史上 5 次运行全部失败，修了三处：
+
+1. `android-actions/setup-android@v3` 会执行 `sdkmanager tools`，而该包已从 SDK
+   仓库移除 → 改为直接暴露 runner 自带 SDK 的路径与 cmdline-tools。
+2. 平台包名写错：公开仓库里是 `platforms;android-37.0`，没有 `platforms;android-37`。
+3. 构建命令漏了 `--features plugin_engine`，打出的包会隐藏局域网与插件入口。
+
+另外：签名 secrets 缺失时不再硬失败（转 unsigned 且跳过发布），并加了
+`workflow_dispatch` 用于不改 tag 也能验证链路。
+
+### 工具链与凭据
+
+- `rust-toolchain.toml` 钉 rustc **1.100.0** + `aarch64-linux-android`；
+  `.node-version` 钉 Node **26.13.0**，CI 用 `node-version-file` 读取，两边同源。
+- 仓库 secrets（已配置 3 个，来自 `signing/rayload-release.jks`）：
+  `ANDROID_KEYSTORE_BASE64`、`ANDROID_KEY_ALIAS`、`ANDROID_KEYSTORE_PASSWORD`。
+- 验证 run `44009634812`（commit `308719b`）全绿，日志确认 Node 26.13.0 /
+  rustc 1.100.0 / pnpm 11.5.2，签名步骤 success，发布步骤因非 tag 而跳过。
+
+### 发布约定
+
+**CI 是唯一发布源**：推 tag 触发构建并发布；本机构建只用于快速验证。
+
+### 等价判定（用户确认"功能一致即可"）
+
+CI 产物 vs 本机产物的实测对比：
+
+| 内容 | 结果 |
+| --- | --- |
+| package / versionCode / versionName / ABI | 一致 |
+| 签名证书 SHA-256 | 一致（同一把密钥） |
+| `classes.dex` | 逐字节一致 |
+| `lib/arm64-v8a/libaria2.so` | 逐字节一致 |
+| `assets/data/*` | 逐字节一致 |
+| `librayburst_lib.so` | 不同：CI 内含 85 处 `/home/runner` 绝对路径，且内嵌前端 chunk 文件名哈希不同（Windows 与 Linux 的 Rollup 遍历顺序差异），大小仅差约 1.5 KB |
+
+结论：**不追求字节一致**，以"版本 + 签名 + dex + sidecar + assets 一致"为验收口径。
+若将来需要收窄差异，可选做法是 `--remap-path-prefix` 统一路径，以及去掉 Vite
+产物文件名里的 `[hash]`（APK 内嵌资源无需 HTTP 缓存语义）。
