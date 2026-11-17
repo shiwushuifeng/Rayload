@@ -41,6 +41,7 @@ import {
 import { useAppMessage } from '@/composables/useAppMessage'
 import { useExtensionPanel } from '@/composables/useExtensionPanel'
 import { useBuildInfoStore } from '@/stores/build'
+import { usePreferenceLabelWidth } from '@/composables/usePreferenceLabelWidth'
 import {
   CloudDownloadOutline,
   CloudUploadOutline,
@@ -62,6 +63,7 @@ const engineStore = useEngineStore()
 const { restartEngine } = useEngineRestart()
 
 const { t } = useI18n()
+const { preferenceLabelWidth } = usePreferenceLabelWidth()
 const preferenceStore = usePreferenceStore()
 const historyStore = useHistoryStore()
 const message = useAppMessage()
@@ -341,7 +343,7 @@ onMounted(async () => {
 <template>
   <div class="preference-form-wrapper">
     <div class="preference-form-scroll">
-      <NForm label-placement="left" label-align="left" label-width="260px" size="small" class="form-preference">
+      <NForm label-placement="left" label-align="left" :label-width="preferenceLabelWidth" size="small" class="form-preference">
         <template v-if="props.variant === 'engine'">
           <NDivider title-placement="left">{{ t('preferences.extension-section') }}</NDivider>
           <NFormItem :label="t('preferences.extension-download-behavior')">

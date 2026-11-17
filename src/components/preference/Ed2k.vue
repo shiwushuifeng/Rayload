@@ -33,6 +33,7 @@ import {
   validateEd2kForm,
 } from '@/composables/useEd2kPreference'
 import { useEd2kSearchSession } from '@/composables/useEd2kSearchSession'
+import { usePreferenceLabelWidth } from '@/composables/usePreferenceLabelWidth'
 import { PROXY_SCOPES } from '@shared/constants'
 import { diffConfig, checkIsNeedRestart } from '@shared/utils/config'
 import { bytesToSize } from '@shared/utils'
@@ -43,6 +44,7 @@ import PreferenceActionRegistration from './PreferenceActionRegistration.vue'
 import PreferenceHintLabel from './PreferenceHintLabel.vue'
 
 const { t } = useI18n()
+const { preferenceLabelWidth } = usePreferenceLabelWidth()
 const preferenceStore = usePreferenceStore()
 const taskStore = useTaskStore()
 const dialog = useDialog()
@@ -284,7 +286,7 @@ onMounted(() => {
 <template>
   <div class="preference-form-wrapper">
     <div class="preference-form-scroll">
-      <NForm label-placement="left" label-align="left" label-width="260px" size="small" class="form-preference">
+      <NForm label-placement="left" label-align="left" :label-width="preferenceLabelWidth" size="small" class="form-preference">
         <NDivider title-placement="left">{{ t('preferences.ed2k-search') }}</NDivider>
         <NFormItem :label="t('preferences.ed2k-search-keyword')">
           <NInput v-model:value="searchKeyword" :disabled="searchActive" @keyup.enter="handleSearch" />

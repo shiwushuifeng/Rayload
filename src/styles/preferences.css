@@ -247,3 +247,21 @@
     line-height: 1.4;
   }
 }
+
+/* Naive UI's select is width:100% by default, so `fit-content` on the wrapper
+   was being overridden and the control stretched across a tablet. Capping it
+   explicitly keeps dropdowns compact next to their label. */
+.form-preference .pref-control-auto .n-select,
+.form-preference .n-form-item .pref-control-auto.n-select {
+  width: 100%;
+}
+
+.form-preference .pref-control-auto {
+  max-width: min(100%, 320px);
+}
+
+@media (max-width: 900px) {
+  .form-preference .pref-control-auto {
+    max-width: 100%;
+  }
+}

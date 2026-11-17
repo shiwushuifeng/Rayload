@@ -25,10 +25,12 @@ import { clearChecksumCache } from '@/api/checksum'
 import { logger } from '@shared/logger'
 import { getErrorMessage } from '@shared/utils/errorMessage'
 import { buildChecksumForm, buildChecksumSystemConfig, createChecksumRule } from '@/composables/useChecksumPreference'
+import { usePreferenceLabelWidth } from '@/composables/usePreferenceLabelWidth'
 import PreferenceActionRegistration from './PreferenceActionRegistration.vue'
 import PreferenceHintLabel from './PreferenceHintLabel.vue'
 
 const { t } = useI18n()
+const { preferenceLabelWidth } = usePreferenceLabelWidth()
 const preferenceStore = usePreferenceStore()
 const message = useAppMessage()
 
@@ -84,7 +86,7 @@ async function handleClearCache() {
 <template>
   <div class="preference-form-wrapper">
     <div class="preference-form-scroll">
-      <NForm label-placement="left" label-align="left" label-width="260px" size="small" class="form-preference">
+      <NForm label-placement="left" label-align="left" :label-width="preferenceLabelWidth" size="small" class="form-preference">
         <NDivider title-placement="left">{{ t('preferences.checksum-title') }}</NDivider>
         <NFormItem :show-label="false">
           <NText depth="3">{{ t('preferences.checksum-hint') }}</NText>

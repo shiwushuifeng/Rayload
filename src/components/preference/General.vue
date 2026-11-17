@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { preferenceLabelWidth } = usePreferenceLabelWidth()
 /**
  * @fileoverview General preference tab: system info, language, how downloads arrive (browser
  * extension, clipboard), notifications, update, appearance, startup & tray, default programs.
@@ -52,6 +53,7 @@ import PreferenceAssociations from './PreferenceAssociations.vue'
 import NavigationCustomization from './NavigationCustomization.vue'
 import AndroidUpdateCheck from './AndroidUpdateCheck.vue'
 import { UI_SCALE_STEPS } from '@/composables/useInterfaceScale'
+import { usePreferenceLabelWidth } from '@/composables/usePreferenceLabelWidth'
 
 const { t, locale } = useI18n()
 const preferenceStore = usePreferenceStore()
@@ -328,7 +330,7 @@ onMounted(async () => {
 <template>
   <div class="preference-form-wrapper">
     <div class="preference-form-scroll">
-      <NForm label-placement="left" label-align="left" label-width="260px" size="small" class="form-preference">
+      <NForm label-placement="left" label-align="left" :label-width="preferenceLabelWidth" size="small" class="form-preference">
         <NFormItem :label="t('about.app-version')">
           <NSpace :size="8" align="center">
             <MTooltip>

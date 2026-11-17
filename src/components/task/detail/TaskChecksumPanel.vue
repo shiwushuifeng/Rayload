@@ -573,7 +573,8 @@ onBeforeUnmount(() => {
 }
 .checksum-row {
   display: grid;
-  grid-template-columns: minmax(64px, auto) minmax(0, 1fr) auto auto;
+  grid-template-columns: minmax(56px, auto) minmax(0, 1fr) auto auto;
+  max-width: 100%;
   gap: 8px;
   align-items: center;
   min-width: 0;
@@ -586,9 +587,15 @@ onBeforeUnmount(() => {
   margin-top: 6px;
 }
 .checksum-value {
+  display: block;
   min-width: 0;
+  max-width: 100%;
   font-size: var(--font-size-xs);
+  /* Long digests wrap on word boundaries; anywhere breaks SHA-512 cleanly so a
+     single row can never exceed the panel width. */
   overflow-wrap: anywhere;
+  word-break: break-all;
+  white-space: normal;
 }
 .checksum-actions {
   display: flex;

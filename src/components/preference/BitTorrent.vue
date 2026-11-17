@@ -1,4 +1,5 @@
 <script setup lang="ts">
+const { preferenceLabelWidth } = usePreferenceLabelWidth()
 /** @fileoverview BitTorrent preference tab: BT settings + tracker management. */
 import { ref, computed, onMounted, h } from 'vue'
 import type { VNodeChild } from 'vue'
@@ -17,6 +18,7 @@ import { getErrorMessage } from '@shared/utils/errorMessage'
 import { buildSystemConfigFromAppConfig } from '@shared/utils/systemConfig'
 import { BT_PEER_ID_PREFIX_MAX_BYTES, isValidBtPeerIdPrefix, isValidBtUserAgent } from '@shared/utils/btIdentity'
 import { useAppMessage } from '@/composables/useAppMessage'
+import { usePreferenceLabelWidth } from '@/composables/usePreferenceLabelWidth'
 import {
   buildBtForm,
   buildBtSystemConfig,
@@ -416,7 +418,7 @@ onMounted(() => {
       <NForm
         label-placement="left"
         label-align="left"
-        label-width="260px"
+        :label-width="preferenceLabelWidth"
         size="small"
         class="form-preference bt-switch-form"
       >

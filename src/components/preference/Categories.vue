@@ -7,6 +7,7 @@ import { NButton, NForm, NFormItem, NInput, NSwitch, NText } from 'naive-ui'
 import { usePreferenceStore } from '@/stores/preference'
 import { usePreferenceForm } from '@/composables/usePreferenceForm'
 import { useAppMessage } from '@/composables/useAppMessage'
+import { usePreferenceLabelWidth } from '@/composables/usePreferenceLabelWidth'
 import { getErrorMessage } from '@shared/utils/errorMessage'
 import { getVideoArchiveFolder, withVideoArchiveFolder } from '@shared/utils/autoArchive'
 import FileCategoryManager from './FileCategoryManager.vue'
@@ -15,6 +16,7 @@ import PreferenceHintLabel from './PreferenceHintLabel.vue'
 import type { FileCategory } from '@shared/types'
 
 const { t } = useI18n()
+const { preferenceLabelWidth } = usePreferenceLabelWidth()
 const preferenceStore = usePreferenceStore()
 const message = useAppMessage()
 
@@ -70,7 +72,7 @@ async function handleCategoryManagerSave(categories: FileCategory[]) {
 <template>
   <div class="preference-form-wrapper">
     <div class="preference-form-scroll">
-      <NForm label-placement="left" label-align="left" label-width="260px" size="small" class="form-preference">
+      <NForm label-placement="left" label-align="left" :label-width="preferenceLabelWidth" size="small" class="form-preference">
         <NFormItem>
           <template #label>
             <PreferenceHintLabel

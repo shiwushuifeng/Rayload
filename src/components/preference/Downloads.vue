@@ -46,9 +46,11 @@ import {
 import PreferenceActionRegistration from './PreferenceActionRegistration.vue'
 import PreferenceHintLabel from './PreferenceHintLabel.vue'
 import DirectoryPopover from '@/components/common/DirectoryPopover.vue'
+import { usePreferenceLabelWidth } from '@/composables/usePreferenceLabelWidth'
 import { FolderOpenOutline } from '@vicons/ionicons5'
 
 const { t } = useI18n()
+const { preferenceLabelWidth } = usePreferenceLabelWidth()
 const preferenceStore = usePreferenceStore()
 const message = useAppMessage()
 const { constraint, configFieldProps, fieldProps, areConfigFieldsValid } = usePreferenceNumericValidation()
@@ -265,7 +267,7 @@ onMounted(async () => {
 <template>
   <div class="preference-form-wrapper">
     <div class="preference-form-scroll">
-      <NForm label-placement="left" label-align="left" label-width="260px" size="small" class="form-preference">
+      <NForm label-placement="left" label-align="left" :label-width="preferenceLabelWidth" size="small" class="form-preference">
         <!-- Save location -->
         <NDivider title-placement="left">{{ t('preferences.download-path') }}</NDivider>
         <NFormItem :label="t('preferences.default-path')">
