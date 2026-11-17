@@ -1,6 +1,39 @@
 //! Terminal colors and a small tree renderer for status and device output.
 
 use std::io::IsTerminal;
+use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
+
+use clap::ValueEnum;
+
+/// Set by the global `--quiet` flag so commands can drop decorative output.
+static QUIET: AtomicBool = AtomicBool::new(false);
+/// 0 = auto, 1 = always, 2 = never.
+static COLOR: AtomicU8 = AtomicU8::new(0);
+
+/// How much color the terminal output should carry.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum ColorChoice {
+    Auto,
+    Always,
+    Never,
+}
+
+pub fn set_quiet(value: bool) {
+    QUIET.store(value, Ordering::Relaxed);
+}
+
+pub fn quiet() -> bool {
+    QUIET.load(Ordering::Relaxed)
+}
+
+pub fn set_color_choice(choice: ColorChoice) {
+    let value = match choice {
+        ColorChoice::Auto => 0,
+        ColorChoice::Always => 1,
+        ColorChoice::Never => 2,
+    };
+    COLOR.store(value, Ordering::Relaxed);
+}
 
 #[derive(Debug, Clone, Copy)]
 pub struct Styles {
@@ -9,9 +42,12 @@ pub struct Styles {
 
 impl Styles {
     pub fn detect() -> Self {
-        Self {
-            enabled: std::io::stdout().is_terminal() && std::env::var_os("NO_COLOR").is_none(),
-        }
+        let enabled = match COLOR.load(Ordering::Relaxed) {
+            1 => true,
+            2 => false,
+            _ => std::io::stdout().is_terminal() && std::env::var_os("NO_COLOR").is_none(),
+        };
+        Self { enabled }
     }
 
     fn paint(self, code: &str, text: &str) -> String {

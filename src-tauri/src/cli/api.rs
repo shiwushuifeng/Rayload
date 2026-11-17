@@ -6,6 +6,22 @@ use serde::{Deserialize, Serialize};
 
 use super::config::Settings;
 
+/// Stable prefixes so the CLI can map failures onto distinct exit codes.
+pub const NOT_RUNNING_PREFIX: &str = "daemon is not running";
+pub const NO_RESPONSE_PREFIX: &str = "daemon did not respond";
+pub const AUTH_PREFIX: &str = "daemon rejected the credentials";
+
+/// Turns a transport error into one of the stable prefixes above.
+fn transport_error(error: reqwest::Error) -> String {
+    if error.is_connect() {
+        format!("{NOT_RUNNING_PREFIX}: {error}")
+    } else if error.is_timeout() {
+        format!("{NO_RESPONSE_PREFIX}: {error}")
+    } else {
+        error.to_string()
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DeviceInfo {
@@ -96,7 +112,7 @@ impl LocalApi {
                 .basic_auth(&self.username, Some(&self.password))
                 .send()
                 .await
-                .map_err(|error| error.to_string())?;
+                .map_err(transport_error)?;
             response_body(response).await
         })
     }
@@ -114,7 +130,7 @@ impl LocalApi {
                 .json(&body)
                 .send()
                 .await
-                .map_err(|error| error.to_string())?;
+                .map_err(transport_error)?;
             response_body(response).await
         })
     }
@@ -132,6 +148,9 @@ async fn response_body<T: serde::de::DeserializeOwned>(
 ) -> Result<T, String> {
     let status = response.status();
     let body = response.text().await.unwrap_or_default();
+    if status == reqwest::StatusCode::UNAUTHORIZED || status == reqwest::StatusCode::FORBIDDEN {
+        return Err(format!("{AUTH_PREFIX}: HTTP {status}"));
+    }
     if !status.is_success() {
         return Err(format!("HTTP {status}: {body}"));
     }

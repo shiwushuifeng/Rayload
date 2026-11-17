@@ -344,31 +344,102 @@ fn spawn_daemon(settings: &Settings, overrides: &Overrides) -> Result<(), String
     }
 }
 
+/// Bumped whenever the JSON shape of a command changes.
+pub const SCHEMA_VERSION: u64 = 1;
+
+/// Adds every URL and reports per-URL results. One failing URL does not stop
+/// the batch; the command still exits non-zero so scripts notice.
 pub fn add(
     overrides: &Overrides,
-    url: &str,
+    urls: &[String],
     out: Option<&str>,
     json_output: bool,
 ) -> Result<(), String> {
     let settings = settings(overrides)?;
-    if url.trim().is_empty() {
+    let urls: Vec<String> = urls
+        .iter()
+        .map(|url| url.trim().to_string())
+        .filter(|url| !url.is_empty())
+        .collect();
+    if urls.is_empty() {
         return Err("URL cannot be empty".into());
     }
     let mut options = serde_json::Map::new();
-    if let Some(name) = out.filter(|name| !name.trim().is_empty()) {
+    // A single --out only makes sense for a single URL.
+    if let Some(name) = out.filter(|name| !name.trim().is_empty() && urls.len() == 1) {
         options.insert("out".into(), json!(name));
     }
-    let gid: String = rpc_call(
-        &settings,
-        "aria2.addUri",
-        vec![json!([url]), json!(options)],
-    )?;
+    let mut added: Vec<Value> = Vec::new();
+    let mut failed: Vec<Value> = Vec::new();
+    for url in &urls {
+        match rpc_call::<String>(&settings, "aria2.addUri", vec![json!([url]), json!(options)]) {
+            Ok(gid) => {
+                if !json_output && !super::style::quiet() {
+                    println!("Added {gid}\t{url}");
+                }
+                added.push(json!({ "url": url, "gid": gid }));
+            }
+            Err(error) => {
+                if !json_output {
+                    eprintln!("Failed {url}: {error}");
+                }
+                failed.push(json!({ "url": url, "error": error }));
+            }
+        }
+    }
     if json_output {
-        println!("{}", json!({ "gid": gid }));
-    } else {
-        println!("Added {gid}");
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&json!({
+                "schemaVersion": SCHEMA_VERSION,
+                "added": added,
+                "failed": failed,
+            }))
+            .map_err(|error| error.to_string())?
+        );
+    }
+    if !failed.is_empty() {
+        // Keep the daemon-down marker when every failure was a connection
+        // problem, so scripts still see exit 3 instead of a generic 1.
+        let all_down = failed.iter().all(|entry| {
+            entry["error"]
+                .as_str()
+                .is_some_and(|error| error.starts_with(super::api::NOT_RUNNING_PREFIX))
+        });
+        let summary = format!("{} of {} URLs could not be added", failed.len(), urls.len());
+        return Err(if all_down {
+            format!("{}: {summary}", super::api::NOT_RUNNING_PREFIX)
+        } else {
+            summary
+        });
     }
     Ok(())
+}
+
+/// Resolves `all`, an exact GID or a GID prefix into tasks.
+pub(crate) fn resolve_targets(
+    settings: &Settings,
+    selector: &str,
+) -> Result<Vec<Aria2Task>, String> {
+    let selector = selector.trim();
+    let tasks = fetch_tasks(settings)?;
+    if selector.eq_ignore_ascii_case("all") {
+        return Ok(tasks);
+    }
+    let matches: Vec<Aria2Task> = tasks
+        .into_iter()
+        .filter(|task| {
+            task.gid == selector || (selector.len() >= 4 && task.gid.starts_with(selector))
+        })
+        .collect();
+    if matches.is_empty() {
+        return Err(format!("no task matches '{selector}'"));
+    }
+    Ok(matches)
+}
+
+fn is_final_status(status: &str) -> bool {
+    matches!(status, "complete" | "error" | "removed")
 }
 
 pub fn list(overrides: &Overrides, json_output: bool) -> Result<(), String> {
@@ -378,8 +449,11 @@ pub fn list(overrides: &Overrides, json_output: bool) -> Result<(), String> {
         let items: Vec<Value> = tasks.iter().map(task_json).collect();
         println!(
             "{}",
-            serde_json::to_string_pretty(&json!({ "tasks": items }))
-                .map_err(|error| error.to_string())?
+            serde_json::to_string_pretty(&json!({
+                "schemaVersion": SCHEMA_VERSION,
+                "tasks": items,
+            }))
+            .map_err(|error| error.to_string())?
         );
         return Ok(());
     }
@@ -387,12 +461,21 @@ pub fn list(overrides: &Overrides, json_output: bool) -> Result<(), String> {
         println!("No downloads.");
         return Ok(());
     }
+    print!("{}\n", print_task_table(&tasks));
+    Ok(())
+}
+
+/// Renders the task table used by `list` and `watch`.
+fn print_task_table(tasks: &[Aria2Task]) -> String {
+    if tasks.is_empty() {
+        return "No downloads.".to_string();
+    }
     let mut table = Table::new();
     table
         .load_preset(comfy_table::presets::UTF8_FULL)
         .set_content_arrangement(ContentArrangement::Dynamic)
         .set_header(vec!["GID", "Name", "Progress", "Speed", "Status"]);
-    for task in &tasks {
+    for task in tasks {
         let (done, total) = task_progress(task);
         let percent = if total == 0 {
             0
@@ -408,40 +491,99 @@ pub fn list(overrides: &Overrides, json_output: bool) -> Result<(), String> {
             state_cell(&task.status),
         ]);
     }
-    println!("{table}");
-    Ok(())
+    table.to_string()
 }
 
-pub fn pause(overrides: &Overrides, gid: &str) -> Result<(), String> {
+pub fn pause(overrides: &Overrides, selector: &str) -> Result<(), String> {
     let settings = settings(overrides)?;
-    let _: String = rpc_call(&settings, "aria2.pause", vec![json!(gid)])?;
-    println!("Paused {gid}");
-    Ok(())
-}
-
-pub fn resume(overrides: &Overrides, gid: &str) -> Result<(), String> {
-    let settings = settings(overrides)?;
-    let _: String = rpc_call(&settings, "aria2.unpause", vec![json!(gid)])?;
-    println!("Resumed {gid}");
-    Ok(())
-}
-
-pub fn remove(overrides: &Overrides, gid: &str) -> Result<(), String> {
-    let settings = settings(overrides)?;
-    let removed = rpc_call::<String>(&settings, "aria2.remove", vec![json!(gid)]).is_ok();
-    let mut cleared = false;
-    for _ in 0..5 {
-        if rpc_call::<String>(&settings, "aria2.removeDownloadResult", vec![json!(gid)]).is_ok() {
-            cleared = true;
-            break;
+    for task in resolve_targets(&settings, selector)? {
+        let gid = task.gid.clone();
+        rpc_call::<String>(&settings, "aria2.pause", vec![json!(gid)])?;
+        if !super::style::quiet() {
+            println!("Paused {gid}");
         }
-        std::thread::sleep(Duration::from_millis(100));
     }
-    if !removed && !cleared {
-        return Err(format!("could not remove {gid}"));
-    }
-    println!("Removed {gid} (downloaded files are kept)");
     Ok(())
+}
+
+pub fn resume(overrides: &Overrides, selector: &str) -> Result<(), String> {
+    let settings = settings(overrides)?;
+    for task in resolve_targets(&settings, selector)? {
+        let gid = task.gid.clone();
+        rpc_call::<String>(&settings, "aria2.unpause", vec![json!(gid)])?;
+        if !super::style::quiet() {
+            println!("Resumed {gid}");
+        }
+    }
+    Ok(())
+}
+
+pub fn remove(overrides: &Overrides, selector: &str) -> Result<(), String> {
+    let settings = settings(overrides)?;
+    let targets = resolve_targets(&settings, selector)?;
+    let mut failures: Vec<String> = Vec::new();
+    for task in targets {
+        let gid = task.gid.clone();
+        let removed = rpc_call::<String>(&settings, "aria2.remove", vec![json!(gid)]).is_ok();
+        let mut cleared = false;
+        for _ in 0..5 {
+            if rpc_call::<String>(&settings, "aria2.removeDownloadResult", vec![json!(gid)]).is_ok()
+            {
+                cleared = true;
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(100));
+        }
+        if removed || cleared {
+            if !super::style::quiet() {
+                println!("Removed {gid} (downloaded files are kept)");
+            }
+        } else {
+            failures.push(gid);
+        }
+    }
+    if !failures.is_empty() {
+        return Err(format!("could not remove {}", failures.join(", ")));
+    }
+    Ok(())
+}
+
+/// Prints progress until every matching task reaches a final state.
+pub fn watch(
+    overrides: &Overrides,
+    selector: Option<&str>,
+    interval_ms: u64,
+    json_output: bool,
+) -> Result<(), String> {
+    let settings = settings(overrides)?;
+    let interval = Duration::from_millis(interval_ms.max(200));
+    let styles = Styles::detect();
+    loop {
+        let tasks = match selector {
+            Some(selector) => resolve_targets(&settings, selector)?,
+            None => fetch_tasks(&settings)?,
+        };
+        if json_output {
+            let items: Vec<Value> = tasks.iter().map(task_json).collect();
+            println!(
+                "{}",
+                serde_json::to_string(&json!({
+                    "schemaVersion": SCHEMA_VERSION,
+                    "tasks": items,
+                }))
+                .map_err(|error| error.to_string())?
+            );
+        } else {
+            if styles.enabled {
+                print!("\x1b[2J\x1b[H");
+            }
+            println!("{}\n", print_task_table(&tasks));
+        }
+        if tasks.iter().all(|task| is_final_status(&task.status)) {
+            return Ok(());
+        }
+        std::thread::sleep(interval);
+    }
 }
 
 pub fn log(overrides: &Overrides, lines: usize, follow: bool) -> Result<(), String> {
@@ -1147,7 +1289,24 @@ fn rpc_call<T: DeserializeOwned>(
                 .call::<T>(method, params)
                 .await
         })
-        .map_err(|error| error.to_string())
+        .map_err(|error| classify_rpc_error(&error.to_string()))
+}
+
+/// Prefixes connection failures so the CLI can report "daemon down" (exit 3)
+/// instead of lumping them in with every other failure.
+fn classify_rpc_error(message: &str) -> String {
+    let lowered = message.to_lowercase();
+    if lowered.contains("error sending request")
+        || lowered.contains("connection refused")
+        || lowered.contains("failed to connect")
+        || lowered.contains("connection reset")
+    {
+        return format!("{}: {message}", super::api::NOT_RUNNING_PREFIX);
+    }
+    if lowered.contains("timed out") || lowered.contains("timeout") {
+        return format!("{}: {message}", super::api::NO_RESPONSE_PREFIX);
+    }
+    message.to_string()
 }
 
 fn fetch_tasks(settings: &Settings) -> Result<Vec<Aria2Task>, String> {
@@ -1355,5 +1514,35 @@ struct PidGuard {
 impl Drop for PidGuard {
     fn drop(&mut self) {
         let _ = fs::remove_file(&self.path);
+    }
+}
+
+#[cfg(test)]
+mod rpc_error_tests {
+    use super::classify_rpc_error;
+    use crate::cli::api::{NOT_RUNNING_PREFIX, NO_RESPONSE_PREFIX};
+
+    #[test]
+    fn connection_failures_are_marked_as_daemon_down() {
+        for message in [
+            "Aria2 RPC error: error sending request for url (http://127.0.0.1:6800/jsonrpc)",
+            "connection refused",
+            "failed to connect to 127.0.0.1",
+        ] {
+            assert!(
+                classify_rpc_error(message).starts_with(NOT_RUNNING_PREFIX),
+                "{message}"
+            );
+        }
+    }
+
+    #[test]
+    fn timeouts_are_marked_separately() {
+        assert!(classify_rpc_error("request timed out").starts_with(NO_RESPONSE_PREFIX));
+    }
+
+    #[test]
+    fn other_errors_pass_through_unchanged() {
+        assert_eq!(classify_rpc_error("Unauthorized"), "Unauthorized");
     }
 }

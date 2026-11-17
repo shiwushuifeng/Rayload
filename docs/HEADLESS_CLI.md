@@ -31,6 +31,55 @@ compatibility alias. Aria2 must be available on `PATH` as `aria2-next` by
 default; override it with `download.engine_bin`, `--engine-bin` or
 `RAYLOAD_ARIA2_BIN`.
 
+## Scripting / 脚本化
+
+Every command accepts these globals:
+
+| Flag | Effect |
+| --- | --- |
+| `--json` | Print machine-readable JSON (commands that support it) |
+| `-q, --quiet` | Print results only, never decoration |
+| `--color auto\|always\|never` | Force or suppress ANSI colour (`NO_COLOR` still honoured) |
+
+**Exit codes** are stable, so scripts can branch on the failure kind:
+
+| Code | Meaning |
+| --- | --- |
+| 0 | Success |
+| 1 | General failure |
+| 2 | Usage error (bad arguments, empty URL) |
+| 3 | Daemon is not running, or did not respond |
+| 4 | No task matched the selector |
+| 5 | Credentials rejected |
+
+**Selectors.** `pause`, `resume` and `rm` accept a full GID, any unique GID
+prefix of at least four characters, or `all`.
+
+```bash
+ray pause all                 # pause every task
+ray rm abcd                   # remove by prefix
+ray resume 3f9c1a2b           # resume by full GID
+```
+
+**Batch adds.** `add` takes several URLs, or reads them from a file or stdin.
+Blank lines and `#` comments are skipped; one failing URL does not stop the
+batch, and the command still exits non-zero so scripts notice.
+
+```bash
+ray add https://a.example/x.zip https://b.example/y.zip
+ray add --input-file urls.txt
+printf '%s\n' https://a https://b | ray add --input-file -
+```
+
+**Watch.** `ray watch [target]` redraws the task table until everything
+finishes, then exits 0. `--interval-ms` tunes the refresh, `--json` emits one
+JSON object per tick.
+
+```bash
+ray watch                     # follow every task
+ray watch abcd --interval-ms 500
+```
+
 ## Quick commands / 快速命令
 
 ```bash
