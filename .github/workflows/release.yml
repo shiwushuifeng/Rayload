@@ -1,13 +1,18 @@
 name: Release
 
-# Required repository secrets for signed releases:
+# Required repository secrets for SIGNED releases:
 #   ANDROID_KEYSTORE_BASE64   base64-encoded release keystore (.jks)
 #   ANDROID_KEY_ALIAS         key alias inside the keystore
 #   ANDROID_KEYSTORE_PASSWORD keystore and key password
+#
+# Without those secrets the build still runs and produces an unsigned APK, but
+# the GitHub Release step is skipped so an unsigned package is never published.
 on:
   push:
     tags:
       - 'v*'
+  # Manual runs validate the toolchain without publishing anything.
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -56,15 +61,35 @@ jobs:
         with:
           workspaces: src-tauri -> target
 
+      # `android-actions/setup-android` is not used: it runs `sdkmanager tools`,
+      # and the legacy `tools` package no longer exists in the SDK repository, so
+      # the action fails before anything is built. The runner image already ships
+      # a complete SDK, so only the paths and cmdline-tools have to be exposed.
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        run: |
+          SDK="${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
+          if [ ! -d "$SDK" ]; then
+            echo "::error::Android SDK not found at $SDK"
+            exit 1
+          fi
+          echo "ANDROID_SDK_ROOT=$SDK" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$SDK" >> "$GITHUB_ENV"
+          CMDLINE_BIN=$(find "$SDK/cmdline-tools" -maxdepth 3 -type d -name bin | sort -V | tail -1)
+          if [ -z "$CMDLINE_BIN" ]; then
+            echo "::error::sdkmanager not found under $SDK/cmdline-tools"
+            exit 1
+          fi
+          echo "$CMDLINE_BIN" >> "$GITHUB_PATH"
+          "$CMDLINE_BIN/sdkmanager" --version
 
+      # Package names must match the published repository: the platform is
+      # `platforms;android-37.0`, there is no plain `platforms;android-37`.
       - name: Install Android platform, build tools, and NDK
         run: |
           yes | sdkmanager --licenses >/dev/null || true
           sdkmanager \
             "platform-tools" \
-            "platforms;android-37" \
+            "platforms;android-37.0" \
             "build-tools;37.0.0" \
             "ndk;29.0.14206865"
           echo "NDK_HOME=$ANDROID_SDK_ROOT/ndk/29.0.14206865" >> "$GITHUB_ENV"
@@ -77,9 +102,10 @@ jobs:
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
-          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
-            echo "::error::ANDROID_KEYSTORE_BASE64 is not configured. Add the signing secrets before publishing a release."
-            exit 1
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$ANDROID_KEY_ALIAS" ] || [ -z "$ANDROID_KEYSTORE_PASSWORD" ]; then
+            echo "::warning::Signing secrets are missing; this run builds an unsigned APK and will not publish a release."
+            echo "SIGNING_ENABLED=false" >> "$GITHUB_ENV"
+            exit 0
           fi
           mkdir -p signing
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > signing/release.jks
@@ -88,6 +114,7 @@ jobs:
             echo "keyAlias=$ANDROID_KEY_ALIAS"
             echo "password=$ANDROID_KEYSTORE_PASSWORD"
           } > signing/keystore.properties
+          echo "SIGNING_ENABLED=true" >> "$GITHUB_ENV"
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -95,8 +122,10 @@ jobs:
       - name: Apply Android project configuration
         run: pnpm android:prepare
 
+      # `plugin_engine` must be enabled: without it the build hides the LAN and
+      # plugin entries, so the APK would ship with missing features.
       - name: Build release APK
-        run: pnpm tauri android build --apk --target aarch64
+        run: pnpm tauri android build --apk --target aarch64 --features plugin_engine
 
       - name: Collect APK and checksum
         run: |
@@ -145,7 +174,10 @@ jobs:
             ${{ env.APK_PATH }}.sha256
           if-no-files-found: error
 
+      # Publishing needs both a tag push and working signing secrets, so a
+      # manual run or a secret-less run can never ship an unsigned package.
       - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/') && env.SIGNING_ENABLED == 'true'
         uses: softprops/action-gh-release@v2
         with:
           files: |
