@@ -245,6 +245,20 @@ jobs:
           rustup toolchain install "$CHANNEL" --profile minimal
           rustup default "$CHANNEL"
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.node-version'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Resolve release version
         run: |
           VERSION=""
@@ -259,6 +273,12 @@ jobs:
             exit 1
           fi
           echo "RELEASE_VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      # tauri-build requires the browser launcher resource even for the headless
+      # CLI, because the binaries share one crate. The launcher is built by a
+      # Node script, hence the Node and pnpm setup above.
+      - name: Build native messaging launcher
+        run: pnpm build:native-launcher
 
       - name: Build CLI
         run: cargo build --release --features cli --bins --manifest-path src-tauri/Cargo.toml
