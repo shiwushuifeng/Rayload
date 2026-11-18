@@ -3,7 +3,11 @@
 All notable changes to the independent Rayload Android port are documented in
 this file.
 
-## Unreleased
+## v1.0.4.1 - 2026-11-18
+
+正式版。版本号从 1.0.4 改为 1.0.4.1：早期的 `v1.0.4` 已被 GitHub 更名为
+“Rayload v1.0.4 Beta” 并标记为预发布（承担 `beta1` 角色），新正式版若继续用
+`1.0.4` 会与它撞名，因此第四位加一表示修复后的正式版。
 
 ### Added
 
@@ -13,6 +17,10 @@ this file.
   attributions, issue templates, and a contribution guide.
 - Added a tag-driven GitHub Actions workflow that builds the ARM64 APK and
   publishes it to GitHub Releases.
+- 平板修复：设置项标签列随视口收缩（96 / 150 / 200 / 260px），不再把右侧控件
+  挤出屏幕；安卓桌面图标选择框宽屏上限 320px；校验摘要按字符换行。
+- `ray` CLI 可脚本化：`add` 支持多 URL 与 `--json`，新增 `watch` 跟随进度，
+  失败分类（连接 / 超时 / 认证）分别退出。
 
 ### Changed
 
@@ -22,12 +30,15 @@ this file.
 - Documented the v0.9.0-beta through v1.0.1 milestones in `ROADMAP.md`.
 - Completion toasts now offer only "Show in folder"; the duplicate "Open file"
   action and its unused helper were removed.
+- Android 版本号来源：`RAYLOAD_VERSION_NAME` 可覆盖 `versionName`，让四段式版本
+  在不破坏 Cargo / Tauri semver 要求的前提下显示在安装器与系统设置里。
+- 发布工作流改为以 tag 作为版本来源（`v1.0.4.1` → `1.0.4.1`），不再只读
+  `Cargo.toml`。
 
 ### Fixed
 
 - Plain HTTP/HTTPS tasks no longer render empty "Peers" and "Trackers" cards in
   the task detail page.
-
 ## v1.0.4-beta4 to beta6 (test builds)
 
 ### Added

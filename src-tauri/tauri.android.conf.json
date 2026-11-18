@@ -6,7 +6,7 @@
   },
   "bundle": {
     "android": {
-      "versionCode": 10015,
+      "versionCode": 10016,
       "minSdkVersion": 24
     },
     "externalBin": [

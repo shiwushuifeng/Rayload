@@ -33,7 +33,12 @@ android {
         minSdk = 24
         targetSdk = 37
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
-        versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
+        // Tauri and Cargo both require a semver version, so a four-part release
+        // such as 1.0.4.1 cannot live in the config files. The override lets the
+        // release build show the full version in the installer and settings
+        // while the crate keeps a valid semver.
+        versionName = System.getenv("RAYLOAD_VERSION_NAME")?.takeIf { it.isNotBlank() }
+            ?: tauriProperties.getProperty("tauri.android.versionName", "1.0")
         // All product translations ship through the WebView JSON catalogs.
         // Android library resource locales are not used by the app UI.
         resourceConfigurations += listOf("en", "zh")

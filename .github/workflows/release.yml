@@ -131,18 +131,35 @@ jobs:
       - name: Apply Android project configuration
         run: pnpm android:prepare
 
+      # A tag carries the exact release version (for example v1.0.4.1), which
+      # cannot live in Cargo.toml because Cargo only accepts semver. The tag is
+      # therefore the source of truth for the APK version name.
+      - name: Resolve release version
+        run: |
+          VERSION=""
+          if [ "${GITHUB_REF_TYPE:-}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          if [ -z "$VERSION" ]; then
+            VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' src-tauri/Cargo.toml | head -1)
+          fi
+          if [ -z "$VERSION" ]; then
+            echo "Could not resolve a release version" >&2
+            exit 1
+          fi
+          echo "RELEASE_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "Release version: $VERSION"
+
       # `plugin_engine` must be enabled: without it the build hides the LAN and
       # plugin entries, so the APK would ship with missing features.
       - name: Build release APK
+        env:
+          RAYLOAD_VERSION_NAME: ${{ env.RELEASE_VERSION }}
         run: pnpm tauri android build --apk --target aarch64 --features plugin_engine
 
       - name: Collect APK and checksum
         run: |
-          VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' src-tauri/Cargo.toml | head -1)
-          if [ -z "$VERSION" ]; then
-            echo "Could not read version from src-tauri/Cargo.toml" >&2
-            exit 1
-          fi
+          VERSION="${RELEASE_VERSION:?release version was not resolved}"
 
           find src-tauri/gen/android/app/build/outputs/apk -type f -name '*.apk' -print
           mapfile -t APKS < <(find src-tauri/gen/android/app/build/outputs/apk -type f -name '*.apk' | sort)
@@ -194,4 +211,85 @@ jobs:
             ${{ env.APK_PATH }}.sha256
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-') }}
+          fail_on_unmatched_files: true
+
+  # The headless CLI links the same crate as the app, so it needs the Tauri
+  # system libraries even though it never opens a window. It is built on Linux
+  # because that is the only platform the CLI supports.
+  cli:
+    name: Build CLI
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Tauri system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential curl wget file libssl-dev libxdo-dev \
+            libwebkit2gtk-4.1-dev libgtk-3-dev \
+            libayatana-appindicator3-dev librsvg2-dev
+
+      - name: Set up Rust
+        run: |
+          CHANNEL=$(sed -n 's/^channel = "\(.*\)"/\1/p' rust-toolchain.toml)
+          if [ -z "$CHANNEL" ]; then
+            echo "Could not read the channel from rust-toolchain.toml" >&2
+            exit 1
+          fi
+          rustup toolchain install "$CHANNEL" --profile minimal
+          rustup default "$CHANNEL"
+
+      - name: Resolve release version
+        run: |
+          VERSION=""
+          if [ "${GITHUB_REF_TYPE:-}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          if [ -z "$VERSION" ]; then
+            VERSION=$(sed -n 's/^version = "\(.*\)"/\1/p' src-tauri/Cargo.toml | head -1)
+          fi
+          if [ -z "$VERSION" ]; then
+            echo "Could not resolve a release version" >&2
+            exit 1
+          fi
+          echo "RELEASE_VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Build CLI
+        run: cargo build --release --features cli --bins --manifest-path src-tauri/Cargo.toml
+
+      # install-cli.sh expects this exact layout inside the tarball.
+      - name: Package CLI
+        run: |
+          NAME="rayload-cli-v${RELEASE_VERSION}-linux-x86_64"
+          mkdir -p "tar/$NAME"
+          for bin in ray rayload rayload-cli; do
+            install -m 0755 "src-tauri/target/release/$bin" "tar/$NAME/$bin"
+          done
+          tar -C tar -czf "$NAME.tar.gz" "$NAME"
+          sha256sum "$NAME.tar.gz" > "$NAME.tar.gz.sha256"
+          echo "CLI_PATH=$NAME.tar.gz" >> "$GITHUB_ENV"
+          ls -l "$NAME.tar.gz"
+
+      - name: Upload CLI artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rayload-cli
+          path: |
+            ${{ env.CLI_PATH }}
+            ${{ env.CLI_PATH }}.sha256
+          if-no-files-found: error
+
+      - name: Publish CLI to the Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.CLI_PATH }}
+            ${{ env.CLI_PATH }}.sha256
           fail_on_unmatched_files: true

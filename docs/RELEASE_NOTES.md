@@ -1,30 +1,99 @@
-# Rayload v1.0.4（正式版）
+# Rayload v1.0.4.1（正式版）
 
-> v1.0.4 系列正式发布。此前所有 `beta*` 标签均为测试版本。
+> v1.0.4 系列的正式版。此前所有 `beta*` 标签均为测试版本。
+
+### 为什么是 1.0.4.1 而不是 1.0.4
+
+- 早期的 `v1.0.4` 已经以稳定版发布过，后来因为前端问题偏多，在 GitHub 上更名
+  为 “Rayload v1.0.4 Beta” 并标记为 pre-release——它实际承担了 `beta1` 的角色。
+- 新的正式版如果继续用 `1.0.4`，就会和那个 Beta 撞名，用户无法区分「旧 Beta」
+  与「新正式版」。
+- 因此本次改号为 **1.0.4.1**：`1.0.4` 系列不变，第四位表示修复后的正式版。
+  旧的 `v1.0.4` 标签与 Release 已删除，避免两个 1.0.4 并存。
+- 技术说明：Cargo 与 Tauri 都要求 semver，四段式不能直接写进 `Cargo.toml`
+  / `tauri.conf.json`。crate 版本保持 `1.0.4`，Android 的 `versionName` 由
+  `RAYLOAD_VERSION_NAME` 注入为 `1.0.4.1`；应用内显示的版本号来自
+  `package.json`，同样是 `1.0.4.1`。
 
 ## 中文
 
-### 相对 v1.0.4-beta8 的修复
+### 本版包含的全部内容（含测试版）
 
-真机测试反馈三个平板端问题，全部修复：
+`v1.0.4-beta2` 到 `v1.0.4-beta8` 是这一轮的全部测试迭代。为方便安装，它们的
+改动已**全部并入本版**，不需要逐个装测试包。下面按主题合并列出。
 
-- **设置项超出屏幕**：所有设置表单此前都写死 `label-width="260px"`，平板竖屏时右侧控件被挤出屏幕。现在标签列随视口收缩（96 / 150 / 200 / 260px）。
-- **安卓桌面图标选择框过宽**：Naive UI 的下拉框默认 `width: 100%`，把 `fit-content` 覆盖了，于是横跨整行。现在宽屏上限 320px，手机上仍是满宽。
-- **校验值超出屏幕底部**：同时勾选多种算法时，SHA-512 这类 128 字符的摘要会撑开行并顶出可视区。现在摘要按字符换行，行宽不超过面板。
+#### 一、下载与任务
 
-手机端在 beta8 已无已知问题。
+- **真机滑动**：左滑删除、右滑暂停/继续（本地）或推回本机（远程）。根因是
+  Android WebView 在滚动接管时发 `pointercancel` 掐断手势，改为触摸事件驱动、
+  横向锁定瞬间抢回手势，越过阈值的 `touchcancel` 按完成处理。
+- **已完成任务右滑分享**，与卡片菜单的「分享文件」一致。
+- **离线设备删除幂等**：不再报 `lan_` 错误，并清理该设备遗留任务。
+- **远程任务离线可删**：设备离线时从本机列表移除并说明，不再提示"目标设备离线"。
+- **统计快捷入口**：清理下载缓存（孤儿 `.aria2` + 应用缓存，报告释放大小）、
+  存储空间分析（下载 / 缓存 / 应用数据 / 临时文件 / 可用空间）。
+- **已完成 APK 一键安装**（FileProvider + `REQUEST_INSTALL_PACKAGES`），音视频
+  完成后可「预览」交给系统播放器。
 
-### 命令行（ray CLI）
+#### 二、高级校验系统
+
+- 七种算法：MD5 / SHA-1 / SHA-256 / SHA-512 / BLAKE3 / SM3 / CRC32，单次读盘全部
+  算完；用户只勾选需要的算法，未启用不计算。
+- **SQLite 哈希缓存**：以「路径 + 大小 + 修改时间」为键、每个算法一行，未变化的
+  文件直接命中；新开算法只补算缺的部分；设置里可一键清空。
+- **下载后自动校验**：总开关 + 分类过滤 + 允许/拒绝规则（通配符或正则），允许
+  规则可覆盖更宽的拒绝规则，在线查询默认只针对 GitHub 来源。
+- **在线查询**：先读 GitHub Release 资产自带的 digest，再查 CIRCL Hash Lookup。
+- **校验界面**：期望值粘贴即比对（对勾/叉）、运行中可取消、导出 `.sha256` 形式
+  的校验文件、BT 多文件任务逐个文件计算。
+
+#### 三、插件
+
+- **导入链路修复**：Android 文件选择器返回 `content://` URI，后端 `std::fs` 读不
+  了，导致外部插件一律导入失败。改为前端按 URI 读字节、后端按字节解析。
+- **文件名归一**：`tool.zip` / `tool.sh` / `tool.json` 统一落盘为 `tool.json`（此前
+  只接受 `.json`，一律报「无法导入该插件清单」）。
+- **脚本入口隔离**：`main.sh` 落盘为 `<清单名>.main.sh`，两个 ZIP 不再互相覆盖。
+- **脚本插件协议**：必须按行 JSON 长驻应答；原测试脚本打印一次就退出，宿主报
+  `plugin closed stdout without answering`，已修正。
+- **导入失败显示后端真实原因**，不再吞成固定文案。
+
+#### 四、界面与布局
+
+- **设备配色统一**：按设备身份派生唯一色相，设置页图标、任务彩条、详情页、取色器
+  四处完全一致；取消撞色渐变，卡片背景改为设备色本身的淡色。
+- **设置页**：<768px 顶部横向 Tab + 卡片流，手机改为分隔行不再一项一卡；平板竖屏
+  保持两列（此前 768–900px 会出现「Tab + 列表」叠层）；保存/放弃改为底部停靠条。
+- **校验设置独立成页**，与「高级」「插件管理」平级。
+- **宽屏统一限宽** 1120px 居中；底栏改单行横向滚动；平板下「全部设备」的实时速度
+  与近七天趋势并排。
+- **进度条美化**：内阴影轨道、渐变填充、顶部高光、运行中流光（`reduced-motion` 关闭）。
+- **详情页**：纯 HTTP/HTTPS 任务不再渲染空的「节点」「Tracker」面板；紧凑远程卡片
+  只留一个动作、设备徽标上限 16%，把宽度让给文件名；「文件详情」固定到行尾。
+- **屏幕方向**改为 `fullUser`，跟随系统（含旋转锁）。
+
+#### 五、平板端修复（beta8 之后）
+
+- **设置项超出屏幕**：所有表单此前写死 `label-width="260px"`，平板竖屏时右侧控件
+  被挤出屏幕；现在标签列随视口收缩（96 / 150 / 200 / 260px）。
+- **安卓桌面图标选择框过宽**：Naive UI 下拉框默认 `width: 100%` 覆盖了
+  `fit-content`，现在宽屏上限 320px，手机上仍是满宽。
+- **校验值溢出**：同时勾选多种算法时 SHA-512 这类 128 字符摘要会撑开行，现在按字
+  符换行。
+
+#### 六、命令行（ray CLI）
 
 这一版把 CLI 做成真正可脚本化的工具：
 
-- **稳定退出码**：0 成功 / 1 通用失败 / **2 用法错误** / **3 守护进程未运行或无响应** / **4 没有匹配的任务** / **5 凭据被拒绝**。脚本可以据此决定重试还是放弃。
-- **全局参数**：`--json`（机器可读输出）、`-q/--quiet`（只输出结果）、`--color auto|always|never`（强制或关闭颜色，`NO_COLOR` 仍然生效）。
-- **批量添加**：`ray add` 支持多个 URL，或用 `--input-file` 从文件 / 标准输入读取；空行与 `#` 注释自动跳过，单个 URL 失败不影响其余，但整体仍以非零退出。
-- **选择器**：`pause` / `resume` / `rm` 支持完整 GID、至少 4 位的唯一 GID 前缀，或 `all`。
-- **新增 `ray watch`**：持续刷新任务表直到全部结束，`--interval-ms` 调刷新频率，`--json` 每拍输出一行 JSON。
-- **JSON 稳定化**：输出带 `schemaVersion`，字段改名不会静默打断下游脚本。
-- **错误分类**：连接失败标记为"守护进程未运行"，超时标记为"无响应"，HTTP 401/403 标记为凭据问题，不再一律报通用错误。
+- **稳定退出码**：0 成功 / 1 通用失败 / 2 用法错误 / 3 守护进程未运行或无响应 /
+  4 没有匹配的任务 / 5 凭据被拒绝。
+- **全局参数**：`--json`、`-q/--quiet`、`--color auto|always|never`。
+- **批量添加**：`ray add` 支持多 URL 或 `--input-file`，跳过空行与 `#` 注释，单个
+  失败不影响其余但整体非零退出。
+- **选择器**：`pause` / `resume` / `rm` 支持完整 GID、至少 4 位唯一前缀或 `all`。
+- **新增 `ray watch`**：持续刷新直到全部结束，`--interval-ms` 调频率，`--json` 每拍
+  一行。
+- **JSON 稳定化**：输出带 `schemaVersion`；错误分类（连接 / 超时 / 认证）分别处理。
 
 ```bash
 ray add https://a.example/x.zip https://b.example/y.zip
@@ -33,43 +102,101 @@ ray watch --interval-ms 500
 ray pause all
 ```
 
-### 延续 beta8 的全部内容
+#### 七、其它
 
-- 真机滑动（触摸事件驱动）、详情动作右对齐、设置保存条置底、校验设置独立成页、方向跟随系统、进度条美化、离线删除幂等、设备颜色按身份派生、校验粘贴提示、平板图表并排。
-- 高级校验系统：七种算法、SQLite 缓存、取消、导出、BT 多文件、在线查询、下载后自动校验。
-- 插件导入链路修复（`content://` URI、文件名归一、脚本入口隔离、行 JSON 长驻协议）。
-- 统计快捷入口（清理下载缓存 / 存储空间分析）、APK 一键安装、音视频预览。
-- 27 种语言同步。
+- 引导页删除「默认下载路径」输入框。
+- 传输卡片溢出修复（碎片图首帧负宽度）。
+- 新增文案经批处理脚本写入全部 27 种语言。
 
 ### 安装
 
-- 包名 `com.shiwushuifeng.rayload`，versionName `1.0.4`，versionCode `10015`
-- arm64-v8a，minSdk 24，targetSdk 37
-- V2 签名（`CN=Rayload, O=shiwushuifeng, C=CN`），可直接覆盖 beta8
+- 包名 `com.shiwushuifeng.rayload`，versionName **`1.0.4.1`**，versionCode `10016`
+- arm64-v8a / x86_64，F-Droid 变体为 `com.shiwushuifeng.rayload.fdroid`
+- minSdk 24，targetSdk 37，V2 签名（`CN=Rayload, O=shiwushuifeng, C=CN`）
+- 可直接覆盖 `v1.0.4-beta8` 与旧 `v1.0.4`，无需卸载
 
 ### 发布方式
 
 本版由 GitHub Actions 从 tag 构建并签名（见 `.github/workflows/release.yml`），
-工具链由 `rust-toolchain.toml` 与 `.node-version` 锁定。
-
+工具链由 `rust-toolchain.toml` 与 `.node-version` 锁定。工作流以 tag 名作为版本
+来源，因此四段式版本号无需写进 `Cargo.toml`。
 ## English
 
-### Fixed since beta8
+### Everything in this release (test builds included)
 
-Three tablet-only issues from device testing:
+`v1.0.4-beta2` through `v1.0.4-beta8` were the test iterations for this cycle.
+Their changes are **folded into this release**, so there is no need to install
+each test package. Grouped by area:
 
-- **Settings overflowed**: every form hardcoded `label-width="260px"`, pushing the
+#### Downloads and tasks
+
+- **Real-device swipe**: left deletes, right pauses/resumes locally or sends a
+  remote task back to this device. Root cause: Android WebView fires
+  `pointercancel` when the scroller takes over, which killed the gesture mid-way.
+  Touch events now drive the row and claim the gesture at the horizontal lock.
+- Finished local tasks share through a right swipe, matching the card menu.
+- Removing an offline device is idempotent: no more `lan_` errors, and its
+  leftover tasks are cleaned up.
+- A remote task can be dismissed while its device is offline, with an explicit
+  note instead of "target device offline".
+- Statistics shortcuts clear the download cache (orphaned `.aria2` files plus
+  the app cache, reporting the freed size) and analyse storage usage.
+- Finished APKs install through the system installer; audio and video open in the
+  system player from a Preview action.
+
+#### Advanced checksum system
+
+- MD5, SHA-1, SHA-256, SHA-512, BLAKE3, SM3 and CRC32 in one pass over the file;
+  only the algorithms the user enables are computed.
+- **SQLite digest cache** keyed by path, size and mtime, one row per algorithm, so
+  an unchanged file returns instantly and a new algorithm only fills the gap.
+- **Verify after download** with a master switch, a category filter and
+  allow/deny rules (wildcard or regex); an allow rule overrides a broader deny.
+- **Published-digest lookup**: GitHub release metadata first, then CIRCL.
+- Match/mismatch against a pasted value, cancel while running, export a checksum
+  file, and per-file checks for multi-file torrents.
+
+#### Plugins
+
+- **Import repair**: Android hands the WebView a `content://` URI that `std::fs`
+  cannot open, so every external import failed. The WebView now reads the bytes
+  and the backend inspects them.
+- Import names normalise to `<stem>.json`; `.zip` and `.sh` used to be rejected
+  with the generic "cannot import this plugin manifest".
+- Script entries are namespaced (`<manifest>.main.sh`) so two archives shipping
+  `main.sh` no longer overwrite each other.
+- Script plugins must answer the newline-delimited JSON protocol; the old test
+  script printed once and exited, which the host rejects.
+- Import failures now surface the backend reason.
+
+#### Interface and layout
+
+- **One device accent**: derived from the device identity, identical in settings,
+  the task rail, the detail page and the color picker; the contrasting gradient
+  is gone and the card wash uses the device color itself.
+- **Settings**: below 768px a horizontal tab strip replaces the group list and
+  phones get dense rows; tablet portrait keeps two columns (768–900px used to
+  stack a second navigation); save/discard moved to a bottom dock.
+- Checksum settings are their own page, a peer of Advanced and Plugin management.
+- Wide screens cap at 1120px and centre; the bottom bar scrolls in one row; the
+  tablet speed and seven-day charts sit side by side.
+- Progress bars restyled: inset track, gradient fill, top highlight and an active
+  sheen (disabled under reduced motion).
+- Plain HTTP/HTTPS tasks no longer render empty Peers and Trackers cards; compact
+  remote rows keep one action and cap the badge at 16%; detail action pinned right.
+- Orientation follows the system (`fullUser`).
+
+#### Tablet fixes after beta8
+
+- **Settings overflow**: every form hardcoded `label-width="260px"`, pushing the
   control past the right edge in tablet portrait. The label column now shrinks
   with the viewport (96 / 150 / 200 / 260px).
-- **Android app-icon selector was too wide**: Naive UI's select is `width: 100%`
-  by default, overriding `fit-content`, so it spanned the whole row. It is now
-  capped at 320px on wide screens and full width on phones.
-- **Checksums ran off the bottom**: enabling several algorithms made 128-character
-  digests stretch the row past the viewport. Digests now wrap inside the row.
+- **App-icon selector too wide**: Naive UI selects default to `width: 100%`,
+  overriding `fit-content`; capped at 320px on wide screens.
+- **Checksums overflowed**: 128-character digests stretched the row past the
+  viewport; they now wrap inside it.
 
-No known issues remained on phones after beta8.
-
-### Command line (ray CLI)
+#### Command line (ray CLI)
 
 - Stable exit codes: 0 ok, 1 general, 2 usage, 3 daemon down or unresponsive,
   4 no task matched, 5 credentials rejected.
@@ -78,13 +205,30 @@ No known issues remained on phones after beta8.
   results and still exits non-zero when any URL failed.
 - `pause`/`resume`/`rm` accept a GID prefix or `all`.
 - New `watch` command follows progress until tasks finish.
-- JSON payloads carry `schemaVersion`.
-- Connection, timeout and auth failures are classified separately.
+- JSON payloads carry `schemaVersion`; connection, timeout and auth failures are
+  classified separately.
+
+#### Other
+
+- The onboarding engine page no longer shows a default download path box.
+- The transfer card no longer overflows (negative piece-map canvas width).
+- New copy was written into all 27 locales by a batch script.
 
 ### Build
 
-`com.shiwushuifeng.rayload`, versionName `1.0.4`, versionCode `10015`,
-arm64-v8a, minSdk 24, targetSdk 37, V2 signed with the same certificate as beta8.
+`com.shiwushuifeng.rayload`, versionName **`1.0.4.1`**, versionCode `10016`,
+arm64-v8a and x86_64; the F-Droid variant is
+`com.shiwushuifeng.rayload.fdroid` with the same version and can coexist.
+minSdk 24, targetSdk 37, V2 signed (`CN=Rayload, O=shiwushuifeng, C=CN`).
+Installs over `v1.0.4-beta8` and the old `v1.0.4` without uninstalling.
+
+### How it is published
+
+GitHub Actions builds and signs this release from the tag
+(`.github/workflows/release.yml`), with the toolchain pinned by
+`rust-toolchain.toml` and `.node-version`. The workflow takes the version from
+the tag name, which is why a four-part version never has to be written into
+`Cargo.toml`.
 
 # Rayload v1.0.4 Beta 8
 
