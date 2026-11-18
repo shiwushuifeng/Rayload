@@ -42,6 +42,7 @@ New to Rayload? Start with the quick start, then open the guide for your setup.
 
 | Guide | What you will find |
 | --- | --- |
+| ⬇️ [Download Guide](./docs/DOWNLOAD.md) | Pick the right APK for your device, verify the checksum and install the CLI. |
 | 🚀 [Quick Start](./docs/QUICK_START.md) | Install the right APK, grant permissions and run your first download. |
 | 🌐 [LAN Networking](./docs/LAN_GUIDE.md) | Mutual pairing, QR and LAN discovery, cross-device tasks and live statistics. |
 | 🔌 [Plugin Development](./docs/PLUGIN_DEVELOPMENT_GUIDE.md) | JSON parsing rules, network whitelists, header rewrites and the `{{password}}` variable. |
@@ -94,23 +95,28 @@ default, runs every protocol through one reliable engine, feels native on a
 phone, and grows through themes and plugins without losing its simplicity. See
 the [roadmap](ROADMAP.md) for what comes next.
 
-## v1.0.4 Beta 2 Highlights
+## v1.0.4.1 Highlights
 
-> Beta preview: LAN and multi-device testing only. Known issues are still being
-> fixed; production users should stay on `v1.0.3` until the stable release.
+> Stable release. The earlier `1.0.4` build had already shipped as a beta, so
+> the fixed release carries the version `1.0.4.1`. All test builds are archived
+> in a single pre-release named `v1.0.4-beta`.
 
-- Mutual LAN pairing: both devices confirm the peer and fingerprint, store each
-  other, and can push tasks or view live statistics in either direction.
-- Remote tasks from paired devices appear in the task list with pause, resume
-  and remove actions, including an offline fallback state.
-- Statistics gained “This device” and “All devices” tabs with per-peer live
-  speed and active-task counts.
-- Declarative JSON plugins now run behind a permission-checked sandbox with
-  risk-graded consent, domain allow-lists and forced header stripping.
-- A rebuilt `ray` CLI turns any Linux NAS or server into a headless download
-  console with YAML config, daemon mode, systemd and task control.
-- Separate lite, full and F-Droid builds; the F-Droid variant uses its own
-  application ID and ships no GitHub self-update path.
+- **Swipe on a real device** works: left deletes, right pauses/resumes locally or
+  sends a remote task back to this device, and finished files share from the same
+  gesture.
+- **Advanced checksums**: MD5, SHA-1, SHA-256, SHA-512, BLAKE3, SM3 and CRC32 in
+  one pass, a SQLite cache keyed by size and mtime, cancellation, checksum export,
+  per-file torrent checks and published-digest lookup through GitHub and CIRCL.
+- **Plugin import repaired** end to end: `content://` URIs from the Android file
+  picker, name normalisation, namespaced script entries and the line-JSON protocol.
+- **One device colour** derived from the device identity, identical in settings,
+  the task rail, the detail page and the color picker.
+- **Responsive layout**: settings tabs on phones, two columns on tablets, 1120px
+  cap on wide screens, a single-row bottom bar and side-by-side tablet charts.
+- **Storage tools**: clear the download cache and analyse storage usage from the
+  statistics page; finished APKs install and finished media preview in one tap.
+- **`ray` CLI** is scriptable: stable exit codes, `--json`, batch `add`, and a new
+  `watch` command.
 
 ## Features
 
@@ -166,14 +172,16 @@ the [roadmap](ROADMAP.md) for what comes next.
 
 | Edition | Artifact | Best for |
 | --- | --- | --- |
-| Lite (ARM64) | `Rayload-v1.0.4-lite-arm64.apk` | Phones and tablets that only need the core downloader; smallest install. |
-| Full (ARM64) | `Rayload-v1.0.4-full-arm64.apk` | Devices that need mutual LAN pairing, remote tasks and the JSON plugin engine. |
-| Full (x86_64) | `Rayload-v1.0.4-full-x86_64.apk` | x86_64 tablets, Android emulators and test devices. |
-| F-Droid (ARM64) | `Rayload-v1.0.4-fdroid-arm64.apk` | Users who want F-Droid-managed updates; separate application ID, no GitHub updater. |
-| CLI (Linux x86_64) | `rayload-cli-v1.0.4-linux-x86_64.tar.gz` | NAS, home servers and headless Linux boxes managed over SSH. |
+| Full (ARM64) — **recommended** | `Rayload-1.0.4.1-full-arm64.apk` | Almost every modern phone and tablet: mutual LAN pairing, remote tasks, the JSON plugin engine. |
+| Lite (ARM64) | `Rayload-1.0.4.1-lite-arm64.apk` | Core downloader only; no LAN pairing or plugin engine, smallest install. |
+| Full (x86_64) | `Rayload-1.0.4.1-full-x86_64.apk` | x86_64 tablets, Android emulators and test devices. |
+| F-Droid (ARM64) | `Rayload-1.0.4.1-fdroid-arm64.apk` | Separate application ID so it installs next to the main build; no GitHub updater. |
+| Demo (ARM64) | `Rayload-1.0.4.1-demo-arm64.apk` | Bundled sample data for screenshots and demos. |
+| CLI (Linux x86_64) | `rayload-cli-v1.0.4.1-linux-x86_64.tar.gz` | NAS, home servers and headless Linux boxes managed over SSH. |
 
-The **Full** build is recommended for most users. Lite keeps the same download
-engine but omits LAN pairing and the plugin engine.
+The **Full ARM64** build is recommended for most users; pick x86_64 only for
+emulators or x86_64 tablets. The step-by-step chooser, checksum verification and
+CLI install live in [docs/DOWNLOAD.md](./docs/DOWNLOAD.md).
 
 ## Installation
 
