@@ -106,8 +106,7 @@ curl -sSk -X POST -H "PRIVATE-TOKEN: $(cat .build-tmp/.gitlab-token)" \
 1. 盯 `!58176`：维护者可能要求改 `versionName`（不匹配 tag）、或引擎处理方式。
 2. 若被要求三段式 tag，则协调开发会话发 `v1.0.5` 并更新配方。
 3. **CLI 尚未被用户实测**：`rayload-cli-v1.0.4.1-linux-x86_64.tar.gz` 已在 Release。
-4. 钉钉通知未配置（`notify_dingtalk.sh` 缺失，用户说要重建机器人）。
-5. `C:\codex\AAAAA` 目录含明文密钥（钉钉 webhook、keystore 密码、Bailian/gh token）
+4. `C:\codex\AAAAA` 目录含明文密钥（keystore 密码、Bailian/gh token）
    ——提醒用户轮换并清除。
 
 ## 纪律
