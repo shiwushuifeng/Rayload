@@ -32,6 +32,11 @@ the Aria2 Next sidecar is compiled during the build instead of downloaded:
 - The submodule vendors its whole dependency stack in `third_party/`, so it
   builds without network access. `cmake`, `ninja-build`, `make`, `perl` and a
   C++ toolchain are required on the build host.
+- Verified on Linux (WSL2 Ubuntu 24.04) with NDK r29: the build completes in
+  about three minutes and produces a binary that is byte-for-byte identical to
+  the upstream `aria2-next-3.1.1-android-arm64` release asset
+  (`sha256 8f06939d…4ea973`), with `libdl`, `libm` and `libc` as its only
+  runtime dependencies.
 
 本地同样可以构建：`NDK=/path/to/ndk scripts/android/build-engine.sh`。
 

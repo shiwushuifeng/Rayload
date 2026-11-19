@@ -111,8 +111,9 @@ curl -sSk -X POST -H "PRIVATE-TOKEN: $(cat .build-tmp/.gitlab-token)" \
 
 1. 盯 `!58176`：配方已改为引擎源码构建 + `UpdateCheckData` 修好版本检查，
    等维护者 review。
-2. **F-Droid 首次构建尚未实跑**：需要一台 Linux + NDK 跑一次
-   `NDK=... scripts/android/build-engine.sh` 确认上游 Android 目标可编通。
+2. ~~F-Droid 首次构建尚未实跑~~ —— 已在 WSL2 (Ubuntu 24.04) + NDK r29
+   实跑 `scripts/android/build-engine.sh` 通过，全程约 2 分 36 秒，产出与上游
+   release 的二进制**逐字节相同**（sha256 `8f06939d…4ea973`）。复现方式见文末。
 3. 若被要求三段式 tag，则协调开发会话发 `v1.0.5`，并同步配方
    `commit` / `CurrentVersionCode`。
 4. **CLI 尚未被用户实测**：`rayload-cli-v1.0.4.1-linux-x86_64.tar.gz` 已在 Release。
@@ -125,3 +126,29 @@ curl -sSk -X POST -H "PRIVATE-TOKEN: $(cat .build-tmp/.gitlab-token)" \
 - 提交前跑 `pnpm check:repo`；提交信息用英文。
 - ver 版本号只改 `src-tauri/Cargo.toml`（`scripts/bump-version.sh`），并同步 `tauri.android.conf.json`。
 - 不提交 keystore、token、SDK 路径、构建产物。
+
+## 复现引擎构建（WSL 实测步骤）
+
+本机 WSL 无 root 权限也能装齐工具链：`apt-get download <pkg>` + `dpkg-deb -x`
+解到 `~/tools/root`，再设 `PATH`/`LD_LIBRARY_PATH` 即可。需要
+`cmake`(3.28)、`ninja-build`、`pkgconf`、`cmake-data`、`libarchive13t64`、
+`librhash0`、`libuv1t64`、`libjsoncpp25`、`libpkgconf3`。
+
+Windows 侧 NDK 只有 `windows-x86_64` 预编译工具链，WSL 里用不了；需另下
+Linux 版：
+
+```bash
+curl -fSL -o android-ndk-r29-linux.zip \
+  https://dl.google.com/android/repository/android-ndk-r29-linux.zip
+unzip -q android-ndk-r29-linux.zip -d ~/tools/
+```
+
+然后在 Linux 文件系统上跑（别在 `/mnt/c` 上编，慢很多）：
+
+```bash
+NDK=~/tools/android-ndk-r29 API=24 bash scripts/android/build-engine.sh
+```
+
+实测结果：`Runtime dependency check passed for android-arm64`，
+产出 sha256 `8f06939d…4ea973`，与上游 release 完全一致；NEEDED 只有
+`libdl/libm/libc`。
