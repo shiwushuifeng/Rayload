@@ -10,9 +10,10 @@
 # * The tag is v1.0.4.1, but four-part versions are not valid semver, so the
 #   build reports versionName 1.0.4 via RAYLOAD_VERSION_NAME. versionCode 10016
 #   is monotonic.
-# * The aria2-next engine is downloaded from the upstream GitHub release of
-#   AnInsomniacy/aria2-next (GPL-2.0-or-later) and verified against the SHA-256
-#   published there, rather than shipping an unattributable binary.
+# * The aria2-next engine (GPL-2.0-or-later) is compiled from source. It lives
+#   in a submodule pinned to upstream v3.1.1, and scripts/android/build-engine.sh
+#   drives the Android cross-compile target upstream provides. The vendored
+#   dependency stack in that submodule builds fully offline.
 
 Categories:
   - Internet
@@ -48,14 +49,13 @@ Repo: https://github.com/shiwushuifeng/Rayload.git
 Builds:
   - versionName: 1.0.4
     versionCode: 10016
-    commit: 71b13f511fb2623a5c071b7b7d7d1d867ba2e6b1
+    commit: de1cf732524059eaf52d3e09da42ab811167ae48
+    submodules: true
     sudo:
       - apt-get update
-      - apt-get install -y nodejs npm openjdk-21-jdk-headless
+      - apt-get install -y nodejs npm openjdk-21-jdk-headless build-essential cmake ninja-build perl pkg-config
     prebuild:
-      - curl -fsSL -o src-tauri/binaries/aria2-next-aarch64-linux-android https://github.com/AnInsomniacy/aria2-next/releases/download/v3.1.1/aria2-next-3.1.1-android-arm64
-      - echo "8f06939d8786c06204a099a3b9ff19d76ce063f62781eed155d9f3dbf04ea973  src-tauri/binaries/aria2-next-aarch64-linux-android" | sha256sum -c -
-      - chmod +x src-tauri/binaries/aria2-next-aarch64-linux-android
+      - NDK=$$NDK$$ API=24 bash scripts/android/build-engine.sh
       - npm install -g pnpm@11.5.2
       - pnpm install --frozen-lockfile
       - rustup target add aarch64-linux-android
@@ -67,5 +67,10 @@ Builds:
 
 AutoUpdateMode: Version
 UpdateCheckMode: Tags ^v[0-9.]+$
+# The Gradle script reads versionName/versionCode from the generated
+# tauri.properties, which is not committed, so the default Gradle/manifest
+# parser finds no version at any tag. Read them from the committed Tauri
+# config instead.
+UpdateCheckData: 'src-tauri/tauri.android.conf.json|"versionCode":\s*(\d+)|.|"version":\s*"([^"]+)"'
 CurrentVersion: 1.0.4
 CurrentVersionCode: 10016

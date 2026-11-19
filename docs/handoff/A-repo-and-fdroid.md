@@ -43,19 +43,25 @@
 2. **aria2 引擎改用官方 3.1.1**，用户接受版本从 3.1.2 降级
 3. **GitHub 上已发布的 1.0.4.1 不动**（内含 3.1.2，用户无感）
 
-### aria2-next 处理方式（已解决，别再重做）
+### aria2-next 处理方式（2026-11-20 改为源码构建）
 
-F-Droid 最大门槛是预编译引擎。现在配方在 `prebuild` 里：
+**之前用 GitHub Releases 下载预编译产物，已废弃**：`Inclusion_Policy` 第 12/20–25 行
+只允许 Debian / Maven 系 / Android·Flutter·Hermes SDK / PyPI·Nix·Rust·Golang·Node.js
+来源的预编译二进制，GitHub Releases 不在白名单。
 
-```
-curl -fsSL -o src-tauri/binaries/aria2-next-aarch64-linux-android \
-  https://github.com/AnInsomniacy/aria2-next/releases/download/v3.1.1/aria2-next-3.1.1-android-arm64
-echo "8f06939d8786c06204a099a3b9ff19d76ce063f62781eed155d9f3dbf04ea973  ..." | sha256sum -c -
-```
+现在引擎**从源码构建**：
 
-上游 `AnInsomniacy/aria2-next` 官方发布 Android 产物 + SHA256，来源可追溯。
-本地 `src-tauri/binaries/aria2-next-aarch64-linux-android` 已换成该 3.1.1 文件
-（备份在 `.build-tmp/aria2/`）。
+- `vendor/aria2-next` 是 git submodule，钉在 upstream `v3.1.1`
+  （`1b8fb72fcf63dc9e78807f20039708184bce0ad2`）
+- 配方 `submodules: true`
+- `scripts/android/build-engine.sh` 调用上游自带的 Android 交叉编译目标
+  （`NDK=$$NDK$$ API=24`），产出 `src-tauri/binaries/aria2-next-aarch64-linux-android`
+- 上游 `third_party/` 是 vendored 源码，**完全离线**可编；需要
+  `cmake>=3.25`、`ninja`、`make`、`perl`、C++ 工具链
+- 许可证 GPL-2.0-or-later（源码头声明），与 GPL-3.0 兼容，`NOTICE` 已记
+
+首次构建要编 openssl/curl/libtorrent/boost/ffmpeg/gpac，耗时约一小时量级。
+本地构建：`NDK=/path/to/ndk scripts/android/build-engine.sh`。
 
 ## 版本号的技术约束（重要）
 
@@ -103,10 +109,14 @@ curl -sSk -X POST -H "PRIVATE-TOKEN: $(cat .build-tmp/.gitlab-token)" \
 
 ## 待办
 
-1. 盯 `!58176`：维护者可能要求改 `versionName`（不匹配 tag）、或引擎处理方式。
-2. 若被要求三段式 tag，则协调开发会话发 `v1.0.5` 并更新配方。
-3. **CLI 尚未被用户实测**：`rayload-cli-v1.0.4.1-linux-x86_64.tar.gz` 已在 Release。
-4. `C:\codex\AAAAA` 目录含明文密钥（keystore 密码、Bailian/gh token）
+1. 盯 `!58176`：配方已改为引擎源码构建 + `UpdateCheckData` 修好版本检查，
+   等维护者 review。
+2. **F-Droid 首次构建尚未实跑**：需要一台 Linux + NDK 跑一次
+   `NDK=... scripts/android/build-engine.sh` 确认上游 Android 目标可编通。
+3. 若被要求三段式 tag，则协调开发会话发 `v1.0.5`，并同步配方
+   `commit` / `CurrentVersionCode`。
+4. **CLI 尚未被用户实测**：`rayload-cli-v1.0.4.1-linux-x86_64.tar.gz` 已在 Release。
+5. `C:\codex\AAAAA` 目录含明文密钥（keystore 密码、Bailian/gh token）
    ——提醒用户轮换并清除。
 
 ## 纪律
