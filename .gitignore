@@ -93,3 +93,6 @@ notify_dingtalk.sh
 .dsh/
 # Local toolchain bootstrapper downloads
 .build-tools/
+
+# Windows reserved device names that MSYS may materialise as character devices
+CON

@@ -1,0 +1,12 @@
+1.0.4
+
+First F-Droid release.
+
+- Swipe gestures on a real device: left deletes, right pauses, resumes or shares.
+- Advanced checksums: MD5, SHA-1, SHA-256, SHA-512, BLAKE3, SM3 and CRC32 in one
+  pass, with a local cache, export and published-digest lookup.
+- Plugin import repaired end to end, including the Android file picker.
+- One colour per device across settings, task cards and the detail page.
+- Responsive settings tabs on phones and two columns on tablets.
+- Storage tools: clear the download cache and analyse storage usage.
+- Finished APKs install and finished media preview in one tap.

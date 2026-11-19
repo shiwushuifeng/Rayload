@@ -4,19 +4,15 @@
 # com.shiwushuifeng.rayload.fdroid. fdroiddata requires the metadata filename to
 # match that applicationId.
 #
-# Notes for the reviewer:
-# * `--features fdroid` alone drops the plugin engine and LAN entries, because
-#   `fdroid` is an additive Cargo feature. Both are needed for feature parity
-#   with the GitHub build, hence the two features together.
-# * The bundled aria2-next sidecar under src-tauri/binaries/ is a prebuilt ELF
-#   built from https://github.com/AnInsomniacy/aria2-next (GPL-2.0-or-later).
-#   Building it needs the NDK and is not part of the app build; if fdroiddata
-#   requires it to be compiled in the F-Droid environment we will add a build
-#   step for the engine.
-# * The upstream release tag is v1.0.4.1, but four-part versions are not valid
-#   semver and F-Droid rejects them. The build therefore reports versionName
-#   1.0.4 (versionCode 10016 is monotonic) through RAYLOAD_VERSION_NAME, so the
-#   store shows 1.0.4 while the GitHub artifact remains v1.0.4.1.
+# Reviewer notes:
+# * `--features fdroid,plugin_engine` is required: `fdroid` is an additive Cargo
+#   feature, so passing it alone would compile out the LAN and plugin entries.
+# * The tag is v1.0.4.1, but four-part versions are not valid semver, so the
+#   build reports versionName 1.0.4 via RAYLOAD_VERSION_NAME. versionCode 10016
+#   is monotonic.
+# * The aria2-next engine is downloaded from the upstream GitHub release of
+#   AnInsomniacy/aria2-next (GPL-2.0-or-later) and verified against the SHA-256
+#   published there, rather than shipping an unattributable binary.
 
 Categories:
   - Internet
@@ -30,9 +26,9 @@ Changelog: https://github.com/shiwushuifeng/Rayload/blob/main/docs/CHANGELOG.md
 AutoName: Rayload
 
 Description: |-
-  Rayload is a fast, private and customizable download manager for Android.
-  It supports HTTP, HTTPS, FTP, BitTorrent, Magnet, Metalink and ED2K through a
-  single Aria2 Next engine, with no ads, accounts or telemetry.
+  Rayload is a fast, private and customizable download manager for Android. It
+  runs a single Aria2 Next engine for HTTP, HTTPS, FTP, BitTorrent, Magnet,
+  Metalink and ED2K, with no ads, accounts or telemetry.
 
   Features include a mobile-first task list, share-to-download, background
   foreground service, speed limits, BitTorrent file selection, a floating speed
@@ -52,11 +48,14 @@ Repo: https://github.com/shiwushuifeng/Rayload.git
 Builds:
   - versionName: 1.0.4
     versionCode: 10016
-    commit: v1.0.4.1
+    commit: 71b13f511fb2623a5c071b7b7d7d1d867ba2e6b1
     sudo:
       - apt-get update
       - apt-get install -y nodejs npm openjdk-21-jdk-headless
     prebuild:
+      - curl -fsSL -o src-tauri/binaries/aria2-next-aarch64-linux-android https://github.com/AnInsomniacy/aria2-next/releases/download/v3.1.1/aria2-next-3.1.1-android-arm64
+      - echo "8f06939d8786c06204a099a3b9ff19d76ce063f62781eed155d9f3dbf04ea973  src-tauri/binaries/aria2-next-aarch64-linux-android" | sha256sum -c -
+      - chmod +x src-tauri/binaries/aria2-next-aarch64-linux-android
       - npm install -g pnpm@11.5.2
       - pnpm install --frozen-lockfile
       - rustup target add aarch64-linux-android

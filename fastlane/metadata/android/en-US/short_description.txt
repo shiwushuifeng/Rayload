@@ -1,1 +1,1 @@
-Fast, private Android downloader for HTTP, BT, Magnet and ED2K.
+Private, fast download manager for HTTP, BitTorrent, Magnet and ED2K. No ads, no accounts, no telemetry.
